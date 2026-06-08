@@ -13,6 +13,7 @@ Per [GOVERNANCE.md](../../GOVERNANCE.md), any change to the spec is accompanied 
 | [0006](0006-rename-shipments-to-deliveries.md) | Rename the booking resource from "shipment" to "delivery" | Accepted |
 | [0007](0007-clarify-phase1-validation-and-reserved-fields.md) | Clarify Phase 1 validation rules and reserved quote fields | Accepted |
 | [0008](0008-expose-dataset-freshness.md) | Expose dataset freshness through the API | Accepted |
+| [0009](0009-define-worker-boundaries.md) | Define Worker policy, validation, and service boundaries | Accepted |
 
 ## Format
 
