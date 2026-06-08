@@ -20,6 +20,8 @@ Itafika does that work **once, in the open, for everyone.** It is the abstractio
 
 For the full vision, see [`docs/Itafika-Concept-Doc.md`](docs/Itafika-Concept-Doc.md) (or the visual version at <https://itafika-tuu.pages.dev/>).
 
+For the current implementation state, see [`docs/status.md`](docs/status.md).
+
 ---
 
 ## What's in this repository
@@ -34,10 +36,10 @@ itafika/
 │   └── data/               · the open zones + rates dataset (+ schema)
 ├── packages/              Cloudflare-native reference implementation (TypeScript)
 │   ├── core/               · routing engine + types generated from the spec
-│   ├── adapters/           · rider / matatu / courier adapters
 │   └── worker/             · Cloudflare Worker API
 ├── examples/               tiny shops calling the API
 ├── docs/                  concept doc, visual page, architecture decisions
+│   ├── status.md           · what is implemented today
 │   └── decisions/          · ADRs (why we made each technical choice)
 ├── CONTRIBUTING.md        how to add an adapter or data
 ├── GOVERNANCE.md          how decisions get made
@@ -45,6 +47,8 @@ itafika/
 ```
 
 **The `spec/` directory is the product.** Anyone could reimplement Itafika in Go, Python, Rust, or any other language from `spec/` alone. `packages/worker` is the hosted reference implementation of that standard.
+
+The repository is still in development. Some ideas described in the concept doc are planned but not implemented yet. [`docs/status.md`](docs/status.md) is the place to check what exists today.
 
 ## Platform shape
 
@@ -79,15 +83,14 @@ The heart is `POST /v1/quotes`:
 {
   "origin_zone_id": "ZONE_NBI_CBD_01",
   "destination_zone_id": "ZONE_NKR_MAIN",
-  "package_weight_kg": 2.5,
-  "package_type": "apparel"
+  "package_weight_kg": 2.5
 }
 
 // response
 {
   "quotes": [
     {
-      "quote_id": "qt_2mn41bq",
+      "quote_id": "qt_8f3b4d2a91c4e87ab11d42ef",
       "provider_type": "matatu_sacco",
       "provider_name": "Mololine Sacco",
       "estimated_cost_kes": 400,
@@ -110,11 +113,17 @@ Because Itafika is open source, the defaults are a **starting point, not a cage.
 
 ## Status
 
-🚧 **Phase 1 — pre-release.** The API contract is being frozen and the first dataset seeded. See the roadmap below.
+🚧 **Phase 1 foundation — in active development.**
+
+The branch already contains a working core package, Worker API, D1 migrations, seed flow, tests, and a simple shop example.
+
+It does **not** yet contain every planned part of the wider Itafika architecture.
+
+See [`docs/status.md`](docs/status.md) for the exact breakdown.
 
 | Phase | What | State |
 |-------|------|-------|
-| **1 — Static API (MVP)** | Seeded static rates + standardized zone IDs behind the four endpoints. Quotes return real, useful numbers. | In progress |
+| **1 — Static API (MVP)** | Seeded static rates + standardized zone IDs behind the four endpoints. Quotes return real, useful numbers. | In active development |
 | **2 — Open adapters** | Publish `LogisticsProviderInterface`; community contributes live provider adapters. | Planned |
 | **3 — Payments & escrow** | Daraja / M-Pesa integration with COD split-billing. | Planned |
 
@@ -126,6 +135,8 @@ Because Itafika is open source, the defaults are a **starting point, not a cage.
 
 ```bash
 pnpm install
+pnpm --filter @itafika/worker db:migrate:local
+pnpm --filter @itafika/worker db:seed:local
 pnpm --filter @itafika/worker dev      # starts the Worker locally
 curl http://localhost:8787/v1/zones
 ```

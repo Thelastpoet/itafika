@@ -4,6 +4,8 @@ A ~50-line script showing what an online shop does at checkout: ask Itafika for
 delivery options between two zones, show them to the customer, book the chosen
 one, and read back tracking.
 
+This example matches the current Phase 1 reference Worker. For broader project status, see [`docs/status.md`](../../docs/status.md).
+
 ## Run it
 
 Start the reference Worker first (from the repo root):

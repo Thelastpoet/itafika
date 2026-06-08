@@ -2,6 +2,10 @@
 
 ### An open-source logistics aggregator API for Kenya
 
+> This is the founding concept document. It explains the destination and the design direction.
+>
+> It is **not** the implementation status document. For what currently exists in the repository, see [`docs/status.md`](status.md).
+
 *"Itafika"* — Swahili, *it will arrive*.
 
 A single, clean, predictable interface that any online shop can plug into to solve delivery and shipping — locations, transport modes, and rates already built in, so no developer has to model Kenya's delivery system from the ground up.

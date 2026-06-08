@@ -4,6 +4,8 @@ Itafika only works if the people who depend on it help build it. The most valuab
 
 There are three ways to contribute, from easiest to most involved.
 
+Before you start, check [`docs/status.md`](docs/status.md). It explains what is already implemented, what is partial, and what is still planned.
+
 ## 1. Contribute data (no code required)
 
 This is the highest-leverage thing most people can do. Two kinds of data:
@@ -26,7 +28,7 @@ An adapter teaches Itafika how to talk to one provider — a courier's rate API,
 
 Read the full contract in [`spec/adapter-contract.md`](spec/adapter-contract.md). In short, an adapter answers three questions for its provider: *can you serve this route?*, *what would it cost and how long?*, and (later phases) *here's a booking — take it.*
 
-Adapters live in [`packages/adapters/`](packages/adapters/). Start by copying the static reference adapter and pointing it at your provider. Static adapters read from the open dataset; live adapters call a provider system and should fail softly if that system is unavailable.
+The adapter contract is already defined, but the repository does **not** yet have a finished `packages/adapters/` implementation area. If you want to work on adapters now, open an issue or PR first so the code structure can be agreed before multiple contributors build in different directions.
 
 ## 3. Contribute to the core / Worker
 
@@ -55,7 +57,7 @@ Because the **spec is the source of truth**, changes that affect the API contrac
 
 - [ ] If it touches the API surface, `spec/openapi.yaml` is updated and an ADR is added/linked.
 - [ ] Data entries follow [`spec/data/SCHEMA.md`](spec/data/SCHEMA.md) and include provenance.
-- [ ] Adapters implement `LogisticsProviderInterface` and pass the adapter conformance tests.
+- [ ] If you add adapter code, it follows `LogisticsProviderInterface` and includes tests with the contribution.
 - [ ] You agree to license your contribution under the project's [MIT License](LICENSE).
 
 ## Getting help
