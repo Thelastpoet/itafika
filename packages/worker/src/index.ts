@@ -6,6 +6,7 @@ import {
   listZones,
   loadQuoteData,
   persistQuotes,
+  pruneExpiredQuotes,
   searchZones,
   trackDelivery,
   zonesExist,
@@ -77,9 +78,11 @@ async function handleQuotes(request: Request, env: Env): Promise<Response> {
     return fail("not_found", "One or both zone IDs are unknown", 404);
   }
 
+  const now = new Date().toISOString();
+  await pruneExpiredQuotes(env.DB, now);
   const data = await loadQuoteData(env.DB, origin_zone_id, destination_zone_id);
   const quotes = quote({ origin_zone_id, destination_zone_id, package_weight_kg, package_type }, data).map(withQuoteId);
-  const createdAt = new Date().toISOString();
+  const createdAt = now;
   await persistQuotes(
     env.DB,
     quotes,
@@ -123,6 +126,7 @@ async function handleCreateDelivery(request: Request, env: Env): Promise<Respons
     req.package_description = packageDescription;
   }
 
+  await pruneExpiredQuotes(env.DB, new Date().toISOString());
   const delivery = await createDelivery(env.DB, req);
   if (!delivery) return fail("not_found", "The quote_id is unknown or has expired", 404);
   return json(delivery, 201);

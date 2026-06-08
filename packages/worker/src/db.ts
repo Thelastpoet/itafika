@@ -135,6 +135,10 @@ export async function persistQuotes(
   );
 }
 
+export async function pruneExpiredQuotes(db: D1Database, now: string): Promise<void> {
+  await db.prepare("DELETE FROM quotes WHERE expires_at IS NOT NULL AND expires_at <= ?").bind(now).run();
+}
+
 export async function createDelivery(db: D1Database, req: DeliveryRequest): Promise<Delivery | null> {
   const quoteRow = await db
     .prepare("SELECT * FROM quotes WHERE quote_id = ? AND (expires_at IS NULL OR expires_at > ?)")
