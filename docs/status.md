@@ -45,7 +45,7 @@ Current behavior is intentionally simple:
 
 Some parts of the contract are in place before the full implementation behind them exists.
 
-- `package_type` is part of the quote request shape, but the current Worker does not use it in quote calculation yet
+- `package_type` can influence quote ranking for higher-care categories, but it is still a simple heuristic rather than a full provider capability model
 - booking creates a delivery record, but does not dispatch to a live provider system
 - tracking is unified, but the current flow only records the initial event unless more events are added later
 - rates in `spec/data/` are still marked `seed-illustrative` unless replaced by sourced field data

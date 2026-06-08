@@ -65,7 +65,7 @@ async function handleQuotes(request: Request, env: Env): Promise<Response> {
     return fail("invalid_request", "Request body must be valid JSON", 400);
   }
 
-  const { origin_zone_id, destination_zone_id, package_weight_kg } = body;
+  const { origin_zone_id, destination_zone_id, package_weight_kg, package_type } = body;
   if (typeof origin_zone_id !== "string" || typeof destination_zone_id !== "string") {
     return fail("invalid_request", "origin_zone_id and destination_zone_id are required", 400);
   }
@@ -78,7 +78,7 @@ async function handleQuotes(request: Request, env: Env): Promise<Response> {
   }
 
   const data = await loadQuoteData(env.DB, origin_zone_id, destination_zone_id);
-  const quotes = quote({ origin_zone_id, destination_zone_id, package_weight_kg }, data).map(withQuoteId);
+  const quotes = quote({ origin_zone_id, destination_zone_id, package_weight_kg, package_type }, data).map(withQuoteId);
   const createdAt = new Date().toISOString();
   await persistQuotes(
     env.DB,

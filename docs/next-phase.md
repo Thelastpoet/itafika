@@ -102,7 +102,6 @@ Why this matters:
 
 Tasks:
 
-- decide whether `package_type` should stay reserved or affect quote ranking/filtering
 - add quote expiry rules if quotes should not remain bookable forever
 - decide whether duplicate quote persistence needs cleanup or pruning
 - add more tracking event creation paths if delivery history is meant to grow beyond the initial event

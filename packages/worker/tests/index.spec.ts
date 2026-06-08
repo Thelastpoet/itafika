@@ -66,6 +66,18 @@ describe("POST /v1/quotes", () => {
 		expect(body.quotes[0]?.quote_id).toMatch(/^qt_[a-f0-9]{24}$/);
 	});
 
+	it("uses package_type to influence ranking for higher-care goods", async () => {
+		const res = await post({
+			origin_zone_id: "ZONE_NBI_CBD_01",
+			destination_zone_id: "ZONE_ELD_MAIN",
+			package_weight_kg: 2.5,
+			package_type: "electronics",
+		});
+		expect(res.status).toBe(200);
+		const body = (await res.json()) as { quotes: { provider_name: string }[] };
+		expect(body.quotes.map((q) => q.provider_name)).toEqual(["G4S Courier", "Mololine Sacco"]);
+	});
+
 	it("rejects a non-positive weight", async () => {
 		const res = await post({ origin_zone_id: "ZONE_NBI_CBD_01", destination_zone_id: "ZONE_ELD_MAIN", package_weight_kg: 0 });
 		expect(res.status).toBe(400);
