@@ -33,6 +33,7 @@ This is more valuable right now than jumping straight to payments, Workflows, or
 - dataset validation workflow
 - dataset freshness endpoint
 - quote expiry and single-use booking policy
+- manual tracking event update path
 - CI for validation, tests, and typecheck
 - compatibility date aligned with the runtime currently used in local verification
 
@@ -64,8 +65,8 @@ Why this matters:
 
 Tasks:
 
-- add more tracking event creation paths beyond the initial booking event
-- decide whether those updates should come from adapters, manual tools, or future webhook flows
+- build on the new manual/internal tracking event path
+- decide how adapter-driven, manual, and future webhook-driven updates should coexist
 - add tests around status progression once the path is chosen
 
 Done when:

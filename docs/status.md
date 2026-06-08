@@ -54,7 +54,7 @@ Some parts of the contract are in place before the full implementation behind th
 
 - `package_type` is still part of the quote request shape, but it is not yet used in quote logic
 - booking creates a delivery record, but does not dispatch to a live provider system
-- tracking is unified, but the current flow only records the initial event unless more events are added later
+- tracking is unified, and Phase 1 now supports manual/internal tracking event updates; adapter-driven and webhook-driven updates still come later
 - rates in `spec/data/` are still marked `seed-illustrative` unless replaced by sourced field data
 
 This is normal for the current phase. The important thing is to describe it clearly.
