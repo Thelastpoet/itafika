@@ -141,7 +141,9 @@ export async function pruneExpiredQuotes(db: D1Database, now: string): Promise<v
 
 export async function createDelivery(db: D1Database, req: DeliveryRequest): Promise<Delivery | null> {
   const quoteRow = await db
-    .prepare("SELECT * FROM quotes WHERE quote_id = ? AND (expires_at IS NULL OR expires_at > ?)")
+    .prepare(
+      "SELECT * FROM quotes WHERE quote_id = ? AND (expires_at IS NULL OR expires_at > ?) AND NOT EXISTS (SELECT 1 FROM deliveries WHERE deliveries.quote_id = quotes.quote_id)",
+    )
     .bind(req.quote_id, new Date().toISOString())
     .first<QuoteRow>();
   if (!quoteRow) return null;

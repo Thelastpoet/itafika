@@ -138,6 +138,21 @@ describe("deliveries", () => {
 		expect(body.history.map((e) => e.status)).toEqual(["package_picked"]);
 	});
 
+	it("does not allow the same quote to be booked twice", async () => {
+		const quote_id = await bookableQuoteId();
+		const payload = {
+			quote_id,
+			sender: { name: "Asha Mwangi", phone: "+254712345678" },
+			recipient: { name: "John Otieno", phone: "+254723456789" },
+		};
+
+		const first = await json(payload);
+		expect(first.status).toBe(201);
+
+		const second = await json(payload);
+		expect(second.status).toBe(404);
+	});
+
 	it("returns 404 booking an unknown quote", async () => {
 		const res = await json({
 			quote_id: "qt_aaaaaaaaaaaaaaaaaaaaaaaa",
