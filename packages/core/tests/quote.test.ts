@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { estimateCostKes, quote, rateAppliesToWeight } from "./quote.js";
-import type { Provider, Rate } from "./types.js";
+import { estimateCostKes, quote, rateAppliesToWeight } from "../src/quote.js";
+import type { Provider, Rate } from "../src/types.js";
 
 const providers: Provider[] = [
   { id: "cbd_rider_pool", name: "Independent Rider (CBD Pool)", type: "boda_rider", reliability_score: 0.92 },

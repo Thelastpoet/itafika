@@ -5,7 +5,7 @@ export default defineWorkersConfig(async () => {
 	const migrations = await readD1Migrations(fileURLToPath(new URL("migrations", import.meta.url)));
 	return {
 		test: {
-			setupFiles: ["./test/apply-migrations.ts"],
+			setupFiles: ["./tests/apply-migrations.ts"],
 			poolOptions: {
 				workers: {
 					singleWorker: true,
