@@ -47,6 +47,8 @@ Cloudflare primitives are used only where they match the job:
 
 Because the **spec is the source of truth**, changes that affect the API contract start with a change to [`spec/openapi.yaml`](spec/openapi.yaml) and a short ADR (see [`docs/decisions/`](docs/decisions/)) — never with code alone. This keeps the standard and the reference implementation from drifting apart.
 
+If you are making a contract change, use [`docs/spec-change-checklist.md`](docs/spec-change-checklist.md).
+
 ---
 
 ## Ground rules
