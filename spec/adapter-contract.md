@@ -45,7 +45,7 @@ interface LogisticsProviderInterface {
    * initial universal status. In Phase 1 this may simply record the booking
    * (a "static" adapter) rather than dispatch to a live system.
    *
-   * Drives: POST /v1/shipments
+   * Drives: POST /v1/deliveries
    */
   book(order: BookingOrder): Promise<BookingResult>;
 
@@ -54,7 +54,7 @@ interface LogisticsProviderInterface {
    * statuses. Pull-based providers query here; push-based providers (webhooks)
    * call the engine's normalise() with the same mapping. Optional in Phase 1.
    *
-   * Drives: GET /v1/shipments/{tracking_id}/track
+   * Drives: GET /v1/deliveries/{tracking_id}/track
    */
   track?(providerRef: string): Promise<TrackingStatus>;
 }

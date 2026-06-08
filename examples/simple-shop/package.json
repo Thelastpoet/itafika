@@ -1,0 +1,11 @@
+{
+  "name": "@itafika/example-simple-shop",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A tiny shop that quotes, books, and tracks a delivery via the Itafika API",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "start": "node checkout.mjs"
+  }
+}

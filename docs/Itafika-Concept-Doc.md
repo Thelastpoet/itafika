@@ -2,6 +2,10 @@
 
 ### An open-source logistics aggregator API for Kenya
 
+> This is the founding concept document. It explains the destination and the design direction.
+>
+> It is **not** the implementation status document. For what currently exists in the repository, see [`docs/status.md`](status.md).
+
 *"Itafika"* — Swahili, *it will arrive*.
 
 A single, clean, predictable interface that any online shop can plug into to solve delivery and shipping — locations, transport modes, and rates already built in, so no developer has to model Kenya's delivery system from the ground up.
@@ -125,10 +129,10 @@ Cloudflare primitives map cleanly to the logistics lifecycle:
 | Need | Primitive |
 |------|-----------|
 | Public API | Workers |
-| Zones, providers, rates, shipments, tracking events | D1 |
+| Zones, providers, rates, deliveries, tracking events | D1 |
 | Webhook processing and background provider jobs | Queues |
 | Booking retries, human confirmation, payment, settlement | Workflows |
-| Per-shipment or per-provider coordination | Durable Objects |
+| Per-delivery or per-provider coordination | Durable Objects |
 
 The first release does not need every primitive at once. Phase 1 can be a Worker plus D1. The other pieces are introduced where the delivery lifecycle needs background work, retries, or stateful coordination.
 
@@ -154,13 +158,13 @@ POST /v1/quotes
 **C. Order & Booking.** Once a shop's customer selects a quote, this module locks it in, generates a tracking ID, and notifies the relevant adapter.
 
 ```
-POST /v1/shipments
+POST /v1/deliveries
 ```
 
 **D. Webhooks & Unified Tracking.** Providers each track differently. Itafika normalizes their states into five universal ones — `package_picked`, `in_transit`, `at_sorting_hub`, `ready_for_pickup`, `delivered` — so a shop reads one vocabulary regardless of who carries the package.
 
 ```
-GET /v1/shipments/{tracking_id}/track
+GET /v1/deliveries/{tracking_id}/track
 ```
 
 ---

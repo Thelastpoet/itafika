@@ -1,0 +1,17 @@
+{
+  "name": "itafika",
+  "version": "0.1.0",
+  "private": true,
+  "description": "An open-source logistics aggregator API for Kenya",
+  "license": "MIT",
+  "packageManager": "pnpm@10.30.3",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "gen:types": "pnpm --filter @itafika/core gen:types",
+    "test": "pnpm -r test",
+    "typecheck": "pnpm -r typecheck",
+    "dev": "pnpm --filter @itafika/worker dev"
+  }
+}

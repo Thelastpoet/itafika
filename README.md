@@ -20,6 +20,8 @@ Itafika does that work **once, in the open, for everyone.** It is the abstractio
 
 For the full vision, see [`docs/Itafika-Concept-Doc.md`](docs/Itafika-Concept-Doc.md) (or the visual version at <https://itafika-tuu.pages.dev/>).
 
+For the current implementation state, see [`docs/status.md`](docs/status.md).
+
 ---
 
 ## What's in this repository
@@ -34,10 +36,10 @@ itafika/
 │   └── data/               · the open zones + rates dataset (+ schema)
 ├── packages/              Cloudflare-native reference implementation (TypeScript)
 │   ├── core/               · routing engine + types generated from the spec
-│   ├── adapters/           · rider / matatu / courier adapters
 │   └── worker/             · Cloudflare Worker API
 ├── examples/               tiny shops calling the API
 ├── docs/                  concept doc, visual page, architecture decisions
+│   ├── status.md           · what is implemented today
 │   └── decisions/          · ADRs (why we made each technical choice)
 ├── CONTRIBUTING.md        how to add an adapter or data
 ├── GOVERNANCE.md          how decisions get made
@@ -46,6 +48,8 @@ itafika/
 
 **The `spec/` directory is the product.** Anyone could reimplement Itafika in Go, Python, Rust, or any other language from `spec/` alone. `packages/worker` is the hosted reference implementation of that standard.
 
+The repository is still in development. Some ideas described in the concept doc are planned but not implemented yet. [`docs/status.md`](docs/status.md) is the place to check what exists today.
+
 ## Platform shape
 
 The reference implementation is designed for **Cloudflare Workers**:
@@ -53,10 +57,10 @@ The reference implementation is designed for **Cloudflare Workers**:
 | Need | Cloudflare primitive |
 |------|----------------------|
 | Public API | Workers |
-| Zones, providers, rates, shipments, tracking events | D1 |
+| Zones, providers, rates, deliveries, tracking events | D1 |
 | Long-running booking or payment flows | Workflows |
 | Background refreshes, webhook processing, async provider jobs | Queues |
-| Per-shipment or per-provider coordination, when needed | Durable Objects |
+| Per-delivery or per-provider coordination, when needed | Durable Objects |
 
 Phase 1 can stay simple: a Worker reads the seeded dataset from D1 and returns quote options. Workflows, Queues, and Durable Objects are added only where the logistics lifecycle needs retries, background work, or strong coordination.
 
@@ -69,8 +73,8 @@ Phase 1 can stay simple: a Worker reads the seeded dataset from D1 and returns q
 | `GET`  | `/v1/zones` | List supported drop-off / pick-up locations |
 | `GET`  | `/v1/zones/search?q=` | Search locations by name |
 | `POST` | `/v1/quotes` | Get delivery options + prices between two zones |
-| `POST` | `/v1/shipments` | Lock in a chosen quote, get a tracking ID |
-| `GET`  | `/v1/shipments/{tracking_id}/track` | Unified tracking status |
+| `POST` | `/v1/deliveries` | Lock in a chosen quote, get a tracking ID |
+| `GET`  | `/v1/deliveries/{tracking_id}/track` | Unified tracking status |
 
 The heart is `POST /v1/quotes`:
 
@@ -79,15 +83,14 @@ The heart is `POST /v1/quotes`:
 {
   "origin_zone_id": "ZONE_NBI_CBD_01",
   "destination_zone_id": "ZONE_NKR_MAIN",
-  "package_weight_kg": 2.5,
-  "package_type": "apparel"
+  "package_weight_kg": 2.5
 }
 
 // response
 {
   "quotes": [
     {
-      "quote_id": "qt_2mn41bq",
+      "quote_id": "qt_8f3b4d2a91c4e87ab11d42ef",
       "provider_type": "matatu_sacco",
       "provider_name": "Mololine Sacco",
       "estimated_cost_kes": 400,
@@ -110,11 +113,17 @@ Because Itafika is open source, the defaults are a **starting point, not a cage.
 
 ## Status
 
-🚧 **Phase 1 — pre-release.** The API contract is being frozen and the first dataset seeded. See the roadmap below.
+🚧 **Phase 1 foundation — in active development.**
+
+The branch already contains a working core package, Worker API, D1 migrations, seed flow, tests, and a simple shop example.
+
+It does **not** yet contain every planned part of the wider Itafika architecture.
+
+See [`docs/status.md`](docs/status.md) for the exact breakdown.
 
 | Phase | What | State |
 |-------|------|-------|
-| **1 — Static API (MVP)** | Seeded static rates + standardized zone IDs behind the four endpoints. Quotes return real, useful numbers. | In progress |
+| **1 — Static API (MVP)** | Seeded static rates + standardized zone IDs behind the four endpoints. Quotes return real, useful numbers. | In active development |
 | **2 — Open adapters** | Publish `LogisticsProviderInterface`; community contributes live provider adapters. | Planned |
 | **3 — Payments & escrow** | Daraja / M-Pesa integration with COD split-billing. | Planned |
 
@@ -126,6 +135,8 @@ Because Itafika is open source, the defaults are a **starting point, not a cage.
 
 ```bash
 pnpm install
+pnpm --filter @itafika/worker db:migrate:local
+pnpm --filter @itafika/worker db:seed:local
 pnpm --filter @itafika/worker dev      # starts the Worker locally
 curl http://localhost:8787/v1/zones
 ```
