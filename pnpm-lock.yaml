@@ -8,6 +8,8 @@ importers:
 
   .: {}
 
+  examples/simple-shop: {}
+
   packages/core:
     devDependencies:
       openapi-typescript:
