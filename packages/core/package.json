@@ -1,0 +1,21 @@
+{
+  "name": "@itafika/core",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Itafika routing engine and types generated from the spec",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "gen:types": "openapi-typescript ../../spec/openapi.yaml -o src/types.gen.ts",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "openapi-typescript": "^7.13.0",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.8"
+  }
+}
