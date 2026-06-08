@@ -9,16 +9,16 @@ info:
     across riders, matatu/bus SACCOs, and national couriers — with Kenyan
     locations modelled as zones and stages rather than street addresses.
 
-    This document is the **canonical Phase 1 contract**. The reference
-    implementation in `packages/` is generated against it. Any change to this
-    file is governed by GOVERNANCE.md and accompanied by an ADR.
+    This document is the **canonical Phase 1 contract**. The Cloudflare Worker
+    reference implementation in `packages/` is generated against it. Any change
+    to this file is governed by GOVERNANCE.md and accompanied by an ADR.
   license:
     name: MIT
     url: https://github.com/itafika/itafika/blob/main/LICENSE
 
 servers:
-  - url: http://localhost:3000
-    description: Local reference implementation
+  - url: http://localhost:8787
+    description: Local Worker development server
   - url: https://api.itafika.dev
     description: Canonical hosted instance (placeholder)
 
@@ -273,7 +273,7 @@ components:
         package_weight_kg:
           type: number
           format: double
-          minimum: 0
+          exclusiveMinimum: 0
           description: Package weight in kilograms.
         package_type:
           type: string

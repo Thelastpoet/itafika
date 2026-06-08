@@ -5,37 +5,38 @@
 
 ## Context
 
-Itafika positions itself as an *open standard* for representing and quoting Kenyan delivery — the GTFS or OpenStreetMap of parcel logistics — not as a single company's product. For that positioning to be real, the **standard must be separable from any one implementation.** Someone should be able to reimplement Itafika in another language from the published artifacts alone.
+Itafika is an open standard for representing and quoting Kenyan delivery, not only one hosted service. Someone should be able to build a conformant implementation from the published contract and dataset alone.
 
-At the same time, a standard with no running code is hard to adopt. We need a reference implementation people can actually call.
+At the same time, a standard is easier to adopt when there is a working reference implementation people can run, inspect, and contribute to.
 
 ## Decision
 
-A **single monorepo** containing two clearly separated layers:
+The repository is a **single spec-first monorepo** with two clear layers:
 
 ```
-spec/        ★ the canonical, language-agnostic standard
-  openapi.yaml         the API contract (source of truth)
-  adapter-contract.md  the provider adapter contract
-  data/                the open zones + rates dataset (+ schema)
+spec/        canonical, language-agnostic standard
+  openapi.yaml         API contract
+  adapter-contract.md  provider adapter contract
+  data/                open zones + rates dataset
 
-packages/    the TypeScript reference implementation
-  core/      routing engine + types generated from spec/openapi.yaml
-  adapters/  provider adapters implementing the adapter contract
-  server/    Fastify HTTP server exposing the contract
+packages/    TypeScript reference implementation
+  core/      quote engine + shared domain logic
+  adapters/  provider adapters
+  worker/    Cloudflare Worker exposing the API
 ```
 
-`spec/` is **authoritative**. `packages/` is **a** correct implementation of it, not *the definition* of it.
+`spec/` is authoritative. `packages/` is a correct implementation of the standard, not the definition of the standard.
 
 ## Rationale
 
-- **Standard ≠ implementation.** Keeping the contract and dataset in a language-neutral `spec/` lets anyone build a conformant server in Go, Python, Rust, etc. That is the whole "open standard" claim, made structural.
-- **One repo, not many.** A monorepo keeps the spec and the reference implementation versioned together and visible in one place, which lowers the contribution barrier versus coordinating across repos. The *separation* is by directory and package boundary, not by repository.
-- **Generated types enforce the boundary.** The server and adapters consume types generated from `spec/openapi.yaml`. The compiler enforces that the implementation matches the standard.
+- **The standard stays portable.** Any team can reimplement Itafika in another language from `spec/`.
+- **The implementation stays honest.** Generated types from `spec/openapi.yaml` keep the Worker, core engine, and adapters aligned with the API contract.
+- **The data remains reviewable.** Zones, providers, rates, and freshness metadata live in `spec/data/` as human-editable CSV files.
+- **Contributors have one place to work.** API contracts, seed data, implementation, examples, and ADRs live together.
 
 ## Consequences
 
-- Every contract change starts in `spec/` and flows outward (codified in [CONTRIBUTING.md](../../CONTRIBUTING.md) and [GOVERNANCE.md](../../GOVERNANCE.md)). Server-only changes that contradict the spec are rejected in favour of fixing the spec.
-- A type-generation step sits between `spec/openapi.yaml` and `packages/`. This is build tooling we commit to maintaining.
-- The dataset lives in `spec/data/` rather than inside the server, signalling that the data is part of the open standard, not an implementation detail.
-- Conformance tests (later) validate any implementation against `spec/`, so "is this a real Itafika server?" has an objective answer.
+- API changes start in `spec/openapi.yaml`, then flow to generated types and implementation code.
+- Data changes start in `spec/data/` and include provenance.
+- The Worker may project `spec/data/` into D1 for fast queries, but the CSV files remain the canonical source for reviewed seed data.
+- Conformance tests should validate that any implementation behaves according to `spec/`.

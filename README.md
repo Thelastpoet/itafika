@@ -24,7 +24,7 @@ For the full vision, see [`docs/Itafika-Concept-Doc.md`](docs/Itafika-Concept-Do
 
 ## What's in this repository
 
-This is a **monorepo** with a deliberate split between the *standard* and a *reference implementation*.
+This is a **spec-first monorepo** with a deliberate split between the open standard and the Cloudflare-native reference implementation.
 
 ```
 itafika/
@@ -32,11 +32,11 @@ itafika/
 │   ├── openapi.yaml        · the Phase 1 API contract
 │   ├── adapter-contract.md · how to write a provider adapter
 │   └── data/               · the open zones + rates dataset (+ schema)
-├── packages/              the reference implementation (TypeScript)
+├── packages/              Cloudflare-native reference implementation (TypeScript)
 │   ├── core/               · routing engine + types generated from the spec
 │   ├── adapters/           · rider / matatu / courier adapters
-│   └── server/             · Fastify HTTP server
-├── examples/              a tiny shop calling the API
+│   └── worker/             · Cloudflare Worker API
+├── examples/               tiny shops calling the API
 ├── docs/                  concept doc, visual page, architecture decisions
 │   └── decisions/          · ADRs (why we made each technical choice)
 ├── CONTRIBUTING.md        how to add an adapter or data
@@ -44,7 +44,21 @@ itafika/
 └── LICENSE                MIT
 ```
 
-**The `spec/` directory is the product.** Anyone could reimplement Itafika in Go or Python from `spec/` alone. `packages/server` is simply *the reference implementation* of that standard.
+**The `spec/` directory is the product.** Anyone could reimplement Itafika in Go, Python, Rust, or any other language from `spec/` alone. `packages/worker` is the hosted reference implementation of that standard.
+
+## Platform shape
+
+The reference implementation is designed for **Cloudflare Workers**:
+
+| Need | Cloudflare primitive |
+|------|----------------------|
+| Public API | Workers |
+| Zones, providers, rates, shipments, tracking events | D1 |
+| Long-running booking or payment flows | Workflows |
+| Background refreshes, webhook processing, async provider jobs | Queues |
+| Per-shipment or per-provider coordination, when needed | Durable Objects |
+
+Phase 1 can stay simple: a Worker reads the seeded dataset from D1 and returns quote options. Workflows, Queues, and Durable Objects are added only where the logistics lifecycle needs retries, background work, or strong coordination.
 
 ---
 
@@ -73,13 +87,7 @@ The heart is `POST /v1/quotes`:
 {
   "quotes": [
     {
-      "provider_type": "boda_rider",
-      "provider_name": "Independent Rider (CBD Pool)",
-      "estimated_cost_kes": 250,
-      "estimated_time": "45 mins",
-      "reliability_score": 0.92
-    },
-    {
+      "quote_id": "qt_2mn41bq",
       "provider_type": "matatu_sacco",
       "provider_name": "Mololine Sacco",
       "estimated_cost_kes": 400,
@@ -114,12 +122,12 @@ Because Itafika is open source, the defaults are a **starting point, not a cage.
 
 ## Quickstart (reference implementation)
 
-> Requires Node.js ≥ 20 and pnpm. (Scaffolding lands with the Phase 1 server.)
+> Requires Node.js >= 20, pnpm, and Wrangler.
 
 ```bash
 pnpm install
-pnpm --filter @itafika/server dev      # starts the API on :3000, SQLite seeded from spec/data
-curl http://localhost:3000/v1/zones
+pnpm --filter @itafika/worker dev      # starts the Worker locally
+curl http://localhost:8787/v1/zones
 ```
 
 ---

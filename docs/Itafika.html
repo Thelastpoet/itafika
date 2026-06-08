@@ -256,7 +256,7 @@
 <section id="try">
   <div class="wrap">
     <h2 class="sec-title">One call in. A checkout-ready list out.</h2>
-    <p class="lede" style="margin-bottom:26px;">This playground runs the real Phase 1 quote logic against Itafika's seed dataset. Change the route and the package — watch the options recompute. This is exactly what a shop's checkout receives.</p>
+    <p class="lede" style="margin-bottom:26px;">This playground shows the Phase 1 quote shape against Itafika's seed dataset. Change the route and the package — watch the options recompute. This is the kind of response a shop's checkout receives from the Worker API.</p>
 
     <div class="pg-wrap">
       <div class="pg-head">
@@ -400,8 +400,8 @@
       <div class="ac" data-ac>
         <div class="ic">⚙️</div>
         <h3>Build the core</h3>
-        <p>The engine, server, and spec tooling — in TypeScript. Spec-first, so contract changes start in <code>openapi.yaml</code>.</p>
-        <div class="more">Every API change pairs with an ADR in <code>docs/decisions/</code>, keeping the standard and the reference server honest with each other.</div>
+        <p>The core engine, Cloudflare Worker, and spec tooling — in TypeScript. Spec-first, so contract changes start in <code>openapi.yaml</code>.</p>
+        <div class="more">Every API change pairs with an ADR in <code>docs/decisions/</code>, keeping the standard and the reference Worker honest with each other.</div>
         <div class="tap">Tap to expand ↓</div>
       </div>
     </div>
@@ -432,7 +432,7 @@
       <div class="ph">Phase 1<small>MVP · now</small></div>
       <div>
         <h3>The static API</h3>
-        <p>Seeded static rates and standardized zone IDs behind the four endpoints; the quote engine returns real, useful numbers. Open-sourced immediately — standardized locations and price estimation are valuable on their own.</p>
+        <p>A Cloudflare Worker reads seeded static rates and standardized zone IDs from D1; the quote engine returns useful options from reviewed data. Open-sourced immediately — standardized locations and price estimation are valuable on their own.</p>
         <span class="stat now">In progress</span>
       </div>
     </div>
@@ -634,7 +634,7 @@ const EPS=[
    req:"GET /v1/zones/search?q=nyeri",res:{query:"nyeri",zones:[{id:"ZONE_NYR_MAIN",name:"Nyeri Main Stage",type:"stage",town:"Nyeri"}]}},
   {v:"POST",path:"/v1/quotes",t:"Get delivery options",d:"The heart of Itafika. Returns every option across all transport classes with cost, time, and reliability.",
    req:{origin_zone_id:"ZONE_NBI_CBD_01",destination_zone_id:"ZONE_NKR_MAIN",package_weight_kg:2.5,package_type:"apparel"},
-   res:{quotes:[{provider_type:"matatu_sacco",provider_name:"Mololine Sacco",estimated_cost_kes:400,estimated_time:"3 hours",reliability_score:0.98}]}},
+   res:{quotes:[{quote_id:"qt_2mn41bq",provider_type:"matatu_sacco",provider_name:"Mololine Sacco",estimated_cost_kes:400,estimated_time:"3 hours",reliability_score:0.98}]}},
   {v:"POST",path:"/v1/shipments",t:"Book a quote",d:"Locks in a chosen quote, records the shipment, and returns a tracking ID.",
    req:{quote_id:"qt_2mn41bq",sender:{name:"Asha",phone:"+254712345678"},recipient:{name:"John",phone:"+254723456789"}},
    res:{tracking_id:"trk_kf93md2",status:"package_picked",created_at:"2026-06-08T08:14:00Z"}},

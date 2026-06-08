@@ -26,17 +26,27 @@ An adapter teaches Itafika how to talk to one provider — a courier's rate API,
 
 Read the full contract in [`spec/adapter-contract.md`](spec/adapter-contract.md). In short, an adapter answers three questions for its provider: *can you serve this route?*, *what would it cost and how long?*, and (later phases) *here's a booking — take it.*
 
-Adapters live in [`packages/adapters/`](packages/adapters/). Start by copying the static reference adapter and pointing it at your provider.
+Adapters live in [`packages/adapters/`](packages/adapters/). Start by copying the static reference adapter and pointing it at your provider. Static adapters read from the open dataset; live adapters call a provider system and should fail softly if that system is unavailable.
 
-## 3. Contribute to the core / server
+## 3. Contribute to the core / Worker
 
-The core routing engine, the server, and the spec tooling. Because the **spec is the source of truth**, changes that affect the API contract start with a change to [`spec/openapi.yaml`](spec/openapi.yaml) and a short ADR (see [`docs/decisions/`](docs/decisions/)) — never with code alone. This keeps the standard and the reference implementation from drifting apart.
+The reference implementation is a Cloudflare Worker written in TypeScript. The Worker exposes the API, the core routing engine computes quotes, and D1 stores zones, providers, rates, shipments, and tracking events.
+
+Cloudflare primitives are used only where they match the job:
+
+- **Workers** serve the HTTP API.
+- **D1** stores the relational dataset and Phase 1 shipment records.
+- **Queues** handle background jobs such as provider webhook processing or rate refreshes.
+- **Workflows** handle durable multi-step work such as booking, retries, human approval, payment, and settlement.
+- **Durable Objects** handle stateful coordination when one shipment, provider, or webhook stream needs a single authority.
+
+Because the **spec is the source of truth**, changes that affect the API contract start with a change to [`spec/openapi.yaml`](spec/openapi.yaml) and a short ADR (see [`docs/decisions/`](docs/decisions/)) — never with code alone. This keeps the standard and the reference implementation from drifting apart.
 
 ---
 
 ## Ground rules
 
-- **The spec leads.** Any change to endpoints, fields, or types is a change to `spec/openapi.yaml` first, then the code follows. Server-only changes that contradict the spec will be asked to fix the spec instead.
+- **The spec leads.** Any change to endpoints, fields, or types is a change to `spec/openapi.yaml` first, then the code follows. Implementation-only changes that contradict the spec will be asked to fix the spec instead.
 - **Backwards compatibility.** Shops build against `/v1`. Breaking changes wait for `/v2` and a deprecation window.
 - **Provenance over precision.** A roughly-right rate with a clear source beats a confidently-wrong one with none.
 - **Be kind.** Many contributors are domain experts (riders, agents, SACCO staff) who may not be developers. Their knowledge is the point.
@@ -50,4 +60,4 @@ The core routing engine, the server, and the spec tooling. Because the **spec is
 
 ## Getting help
 
-Open an issue with the `question` label. If you're unsure whether something belongs in the spec or just the server, ask before writing a lot of code — it saves everyone time.
+Open an issue with the `question` label. If you're unsure whether something belongs in the spec, the core engine, or the Worker, ask before writing a lot of code — it saves everyone time.

@@ -57,19 +57,13 @@ POST /v1/quotes
 ```
 
 ```json
-{
-  "quotes": [
     {
-      "provider_type": "boda_rider",
-      "provider_name": "Independent Rider (CBD Pool)",
-      "estimated_cost_kes": 250,
-      "estimated_time": "45 mins",
-      "reliability_score": 0.92
-    },
-    {
-      "provider_type": "matatu_sacco",
-      "provider_name": "Mololine Sacco",
-      "estimated_cost_kes": 400,
+      "quotes": [
+        {
+          "quote_id": "qt_2mn41bq",
+          "provider_type": "matatu_sacco",
+          "provider_name": "Mololine Sacco",
+          "estimated_cost_kes": 400,
       "estimated_time": "3 hours",
       "reliability_score": 0.98
     }
@@ -97,7 +91,13 @@ And because Itafika is open source, the defaults are a **starting point, not a c
 
 ## 6. Architecture
 
-Itafika uses an **Adapter Pattern**. The Core Routing Engine handles every request in the same standardized way and never knows which physical provider will ultimately fulfill it. Small adapters translate the standard request into the language of each transport class.
+Itafika has two layers: the open standard and the hosted reference API.
+
+The **standard** lives in `spec/`: the OpenAPI contract, the adapter contract, and the open dataset. This is the part any team can reimplement in another language.
+
+The **reference API** runs on Cloudflare Workers. A Worker receives checkout requests, reads zones and rates from D1, asks the core quote engine for available options, and returns the same JSON shape defined in the OpenAPI contract.
+
+Itafika also uses an **Adapter Pattern**. The Core Routing Engine handles every request in the same standardized way and never knows which physical provider will ultimately fulfill it. Small adapters translate the standard request into the language of each transport class.
 
 ```
                   ┌───────────────────────────────┐
@@ -119,6 +119,18 @@ Itafika uses an **Adapter Pattern**. The Core Routing Engine handles every reque
 ```
 
 This is also the open-source strategy made structural. Itafika ships the contract — a `LogisticsProviderInterface` — and the community fills in providers over time. The core stays small and stable; coverage grows at the edges through contribution.
+
+Cloudflare primitives map cleanly to the logistics lifecycle:
+
+| Need | Primitive |
+|------|-----------|
+| Public API | Workers |
+| Zones, providers, rates, shipments, tracking events | D1 |
+| Webhook processing and background provider jobs | Queues |
+| Booking retries, human confirmation, payment, settlement | Workflows |
+| Per-shipment or per-provider coordination | Durable Objects |
+
+The first release does not need every primitive at once. Phase 1 can be a Worker plus D1. The other pieces are introduced where the delivery lifecycle needs background work, retries, or stateful coordination.
 
 ---
 
@@ -165,15 +177,17 @@ A clean relational core makes the whole thing legible and contributable.
 
 The Rates table is the asset. It is the encoded answer to *"what are all the ways to move a parcel from A to B in Kenya, and what does each cost"* — the thing no one has assembled cleanly and openly, and the thing every consumer of Itafika gets for free.
 
+The human-editable source of this data is `spec/data/`. The hosted Worker loads that data into D1 so the API can query it quickly.
+
 ---
 
 ## 9. Roadmap
 
-**Phase 1 — The static API (MVP).** No scraping, no live tracking, no heroics. Seed the database with crowd-sourced static data: standard Nairobi CBD rider rates (≈ KES 200–300), common upcountry matatu and bus parcel rates (≈ KES 300–500 for boxes under 5kg), and a starter set of zones and stages. Ship the four endpoints with the quote engine returning real, useful numbers. Open-source it immediately — because standardized location IDs and reliable price estimation are valuable on their own, before a single live integration exists.
+**Phase 1 — The static API (MVP).** No scraping, no live tracking, no heroics. Seed D1 from the open dataset: standard Nairobi CBD rider rates, common upcountry matatu and bus parcel rates, national courier options, and a starter set of zones and stages. Ship the Worker API with the quote engine returning useful numbers from reviewed data. Open-source it immediately — because standardized location IDs and reliable price estimation are valuable on their own, before a single live integration exists.
 
-**Phase 2 — Open adapter contribution.** Publish the `LogisticsProviderInterface` and invite the community to extend coverage provider by provider: an adapter that pulls live rates from a courier, a bridge that lets a manual rider confirm a status over a WhatsApp bot, a new town's stage map. The core never changes; the edges grow.
+**Phase 2 — Open adapter contribution.** Publish the `LogisticsProviderInterface` and invite the community to extend coverage provider by provider: an adapter that pulls live rates from a courier, a bridge that lets a manual rider confirm a status over WhatsApp, a new town's stage map. Queues handle background adapter work, and Workflows handle retry-heavy booking steps. The core never changes; the edges grow.
 
-**Phase 3 — Payments and escrow.** Integrate Daraja / M-Pesa into the engine so that, for cash-on-delivery, Itafika can trigger a split — routing the delivery fee to the rider or SACCO and the balance to the merchant. (This layer changes Itafika's regulatory posture, so it is deliberately last and treated with care.)
+**Phase 3 — Payments and escrow.** Integrate Daraja / M-Pesa so that, for cash-on-delivery, Itafika can trigger a split — routing the delivery fee to the rider or SACCO and the balance to the merchant. Workflows are the right home for these multi-step flows because they need retries, waiting, auditability, and careful state transitions. This layer changes Itafika's regulatory posture, so it is deliberately last and treated with care.
 
 ---
 
@@ -191,11 +205,12 @@ The work of mapping Kenya's delivery system should be done once and shared. That
 
 This document is the founding concept. It is intentionally complete on the *what* and the *why*, and deliberately light on bikeshedding the *how* — that comes next, with the people who build and adopt it.
 
-Immediate next steps worth deciding:
+Immediate next steps:
 
-- Lock the name and the license.
-- Freeze the Phase 1 API contract (the four endpoints and the quote schema) so early adopters can build against a stable shape.
-- Seed the first dataset: a starter set of Nairobi CBD hubs and a handful of upcountry stages with real static rates.
-- Publish the repository and the `LogisticsProviderInterface` so the first adapters can be contributed.
+- Freeze the Phase 1 API contract so early adopters can build against a stable shape.
+- Seed the first useful dataset: Nairobi CBD hubs, common upcountry stages, and sourced static rates.
+- Build the Cloudflare Worker reference API.
+- Add D1 migrations and a seed command that loads `spec/data/`.
+- Publish the `LogisticsProviderInterface` so the first adapters can be contributed.
 
 *Itafika — so that any shop can simply say: it will arrive.*

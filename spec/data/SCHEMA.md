@@ -2,7 +2,7 @@
 
 The files in this directory are the **open, community-maintained representation of
 how parcels move in Kenya**. They are part of the canonical standard, not an
-implementation detail — the reference server loads them into its database, but the
+implementation detail — the reference Worker loads them into D1, but the
 files here are the source of truth and the thing pull requests review.
 
 Three datasets, mirroring the data model: **zones**, **providers**, and **rates**.

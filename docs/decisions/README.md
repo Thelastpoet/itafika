@@ -6,9 +6,9 @@ Per [GOVERNANCE.md](../../GOVERNANCE.md), any change to the spec is accompanied 
 
 | # | Title | Status |
 |---|-------|--------|
-| [0001](0001-language-and-stack.md) | Language and stack for the reference implementation | Accepted |
+| [0001](0001-language-and-stack.md) | TypeScript and Cloudflare Workers for the reference implementation | Accepted |
 | [0002](0002-spec-first-monorepo.md) | Spec-first, clearly separated monorepo | Accepted |
-| [0003](0003-datastore.md) | SQLite for dev, Postgres for production | Accepted |
+| [0003](0003-datastore.md) | D1 as the reference datastore | Accepted |
 | [0004](0004-license.md) | MIT license | Accepted |
 
 ## Format
