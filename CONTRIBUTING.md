@@ -5,6 +5,7 @@ Itafika only works if the people who depend on it help build it. The most valuab
 There are three ways to contribute, from easiest to most involved.
 
 Before you start, check [`docs/status.md`](docs/status.md). It explains what is already implemented, what is partial, and what is still planned.
+Maintainers preparing a release or milestone should also use [`docs/release-checklist.md`](docs/release-checklist.md).
 
 Also read [`docs/engineering-principles.md`](docs/engineering-principles.md). It sets the rules for boundaries, policy ownership, and how we avoid architectural drift.
 

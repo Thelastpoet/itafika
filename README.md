@@ -39,11 +39,13 @@ itafika/
 │   ├── adapter-contract.md · how to write a provider adapter
 │   └── data/               · the open zones + rates dataset (+ schema)
 ├── packages/              Cloudflare-native reference implementation (TypeScript)
-│   ├── core/               · routing engine + types generated from the spec
+│   ├── core/               · routing engine + shared domain helpers
+│   ├── adapters/           · reference provider adapter package
 │   └── worker/             · Cloudflare Worker API
 ├── examples/               tiny shops calling the API
 ├── docs/                  concept doc, visual page, architecture decisions
 │   ├── status.md           · what is implemented today
+│   ├── release-checklist.md · maintainer release/review checklist
 │   └── decisions/          · ADRs (why we made each technical choice)
 ├── CONTRIBUTING.md        how to add an adapter or data
 ├── GOVERNANCE.md          how decisions get made
@@ -120,7 +122,7 @@ Because Itafika is open source, the defaults are a **starting point, not a cage.
 
 🚧 **Phase 1 foundation — in active development.**
 
-The branch already contains a working core package, Worker API, D1 migrations, seed flow, tests, and a simple shop example.
+The repository already contains a working core package, adapter package, Worker API, D1 migrations, seed flow, tests, and a simple shop example.
 
 It does **not** yet contain every planned part of the wider Itafika architecture.
 
@@ -128,8 +130,8 @@ See [`docs/status.md`](docs/status.md) for the exact breakdown.
 
 | Phase | What | State |
 |-------|------|-------|
-| **1 — Static API (MVP)** | Seeded static rates + standardized zone IDs behind the four endpoints. Quotes return real, useful numbers. | In active development |
-| **2 — Open adapters** | Publish `LogisticsProviderInterface`; community contributes live provider adapters. | Planned |
+| **1 — Static API (MVP)** | Seeded static rates + standardized zone IDs behind the current API, with quote lifecycle and tracking basics. | In active development |
+| **2 — Adapter runtime integration** | Wire the reference Worker to use adapter instances for provider flows, then grow live adapters. | Planned |
 | **3 — Payments & escrow** | Daraja / M-Pesa integration with COD split-billing. | Planned |
 
 ---
@@ -155,6 +157,8 @@ For remote deployment, use [`docs/deploy-worker.md`](docs/deploy-worker.md).
 The whole strategy depends on people contributing adapters and data. If you can describe how parcels move in your town — the stages, the providers, the rates — you can contribute, even without writing an adapter.
 
 Start with [`CONTRIBUTING.md`](CONTRIBUTING.md). To write a provider adapter, read [`spec/adapter-contract.md`](spec/adapter-contract.md).
+
+Maintainers should also use [`docs/release-checklist.md`](docs/release-checklist.md) before calling a release or milestone ready.
 
 ## License
 
