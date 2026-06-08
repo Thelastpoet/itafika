@@ -22,6 +22,8 @@ For the full vision, see [`docs/Itafika-Concept-Doc.md`](docs/Itafika-Concept-Do
 
 For the current implementation state, see [`docs/status.md`](docs/status.md).
 
+For the next practical work queue, see [`docs/next-phase.md`](docs/next-phase.md).
+
 ---
 
 ## What's in this repository

@@ -8,6 +8,7 @@ Use it alongside the other docs:
 
 - `README.md` explains the project at a high level.
 - `docs/Itafika-Concept-Doc.md` explains the long-term vision.
+- `docs/next-phase.md` lists the most useful next implementation tasks.
 - `spec/` defines the contract and data format.
 
 If there is ever a difference between the vision and the code, this file should tell contributors what is real right now.
