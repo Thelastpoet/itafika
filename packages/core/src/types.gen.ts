@@ -50,7 +50,7 @@ export interface paths {
         /**
          * Get delivery options and prices between two zones
          * @description The heart of Itafika. Given an origin, destination, weight, and package
-         *     type, returns every available delivery option across all transport
+         *     details, returns every available delivery option across all transport
          *     classes, each with an estimated cost, time, and reliability score.
          */
         post: operations["createQuote"];
@@ -147,7 +147,7 @@ export interface components {
              * @description Package weight in kilograms.
              */
             package_weight_kg: number;
-            /** @description Free-form category, e.g. "apparel", "documents", "electronics". */
+            /** @description Optional package category for filtering or ranking logic. Phase 1 implementations may ignore it. */
             package_type?: string;
         };
         Quote: {
@@ -181,9 +181,9 @@ export interface components {
             /** @description Use with GET /v1/deliveries/{tracking_id}/track. */
             tracking_id: string;
             status: components["schemas"]["TrackingStatus"];
-            quote?: components["schemas"]["Quote"];
-            sender?: components["schemas"]["Contact"];
-            recipient?: components["schemas"]["Contact"];
+            quote: components["schemas"]["Quote"];
+            sender: components["schemas"]["Contact"];
+            recipient: components["schemas"]["Contact"];
             /** Format: date-time */
             created_at: string;
         };
@@ -301,8 +301,19 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "zones": [
+                     *         {
+                     *           "id": "ZONE_NBI_CBD_01",
+                     *           "name": "RNG Plaza",
+                     *           "type": "cbd_hub",
+                     *           "town": "Nairobi"
+                     *         }
+                     *       ]
+                     *     }
+                     */
                     "application/json": {
-                        query?: string;
                         zones?: components["schemas"]["Zone"][];
                     };
                 };
@@ -323,8 +334,7 @@ export interface operations {
                  * @example {
                  *       "origin_zone_id": "ZONE_NBI_CBD_01",
                  *       "destination_zone_id": "ZONE_NKR_MAIN",
-                 *       "package_weight_kg": 2.5,
-                 *       "package_type": "apparel"
+                 *       "package_weight_kg": 2.5
                  *     }
                  */
                 "application/json": components["schemas"]["QuoteRequest"];
@@ -343,7 +353,7 @@ export interface operations {
                      *       "destination_zone_id": "ZONE_NKR_MAIN",
                      *       "quotes": [
                      *         {
-                     *           "quote_id": "qt_8sd92ka",
+                     *           "quote_id": "qt_8f3b4d2a91c4e87ab11d42ef",
                      *           "provider_type": "boda_rider",
                      *           "provider_name": "Independent Rider (CBD Pool)",
                      *           "estimated_cost_kes": 250,
@@ -351,7 +361,7 @@ export interface operations {
                      *           "reliability_score": 0.92
                      *         },
                      *         {
-                     *           "quote_id": "qt_2mn41bq",
+                     *           "quote_id": "qt_b1a56ce02d7345f398ee2c04",
                      *           "provider_type": "matatu_sacco",
                      *           "provider_name": "Mololine Sacco",
                      *           "estimated_cost_kes": 400,
@@ -391,7 +401,7 @@ export interface operations {
             content: {
                 /**
                  * @example {
-                 *       "quote_id": "qt_2mn41bq",
+                 *       "quote_id": "qt_b1a56ce02d7345f398ee2c04",
                  *       "sender": {
                  *         "name": "Asha Mwangi",
                  *         "phone": "+254712345678"
@@ -447,7 +457,7 @@ export interface operations {
                 content: {
                     /**
                      * @example {
-                     *       "tracking_id": "trk_kf93md2",
+                     *       "tracking_id": "trk_7f93f6f7a86c4f5188ff8d5d9c6f2b47",
                      *       "status": "in_transit",
                      *       "history": [
                      *         {
@@ -464,6 +474,7 @@ export interface operations {
                     "application/json": components["schemas"]["TrackingResponse"];
                 };
             };
+            400: components["responses"]["BadRequest"];
             /** @description Unknown tracking ID. */
             404: {
                 headers: {
