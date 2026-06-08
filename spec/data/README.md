@@ -14,7 +14,8 @@ The source of truth for zones, providers, and rates. See [`SCHEMA.md`](SCHEMA.md
 > format. **Replacing them with real, sourced rates is the single most valuable
 > early contribution** — see [CONTRIBUTING.md](../../CONTRIBUTING.md). When you add a
 > verified rate, set its `source` to something traceable (e.g. `field-2026-06`,
-> `sacco-desk-call`) and update `freshness.csv`.
+> `sacco-desk-call`) and update `freshness.csv`. Every town in `zones.csv` must
+> have exactly one freshness row.
 
 Before opening a PR, run:
 

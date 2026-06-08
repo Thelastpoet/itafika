@@ -15,6 +15,7 @@ Per [GOVERNANCE.md](../../GOVERNANCE.md), any change to the spec is accompanied 
 | [0008](0008-expose-dataset-freshness.md) | Expose dataset freshness through the API | Accepted |
 | [0009](0009-define-worker-boundaries.md) | Define Worker policy, validation, and service boundaries | Accepted |
 | [0010](0010-clarify-adapter-contract-vs-phase1-integration.md) | Clarify adapter contract versus Phase 1 runtime integration | Accepted |
+| [0011](0011-require-freshness-for-every-town.md) | Require freshness coverage for every dataset town | Accepted |
 
 ## Format
 

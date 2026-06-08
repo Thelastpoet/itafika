@@ -55,6 +55,7 @@ What each value means:
 ## Provenance matters
 
 The `source` field is required.
+Every town in `zones.csv` must also appear exactly once in `freshness.csv`.
 
 Good examples:
 
@@ -87,6 +88,7 @@ That checks:
 - number formats
 - enum values
 - freshness date format
+- freshness coverage for every town
 
 ## If you are correcting a stale rate
 
@@ -98,6 +100,7 @@ When you change an existing rate:
 - keep the zone and provider IDs stable
 - update the `source`
 - update the town date in `freshness.csv` if needed
+- if you add a new town in `zones.csv`, add its freshness row in the same PR
 
 ## PR checklist for data contributions
 

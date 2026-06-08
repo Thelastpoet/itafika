@@ -137,6 +137,12 @@ for (const [index, row] of freshness.entries()) {
   }
 }
 
+for (const town of towns) {
+  if (!freshnessTowns.has(town)) {
+    errors.push(`freshness.csv: missing town "${town}" required by zones.csv`);
+  }
+}
+
 if (errors.length > 0) fail(errors);
 
 console.log("spec/data validation passed");

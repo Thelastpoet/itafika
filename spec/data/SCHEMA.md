@@ -61,6 +61,6 @@ One row per (provider, origin, destination). This is where Itafika's value conce
 
 - **Provenance is mandatory.** Every rate row carries a `source`. A roughly-right rate with a clear source beats a confident guess.
 - **Correcting beats adding.** Rates drift; updating a stale one is a first-class contribution.
-- **Freshness.** Each region's last-updated date is tracked in `freshness.csv` (`town,last_updated`) so consumers can reason about staleness.
+- **Freshness is complete by town.** Every town that appears in `zones.csv` must have exactly one row in `freshness.csv` (`town,last_updated`) so consumers can reason about staleness.
 - **IDs are forever.** Once a `zone.id` or `provider.id` is published, it isn't reused or repurposed; retire instead.
 - **Symmetry isn't assumed.** A→B and B→A are separate rows; return rates often differ.
