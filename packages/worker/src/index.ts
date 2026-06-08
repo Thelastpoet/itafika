@@ -1,62 +1,19 @@
-import { quote } from "@itafika/core";
-import type { Contact, DeliveryRequest, Quote, QuoteOption, QuoteRequest, ZoneType } from "@itafika/core";
+import type { DeliveryRequest, QuoteRequest, ZoneType } from "@itafika/core";
 import {
-  createDelivery,
   listFreshness,
   listZones,
-  loadQuoteData,
-  persistQuotes,
-  pruneExpiredQuotes,
   searchZones,
   trackDelivery,
-  zonesExist,
 } from "./db.js";
+import { bookDelivery } from "./delivery-service.js";
+import { clampLimit, isQuoteId, isTrackingId, parseContact, parsePackageDescription } from "./validation.js";
+import { createQuotes } from "./quote-service.js";
 
 const json = (data: unknown, status = 200): Response =>
   new Response(JSON.stringify(data), { status, headers: { "content-type": "application/json" } });
 
 const fail = (code: string, message: string, status: number): Response =>
   json({ error: { code, message } }, status);
-
-const QUOTE_ID_RE = /^qt_[a-f0-9]{24}$/;
-const TRACKING_ID_RE = /^trk_[a-f0-9]{32}$/;
-const PHONE_RE = /^\+[1-9]\d{7,14}$/;
-const NAME_MAX_LENGTH = 120;
-const PHONE_MAX_LENGTH = 16;
-const PACKAGE_DESCRIPTION_MAX_LENGTH = 500;
-const QUOTE_TTL_HOURS = 24;
-
-function clampLimit(raw: string | null): number {
-  const n = raw === null ? 100 : Number(raw);
-  if (!Number.isFinite(n)) return 100;
-  return Math.min(500, Math.max(1, Math.trunc(n)));
-}
-
-const opaqueId = (prefix: string, hexLength: number): string =>
-  `${prefix}_${crypto.randomUUID().replace(/-/g, "").slice(0, hexLength)}`;
-
-function withQuoteId(option: QuoteOption): Quote {
-  return { quote_id: opaqueId("qt", 24), ...option };
-}
-
-function normalizeText(value: unknown, maxLength: number): string | null {
-  if (typeof value !== "string") return null;
-  const normalized = value.trim();
-  if (normalized.length === 0 || normalized.length > maxLength) return null;
-  return normalized;
-}
-
-function parseContact(value: unknown): Contact | null {
-  if (typeof value !== "object" || value === null) return null;
-  const name = normalizeText((value as Contact).name, NAME_MAX_LENGTH);
-  const phone = normalizeText((value as Contact).phone, PHONE_MAX_LENGTH);
-  if (name === null || phone === null || !PHONE_RE.test(phone)) return null;
-  return { name, phone };
-}
-
-function addHours(iso: string, hours: number): string {
-  return new Date(Date.parse(iso) + hours * 60 * 60 * 1000).toISOString();
-}
 
 async function handleQuotes(request: Request, env: Env): Promise<Response> {
   let body: Partial<QuoteRequest>;
@@ -74,25 +31,9 @@ async function handleQuotes(request: Request, env: Env): Promise<Response> {
     return fail("invalid_request", "package_weight_kg must be a positive number", 400);
   }
 
-  if (!(await zonesExist(env.DB, origin_zone_id, destination_zone_id))) {
-    return fail("not_found", "One or both zone IDs are unknown", 404);
-  }
-
-  const now = new Date().toISOString();
-  await pruneExpiredQuotes(env.DB, now);
-  const data = await loadQuoteData(env.DB, origin_zone_id, destination_zone_id);
-  const quotes = quote({ origin_zone_id, destination_zone_id, package_weight_kg }, data).map(withQuoteId);
-  const createdAt = now;
-  await persistQuotes(
-    env.DB,
-    quotes,
-    origin_zone_id,
-    destination_zone_id,
-    package_weight_kg,
-    createdAt,
-    addHours(createdAt, QUOTE_TTL_HOURS),
-  );
-  return json({ origin_zone_id, destination_zone_id, quotes });
+  const result = await createQuotes(env.DB, { origin_zone_id, destination_zone_id, package_weight_kg });
+  if (!result.ok) return fail("not_found", "One or both zone IDs are unknown", 404);
+  return json(result.body);
 }
 
 async function handleCreateDelivery(request: Request, env: Env): Promise<Response> {
@@ -103,7 +44,7 @@ async function handleCreateDelivery(request: Request, env: Env): Promise<Respons
     return fail("invalid_request", "Request body must be valid JSON", 400);
   }
 
-  if (typeof body.quote_id !== "string" || !QUOTE_ID_RE.test(body.quote_id)) {
+  if (typeof body.quote_id !== "string" || !isQuoteId(body.quote_id)) {
     return fail("invalid_request", "quote_id must be a valid quote identifier", 400);
   }
 
@@ -119,15 +60,14 @@ async function handleCreateDelivery(request: Request, env: Env): Promise<Respons
 
   const req: DeliveryRequest = { quote_id: body.quote_id, sender, recipient };
   if (body.package_description !== undefined) {
-    const packageDescription = normalizeText(body.package_description, PACKAGE_DESCRIPTION_MAX_LENGTH);
+    const packageDescription = parsePackageDescription(body.package_description);
     if (packageDescription === null) {
       return fail("invalid_request", "package_description must be a non-empty string up to 500 characters", 400);
     }
     req.package_description = packageDescription;
   }
 
-  await pruneExpiredQuotes(env.DB, new Date().toISOString());
-  const delivery = await createDelivery(env.DB, req);
+  const delivery = await bookDelivery(env.DB, req);
   if (!delivery) return fail("not_found", "The quote_id is unknown or has expired", 404);
   return json(delivery, 201);
 }
@@ -168,7 +108,7 @@ export default {
       const track = pathname.match(/^\/v1\/deliveries\/([^/]+)\/track$/);
       if (method === "GET" && track) {
         const trackingId = decodeURIComponent(track[1]!);
-        if (!TRACKING_ID_RE.test(trackingId)) {
+        if (!isTrackingId(trackingId)) {
           return fail("invalid_request", "tracking_id must be a valid tracking identifier", 400);
         }
         const result = await trackDelivery(env.DB, trackingId);

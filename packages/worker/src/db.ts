@@ -139,28 +139,31 @@ export async function pruneExpiredQuotes(db: D1Database, now: string): Promise<v
   await db.prepare("DELETE FROM quotes WHERE expires_at IS NOT NULL AND expires_at <= ?").bind(now).run();
 }
 
-export async function createDelivery(db: D1Database, req: DeliveryRequest): Promise<Delivery | null> {
+export async function createDelivery(
+  db: D1Database,
+  req: DeliveryRequest,
+  now: string,
+  trackingId: string,
+): Promise<Delivery | null> {
   const quoteRow = await db
     .prepare(
       "SELECT * FROM quotes WHERE quote_id = ? AND (expires_at IS NULL OR expires_at > ?) AND NOT EXISTS (SELECT 1 FROM deliveries WHERE deliveries.quote_id = quotes.quote_id)",
     )
-    .bind(req.quote_id, new Date().toISOString())
+    .bind(req.quote_id, now)
     .first<QuoteRow>();
   if (!quoteRow) return null;
 
-  const trackingId = `trk_${crypto.randomUUID().replace(/-/g, "")}`;
   const status: TrackingStatus = "package_picked";
-  const createdAt = new Date().toISOString();
 
   await db.batch([
     db
       .prepare(
         "INSERT INTO deliveries (tracking_id, quote_id, status, sender_name, sender_phone, recipient_name, recipient_phone, package_description, created_at) VALUES (?,?,?,?,?,?,?,?,?)",
       )
-      .bind(trackingId, req.quote_id, status, req.sender.name, req.sender.phone, req.recipient.name, req.recipient.phone, req.package_description ?? null, createdAt),
+      .bind(trackingId, req.quote_id, status, req.sender.name, req.sender.phone, req.recipient.name, req.recipient.phone, req.package_description ?? null, now),
     db
       .prepare("INSERT INTO tracking_events (tracking_id, status, at) VALUES (?,?,?)")
-      .bind(trackingId, status, createdAt),
+      .bind(trackingId, status, now),
   ]);
 
   return {
@@ -169,7 +172,7 @@ export async function createDelivery(db: D1Database, req: DeliveryRequest): Prom
     quote: toQuote(quoteRow),
     sender: req.sender,
     recipient: req.recipient,
-    created_at: createdAt,
+    created_at: now,
   };
 }
 
