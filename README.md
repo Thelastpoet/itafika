@@ -18,7 +18,7 @@ Kenya's e-commerce is a billion-dollar market and climbing, but delivery is the 
 
 Itafika does that work **once, in the open, for everyone.** It is the abstraction layer for Kenyan delivery — what Daraja is to payments. It is **not** a delivery company; it is the open standard *beneath* anyone who would otherwise integrate every provider by hand.
 
-For the full vision, see [`docs/Itafika-Concept-Doc.md`](docs/Itafika-Concept-Doc.md) (or the visual version, [`docs/Itafika.html`](docs/Itafika.html)).
+For the full vision, see [`docs/Itafika-Concept-Doc.md`](docs/Itafika-Concept-Doc.md) (or the visual version at <https://itafika-tuu.pages.dev/>).
 
 ---
 
