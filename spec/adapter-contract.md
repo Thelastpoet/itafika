@@ -2,8 +2,8 @@
 
 > Part of the canonical Itafika standard. A conformant provider adapter — in any
 > language — implements this contract. The TypeScript reference interface lives at
-> `packages/adapters/src/LogisticsProviderInterface.ts` and is generated against
-> the types in [`openapi.yaml`](openapi.yaml).
+> `packages/adapters/src/types.ts` and uses the shared types generated from
+> [`openapi.yaml`](openapi.yaml).
 
 ## What an adapter is
 
@@ -114,7 +114,7 @@ Adapters differ only in *how* they answer, never in the interface.
 
 ## Adding an adapter (checklist)
 
-- [ ] Copy the static reference adapter in `packages/adapters/src/`.
+- [ ] Copy the static reference adapter in `packages/adapters/src/static-adapter.ts`.
 - [ ] Fill in `ProviderInfo` and implement `quote()` (and `book()` / `track()` if applicable).
 - [ ] If static, add or reference your provider's rows in [`data/`](data/) per [`data/SCHEMA.md`](data/SCHEMA.md).
 - [ ] Pass the adapter conformance tests.

@@ -10,6 +10,22 @@ importers:
 
   examples/simple-shop: {}
 
+  packages/adapters:
+    dependencies:
+      '@itafika/core':
+        specifier: workspace:*
+        version: link:../core
+    devDependencies:
+      '@types/node':
+        specifier: ^25.9.2
+        version: 25.9.2
+      typescript:
+        specifier: ^6.0.3
+        version: 6.0.3
+      vitest:
+        specifier: ^4.1.8
+        version: 4.1.8(@types/node@25.9.2)(vite@8.0.16(@types/node@25.9.2)(esbuild@0.27.7))
+
   packages/core:
     devDependencies:
       openapi-typescript:

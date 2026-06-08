@@ -28,7 +28,7 @@ An adapter teaches Itafika how to talk to one provider — a courier's rate API,
 
 Read the full contract in [`spec/adapter-contract.md`](spec/adapter-contract.md). In short, an adapter answers three questions for its provider: *can you serve this route?*, *what would it cost and how long?*, and (later phases) *here's a booking — take it.*
 
-The adapter contract is already defined, but the repository does **not** yet have a finished `packages/adapters/` implementation area. If you want to work on adapters now, open an issue or PR first so the code structure can be agreed before multiple contributors build in different directions.
+The adapter contract is defined in [`spec/adapter-contract.md`](spec/adapter-contract.md), and the repository now includes a reference `packages/adapters/` package. Start from the static adapter there and extend it for your provider.
 
 ## 3. Contribute to the core / Worker
 
