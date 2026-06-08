@@ -1,0 +1,376 @@
+openapi: 3.1.0
+info:
+  title: Itafika API
+  version: "1.0.0-phase1"
+  description: |
+    An open-source logistics aggregator API for Kenya.
+
+    Itafika gives any online shop a single interface to quote and book delivery
+    across riders, matatu/bus SACCOs, and national couriers — with Kenyan
+    locations modelled as zones and stages rather than street addresses.
+
+    This document is the **canonical Phase 1 contract**. The reference
+    implementation in `packages/` is generated against it. Any change to this
+    file is governed by GOVERNANCE.md and accompanied by an ADR.
+  license:
+    name: MIT
+    url: https://github.com/itafika/itafika/blob/main/LICENSE
+
+servers:
+  - url: http://localhost:3000
+    description: Local reference implementation
+  - url: https://api.itafika.dev
+    description: Canonical hosted instance (placeholder)
+
+tags:
+  - name: Zones
+    description: Locations — CBD hubs, upcountry stages, residential areas.
+  - name: Quotes
+    description: Delivery options and prices between two zones.
+  - name: Shipments
+    description: Booking a chosen quote and tracking it.
+
+paths:
+  /v1/zones:
+    get:
+      tags: [Zones]
+      summary: List supported drop-off / pick-up locations
+      operationId: listZones
+      parameters:
+        - name: type
+          in: query
+          required: false
+          description: Filter by zone type.
+          schema:
+            $ref: '#/components/schemas/ZoneType'
+        - name: limit
+          in: query
+          required: false
+          schema: { type: integer, default: 100, minimum: 1, maximum: 500 }
+      responses:
+        '200':
+          description: A list of zones.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  zones:
+                    type: array
+                    items: { $ref: '#/components/schemas/Zone' }
+              example:
+                zones:
+                  - id: ZONE_NBI_CBD_01
+                    name: RNG Plaza
+                    type: cbd_hub
+                    town: Nairobi
+                    coordinates: { lat: -1.2841, lng: 36.8255 }
+                  - id: ZONE_NKR_MAIN
+                    name: Nakuru Main Stage
+                    type: stage
+                    town: Nakuru
+                    coordinates: { lat: -0.3031, lng: 36.0800 }
+
+  /v1/zones/search:
+    get:
+      tags: [Zones]
+      summary: Search locations by name
+      operationId: searchZones
+      parameters:
+        - name: q
+          in: query
+          required: true
+          description: Free-text query, e.g. "cbd", "nyeri", "rng".
+          schema: { type: string, minLength: 1 }
+      responses:
+        '200':
+          description: Matching zones, best match first.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  query: { type: string }
+                  zones:
+                    type: array
+                    items: { $ref: '#/components/schemas/Zone' }
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /v1/quotes:
+    post:
+      tags: [Quotes]
+      summary: Get delivery options and prices between two zones
+      description: |
+        The heart of Itafika. Given an origin, destination, weight, and package
+        type, returns every available delivery option across all transport
+        classes, each with an estimated cost, time, and reliability score.
+      operationId: createQuote
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/QuoteRequest' }
+            example:
+              origin_zone_id: ZONE_NBI_CBD_01
+              destination_zone_id: ZONE_NKR_MAIN
+              package_weight_kg: 2.5
+              package_type: apparel
+      responses:
+        '200':
+          description: Available quotes. May be an empty list if no provider serves the route.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  origin_zone_id: { type: string }
+                  destination_zone_id: { type: string }
+                  quotes:
+                    type: array
+                    items: { $ref: '#/components/schemas/Quote' }
+              example:
+                origin_zone_id: ZONE_NBI_CBD_01
+                destination_zone_id: ZONE_NKR_MAIN
+                quotes:
+                  - quote_id: qt_8sd92ka
+                    provider_type: boda_rider
+                    provider_name: Independent Rider (CBD Pool)
+                    estimated_cost_kes: 250
+                    estimated_time: "45 mins"
+                    reliability_score: 0.92
+                  - quote_id: qt_2mn41bq
+                    provider_type: matatu_sacco
+                    provider_name: Mololine Sacco
+                    estimated_cost_kes: 400
+                    estimated_time: "3 hours"
+                    reliability_score: 0.98
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          description: One or both zone IDs are unknown.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /v1/shipments:
+    post:
+      tags: [Shipments]
+      summary: Lock in a chosen quote and create a shipment
+      description: |
+        Accepts a quote the customer selected, records the shipment, generates a
+        tracking ID, and notifies the relevant adapter. In Phase 1 the booking is
+        recorded but provider dispatch may be a stub depending on the adapter.
+      operationId: createShipment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ShipmentRequest' }
+            example:
+              quote_id: qt_2mn41bq
+              sender:
+                name: Asha Mwangi
+                phone: "+254712345678"
+              recipient:
+                name: John Otieno
+                phone: "+254723456789"
+              package_description: "Sealed apparel box, 2.5kg"
+      responses:
+        '201':
+          description: Shipment created.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Shipment' }
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          description: The quote_id is unknown or has expired.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /v1/shipments/{tracking_id}/track:
+    get:
+      tags: [Shipments]
+      summary: Get the unified tracking status of a shipment
+      description: |
+        Returns the shipment's current universal status and its history.
+        Every provider's own states are normalised into Itafika's five
+        universal statuses.
+      operationId: trackShipment
+      parameters:
+        - name: tracking_id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Current status and history.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TrackingResponse' }
+              example:
+                tracking_id: trk_kf93md2
+                status: in_transit
+                history:
+                  - status: package_picked
+                    at: "2026-06-08T08:14:00Z"
+                  - status: in_transit
+                    at: "2026-06-08T08:40:00Z"
+        '404':
+          description: Unknown tracking ID.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+components:
+  schemas:
+
+    ZoneType:
+      type: string
+      description: The kind of location.
+      enum: [cbd_hub, stage, residential_area]
+
+    ProviderType:
+      type: string
+      description: The class of transport. Adapters are organised by these classes.
+      enum: [boda_rider, matatu_sacco, bus, national_courier]
+
+    TrackingStatus:
+      type: string
+      description: The five universal shipment statuses.
+      enum: [package_picked, in_transit, at_sorting_hub, ready_for_pickup, delivered]
+
+    Coordinates:
+      type: object
+      properties:
+        lat: { type: number, format: double }
+        lng: { type: number, format: double }
+      required: [lat, lng]
+
+    Zone:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Stable, human-readable identifier, e.g. ZONE_NBI_CBD_01.
+        name:
+          type: string
+          description: Human-readable name, e.g. "RNG Plaza".
+        type: { $ref: '#/components/schemas/ZoneType' }
+        town:
+          type: string
+          description: The town or city the zone belongs to.
+        coordinates: { $ref: '#/components/schemas/Coordinates' }
+      required: [id, name, type, town]
+
+    QuoteRequest:
+      type: object
+      properties:
+        origin_zone_id: { type: string }
+        destination_zone_id: { type: string }
+        package_weight_kg:
+          type: number
+          format: double
+          minimum: 0
+          description: Package weight in kilograms.
+        package_type:
+          type: string
+          description: Free-form category, e.g. "apparel", "documents", "electronics".
+      required: [origin_zone_id, destination_zone_id, package_weight_kg]
+
+    Quote:
+      type: object
+      properties:
+        quote_id:
+          type: string
+          description: Opaque ID used to book this quote via POST /v1/shipments.
+        provider_type: { $ref: '#/components/schemas/ProviderType' }
+        provider_name:
+          type: string
+          description: Human-readable provider name shown to the customer.
+        estimated_cost_kes:
+          type: integer
+          description: Estimated cost in Kenyan Shillings.
+        estimated_time:
+          type: string
+          description: Human-readable estimate, e.g. "45 mins", "3 hours", "next day".
+        reliability_score:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 1
+          description: 0–1 confidence in on-time, intact delivery.
+      required: [quote_id, provider_type, provider_name, estimated_cost_kes, estimated_time]
+
+    Contact:
+      type: object
+      properties:
+        name: { type: string }
+        phone:
+          type: string
+          description: E.164 format, e.g. +254712345678.
+      required: [name, phone]
+
+    ShipmentRequest:
+      type: object
+      properties:
+        quote_id: { type: string }
+        sender: { $ref: '#/components/schemas/Contact' }
+        recipient: { $ref: '#/components/schemas/Contact' }
+        package_description: { type: string }
+      required: [quote_id, sender, recipient]
+
+    Shipment:
+      type: object
+      properties:
+        tracking_id:
+          type: string
+          description: Use with GET /v1/shipments/{tracking_id}/track.
+        status: { $ref: '#/components/schemas/TrackingStatus' }
+        quote: { $ref: '#/components/schemas/Quote' }
+        sender: { $ref: '#/components/schemas/Contact' }
+        recipient: { $ref: '#/components/schemas/Contact' }
+        created_at: { type: string, format: date-time }
+      required: [tracking_id, status, created_at]
+
+    TrackingEvent:
+      type: object
+      properties:
+        status: { $ref: '#/components/schemas/TrackingStatus' }
+        at: { type: string, format: date-time }
+        note: { type: string }
+      required: [status, at]
+
+    TrackingResponse:
+      type: object
+      properties:
+        tracking_id: { type: string }
+        status: { $ref: '#/components/schemas/TrackingStatus' }
+        history:
+          type: array
+          items: { $ref: '#/components/schemas/TrackingEvent' }
+      required: [tracking_id, status, history]
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code: { type: string }
+            message: { type: string }
+          required: [code, message]
+      required: [error]
+
+  responses:
+    BadRequest:
+      description: The request was malformed or failed validation.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+          example:
+            error:
+              code: invalid_request
+              message: "package_weight_kg must be a positive number"

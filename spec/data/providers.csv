@@ -1,0 +1,7 @@
+id,name,type,reliability_score
+cbd_rider_pool,Independent Rider (CBD Pool),boda_rider,0.92
+mololine,Mololine Sacco,matatu_sacco,0.98
+2nk,2NK Sacco,matatu_sacco,0.97
+easycoach,Easy Coach,bus,0.96
+g4s,G4S Courier,national_courier,0.99
+fargo,Fargo Courier,national_courier,0.97

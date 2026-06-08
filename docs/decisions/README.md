@@ -1,0 +1,16 @@
+# Architecture Decision Records (ADRs)
+
+An ADR captures a single significant decision: the context, the options considered, the choice, and its consequences. They exist so the *why* behind Itafika outlives the conversations that produced it.
+
+Per [GOVERNANCE.md](../../GOVERNANCE.md), any change to the spec is accompanied by an ADR. ADRs are immutable once accepted — to change a decision, write a new ADR that supersedes the old one and update the status below.
+
+| # | Title | Status |
+|---|-------|--------|
+| [0001](0001-language-and-stack.md) | Language and stack for the reference implementation | Accepted |
+| [0002](0002-spec-first-monorepo.md) | Spec-first, clearly separated monorepo | Accepted |
+| [0003](0003-datastore.md) | SQLite for dev, Postgres for production | Accepted |
+| [0004](0004-license.md) | MIT license | Accepted |
+
+## Format
+
+Each ADR follows: **Context → Decision → Consequences**, with an explicit list of the options that were rejected and why.

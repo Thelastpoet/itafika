@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Itafika — open-source logistics aggregator API for Kenya</title>
+<style>
+  :root{
+    --ink:#0b1726;
+    --ink-soft:#41546b;
+    --paper:#f3f6fc;
+    --card:#ffffff;
+    --line:#dde6f3;
+    --blue:#2563eb;
+    --blue-deep:#11357e;
+    --blue-darker:#0a224f;
+    --sky:#3b82f6;
+    --sky-soft:#e6efff;
+    --amber:#f0a020;
+    --accent:#f0a020;
+    --teal:#0d9488;
+    --violet:#7c5cdb;
+    --good:#1f9d63;
+    --shadow:0 1px 2px rgba(11,23,38,.05),0 10px 34px rgba(17,53,126,.09);
+    --radius:16px;
+    --m-rider:#2563eb;
+    --m-matatu:#f0a020;
+    --m-bus:#0d9488;
+    --m-courier:#7c5cdb;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{margin:0;font-family:'Segoe UI',system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif;color:var(--ink);background:var(--paper);line-height:1.6;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:1000px;margin:0 auto;padding:0 24px;}
+  h1,h2,h3{line-height:1.16;letter-spacing:-.015em;margin:0;}
+  p{margin:0 0 1em;}
+  code,pre{font-family:'SF Mono',ui-monospace,'Cascadia Code',Consolas,monospace;}
+  a{color:var(--blue);}
+
+  nav{position:sticky;top:0;z-index:50;background:rgba(243,246,252,.86);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);}
+  nav .wrap{display:flex;align-items:center;gap:18px;height:58px;}
+  nav .brand{font-weight:800;color:var(--blue-deep);font-size:18px;letter-spacing:-.02em;margin-right:auto;display:flex;align-items:center;gap:9px;}
+  nav .brand .mk{width:22px;height:22px;border-radius:6px;background:linear-gradient(135deg,var(--sky),var(--blue-deep));display:inline-block;}
+  nav a.lnk{color:var(--ink-soft);text-decoration:none;font-size:14px;font-weight:600;padding:6px 4px;border-bottom:2px solid transparent;}
+  nav a.lnk:hover{color:var(--blue);border-color:var(--blue);}
+  @media(max-width:740px){nav a.lnk{display:none;}}
+
+  .hero{background:radial-gradient(1100px 520px at 82% -12%, rgba(59,130,246,.30), transparent 60%),radial-gradient(800px 600px at 0% 0%, rgba(124,92,219,.20), transparent 55%),linear-gradient(160deg,#1e4fa3,#12306f 75%);color:#eaf1ff;padding:72px 0 60px;border-bottom:3px solid var(--accent);}
+  .badge{display:inline-flex;align-items:center;gap:8px;font-size:12.5px;letter-spacing:.14em;text-transform:uppercase;color:#bcd4ff;border:1px solid rgba(188,212,255,.35);padding:6px 14px;border-radius:999px;margin-bottom:24px;}
+  .badge .dot{width:7px;height:7px;border-radius:50%;background:var(--accent);animation:pulse 2s infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.35;}}
+  .hero h1{font-size:clamp(42px,7.4vw,74px);font-weight:800;color:#fff;margin-bottom:14px;letter-spacing:-.03em;}
+  .hero .tag{font-size:clamp(18px,2.4vw,23px);font-weight:500;color:#cddcff;max-width:680px;}
+  .hero .mean{margin-top:8px;font-size:15px;color:#93b4ee;font-style:italic;}
+  .hero-lead{margin-top:28px;font-size:18px;line-height:1.65;max-width:720px;color:#dde8ff;}
+  .hero-lead b{color:#fff;}
+  .ctarow{margin-top:30px;display:flex;flex-wrap:wrap;gap:12px;}
+  .btn{border:none;cursor:pointer;font-family:inherit;font-weight:700;font-size:15px;padding:13px 22px;border-radius:11px;text-decoration:none;display:inline-flex;align-items:center;gap:9px;transition:.15s;}
+  .btn.primary{background:#fff;color:var(--blue-deep);}
+  .btn.primary:hover{transform:translateY(-2px);box-shadow:0 10px 26px rgba(0,0,0,.25);}
+  .btn.ghost{background:rgba(255,255,255,.10);color:#fff;border:1px solid rgba(255,255,255,.28);}
+  .btn.ghost:hover{background:rgba(255,255,255,.18);}
+
+  section{padding:60px 0;border-bottom:1px solid var(--line);}
+  .sec-title{font-size:clamp(26px,4vw,38px);font-weight:800;margin-bottom:16px;}
+  .lede{font-size:18.5px;color:var(--ink-soft);max-width:760px;}
+
+  .pg-wrap{background:var(--card);border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow);overflow:hidden;}
+  .pg-head{display:flex;align-items:center;gap:10px;padding:14px 20px;background:linear-gradient(135deg,var(--blue-deep),var(--blue-darker));color:#fff;}
+  .pg-head .dotrow{display:flex;gap:6px;margin-right:6px;}
+  .pg-head .dotrow i{width:11px;height:11px;border-radius:50%;display:inline-block;}
+  .pg-head .t{font-weight:700;font-size:14px;letter-spacing:.02em;}
+  .pg-head .live{margin-left:auto;font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;background:rgba(255,255,255,.14);padding:4px 11px;border-radius:999px;display:flex;align-items:center;gap:7px;}
+  .pg-head .live .d{width:7px;height:7px;border-radius:50%;background:#5ee08a;animation:ring 1.8s infinite;}
+  @keyframes ring{0%{box-shadow:0 0 0 0 rgba(94,224,138,.55);}70%{box-shadow:0 0 0 7px rgba(94,224,138,0);}100%{box-shadow:0 0 0 0 rgba(94,224,138,0);}}
+  .pg-body{display:grid;grid-template-columns:340px 1fr;}
+  @media(max-width:780px){.pg-body{grid-template-columns:1fr;}}
+  .pg-form{padding:22px;border-right:1px solid var(--line);}
+  @media(max-width:780px){.pg-form{border-right:none;border-bottom:1px solid var(--line);}}
+  .fld{margin-bottom:16px;}
+  .fld label{display:block;font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:6px;}
+  .fld select,.fld input[type=text]{width:100%;padding:11px 12px;border:1.5px solid var(--line);border-radius:10px;font-family:inherit;font-size:14.5px;color:var(--ink);background:#fbfdff;}
+  .fld select:focus,.fld input:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,235,.15);}
+  .wt{display:flex;align-items:center;gap:12px;}
+  .wt input[type=range]{flex:1;accent-color:var(--blue);}
+  .wt .val{font-weight:800;color:var(--blue-deep);min-width:64px;text-align:right;font-variant-numeric:tabular-nums;}
+  .seg{display:flex;gap:6px;flex-wrap:wrap;}
+  .seg button{flex:1;min-width:62px;padding:8px;border:1.5px solid var(--line);background:#fbfdff;border-radius:9px;font-family:inherit;font-size:12.5px;font-weight:600;color:var(--ink-soft);cursor:pointer;transition:.13s;}
+  .seg button.on{background:var(--blue);color:#fff;border-color:var(--blue);}
+  .go{width:100%;margin-top:6px;background:var(--blue);color:#fff;border:none;padding:13px;border-radius:11px;font-weight:700;font-size:15px;cursor:pointer;transition:.15s;}
+  .go:hover{background:var(--blue-deep);}
+
+  .pg-out{padding:22px;background:#fbfcff;}
+  .pg-tabs{display:flex;gap:4px;margin-bottom:16px;background:#eef3fb;padding:4px;border-radius:11px;width:fit-content;}
+  .pg-tabs button{border:none;background:transparent;font-family:inherit;font-weight:700;font-size:13px;color:var(--ink-soft);padding:7px 16px;border-radius:8px;cursor:pointer;}
+  .pg-tabs button.on{background:#fff;color:var(--blue-deep);box-shadow:0 1px 4px rgba(0,0,0,.08);}
+  .route-line{font-size:13px;color:var(--ink-soft);margin-bottom:14px;}
+  .route-line b{color:var(--ink);}
+
+  .opt{display:flex;align-items:center;gap:13px;padding:14px;border:1.5px solid var(--line);border-radius:13px;margin-bottom:11px;background:#fff;transition:.18s;animation:rise .35s ease both;}
+  @keyframes rise{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+  .opt:hover{border-color:var(--blue);transform:translateY(-2px);box-shadow:0 8px 22px rgba(37,99,235,.12);}
+  .opt.best{border-color:var(--good);box-shadow:0 0 0 1px var(--good) inset;}
+  .opt .mode{width:46px;height:46px;border-radius:11px;display:grid;place-items:center;font-size:22px;flex:0 0 auto;color:#fff;}
+  .opt .meta{flex:1;min-width:0;}
+  .opt .meta .name{font-weight:700;font-size:14.5px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .tagchip{font-size:10px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:2px 7px;border-radius:5px;color:#fff;}
+  .badge-best{font-size:10px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:#fff;background:var(--good);padding:2px 7px;border-radius:5px;}
+  .opt .meta .sub{font-size:12.5px;color:var(--ink-soft);margin-top:2px;}
+  .rel{margin-top:6px;display:flex;align-items:center;gap:8px;}
+  .rel .bar{height:5px;flex:1;max-width:120px;background:#e6edf7;border-radius:3px;overflow:hidden;}
+  .rel .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--sky),var(--good));}
+  .rel .pct{font-size:11px;color:var(--good);font-weight:700;}
+  .opt .price{text-align:right;}
+  .opt .price .kes{font-weight:800;font-size:17px;color:var(--blue-deep);}
+  .opt .price .lbl{font-size:10.5px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.05em;}
+
+  .empty{text-align:center;padding:26px 18px;border:1.5px dashed var(--line);border-radius:14px;background:#fff;}
+  .empty .em{font-size:30px;}
+  .empty h4{margin:8px 0 4px;font-size:16px;}
+  .empty p{font-size:13.5px;color:var(--ink-soft);margin:0 auto;max-width:340px;}
+  .empty .mini{display:inline-block;margin-top:12px;font-size:12px;background:var(--sky-soft);color:var(--blue-deep);border:1px solid #cfe0ff;padding:7px 13px;border-radius:8px;font-weight:700;}
+
+  pre.json{margin:0;background:#0b1f44;color:#cfe0ff;font-size:12.5px;line-height:1.6;border-radius:12px;padding:16px;overflow-x:auto;}
+  .json .k{color:#6fd3c9;}.json .s{color:#ffc97a;}.json .n{color:#86b7ff;}
+
+  .compare{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+  @media(max-width:680px){.compare{grid-template-columns:1fr;}}
+  .ccard{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);}
+  .ccard .lab{font-size:12px;letter-spacing:.1em;text-transform:uppercase;font-weight:800;color:var(--accent);margin-bottom:8px;}
+  .ccard h3{font-size:19px;margin-bottom:8px;}
+  .ccard p{font-size:15px;color:var(--ink-soft);margin:0;}
+
+  .arch{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:30px 26px;box-shadow:var(--shadow);}
+  .node{border-radius:12px;text-align:center;font-weight:700;padding:14px 18px;margin:0 auto;}
+  .n-client{background:#0b1726;color:#fff;max-width:360px;}
+  .n-core{background:linear-gradient(135deg,var(--blue),var(--blue-deep));color:#fff;max-width:430px;font-size:18px;cursor:pointer;transition:.15s;}
+  .n-core:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(37,99,235,.3);}
+  .arrow{width:2px;height:24px;background:var(--line);margin:8px auto;position:relative;}
+  .arrow::after{content:"";position:absolute;bottom:-1px;left:50%;transform:translateX(-50%);border:5px solid transparent;border-top-color:var(--line);}
+  .lbl{text-align:center;font-size:12px;color:var(--ink-soft);letter-spacing:.04em;margin:4px 0;}
+  .fan{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
+  @media(max-width:680px){.fan{grid-template-columns:repeat(2,1fr);}}
+  .ad{border-radius:12px;padding:15px 12px;text-align:center;color:#fff;font-weight:700;font-size:14px;cursor:pointer;transition:.15s;border:2px solid transparent;}
+  .ad:hover{transform:translateY(-3px);}
+  .ad.on{outline:3px solid rgba(255,255,255,.5);box-shadow:0 8px 22px rgba(0,0,0,.18);}
+  .ad .src{display:block;font-weight:500;font-size:11.5px;opacity:.92;margin-top:5px;}
+  .ad-r{background:var(--m-rider);}.ad-m{background:var(--m-matatu);}.ad-b{background:var(--m-bus);}.ad-c{background:var(--m-courier);}
+  .arch-detail{margin-top:22px;border:1px solid var(--line);border-radius:14px;padding:20px 22px;background:#fbfcff;min-height:96px;}
+  .arch-detail h4{font-size:16px;margin-bottom:6px;display:flex;align-items:center;gap:9px;}
+  .arch-detail h4 .pip{width:12px;height:12px;border-radius:4px;}
+  .arch-detail p{font-size:14.5px;color:var(--ink-soft);margin:0;}
+
+  .ep-wrap{background:var(--card);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);overflow:hidden;}
+  .ep-list{display:flex;flex-wrap:wrap;border-bottom:1px solid var(--line);background:#f7faff;}
+  .ep-list button{border:none;background:transparent;font-family:inherit;cursor:pointer;padding:13px 16px;font-size:13px;font-weight:700;color:var(--ink-soft);border-bottom:3px solid transparent;display:flex;align-items:center;gap:8px;}
+  .ep-list button.on{color:var(--blue-deep);border-color:var(--blue);background:#fff;}
+  .verb{font-family:monospace;font-size:11px;font-weight:800;padding:2px 7px;border-radius:5px;color:#fff;}
+  .verb.get{background:var(--teal);}.verb.post{background:var(--blue);}
+  .ep-pane{padding:22px;}
+  .ep-pane h4{font-size:17px;margin-bottom:6px;display:flex;align-items:center;gap:9px;}
+  .ep-pane .path{font-family:monospace;font-size:13px;color:var(--blue-deep);background:var(--sky-soft);display:inline-block;padding:5px 10px;border-radius:7px;margin-bottom:12px;}
+  .ep-pane p.d{font-size:14.5px;color:var(--ink-soft);}
+  .ep-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:8px;}
+  @media(max-width:680px){.ep-grid{grid-template-columns:1fr;}}
+  .ep-grid .h{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:6px;}
+
+  .track{background:var(--card);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);padding:28px 26px;}
+  .steps{display:flex;align-items:flex-start;justify-content:space-between;position:relative;gap:6px;}
+  .steps::before{content:"";position:absolute;top:20px;left:24px;right:24px;height:3px;background:var(--line);border-radius:3px;}
+  .steps .prog{position:absolute;top:20px;left:24px;height:3px;background:var(--blue);border-radius:3px;transition:width .5s ease;z-index:1;}
+  .stp{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;flex:1;cursor:pointer;}
+  .stp .ball{width:42px;height:42px;border-radius:50%;background:#fff;border:3px solid var(--line);display:grid;place-items:center;font-size:18px;transition:.3s;}
+  .stp.done .ball{border-color:var(--blue);background:var(--blue);color:#fff;}
+  .stp.cur .ball{border-color:var(--blue);background:#fff;color:var(--blue);box-shadow:0 0 0 5px rgba(37,99,235,.16);}
+  .stp .nm{font-size:11px;font-family:monospace;margin-top:9px;color:var(--ink-soft);text-align:center;max-width:84px;}
+  .stp.done .nm,.stp.cur .nm{color:var(--blue-deep);font-weight:700;}
+  .track .ctl{display:flex;gap:10px;justify-content:center;margin-top:24px;}
+  .track .ctl button{font-family:inherit;font-weight:700;font-size:13.5px;padding:9px 18px;border-radius:9px;border:1.5px solid var(--line);background:#fff;color:var(--blue-deep);cursor:pointer;}
+  .track .ctl button:hover{border-color:var(--blue);}
+  .track .ctl button.solid{background:var(--blue);color:#fff;border-color:var(--blue);}
+
+  .three{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+  @media(max-width:740px){.three{grid-template-columns:1fr;}}
+  .ac{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px;box-shadow:var(--shadow);cursor:pointer;transition:.18s;border-top:4px solid var(--blue);}
+  .ac:hover{transform:translateY(-3px);box-shadow:0 14px 34px rgba(17,53,126,.13);}
+  .ac .ic{font-size:26px;margin-bottom:10px;}
+  .ac h3{font-size:17px;margin-bottom:7px;}
+  .ac p{font-size:14px;color:var(--ink-soft);margin:0;}
+  .ac .more{margin-top:12px;font-size:13px;color:var(--ink-soft);overflow:hidden;max-height:0;transition:max-height .3s ease;}
+  .ac.open .more{max-height:220px;}
+  .ac .more code{background:#eef3fb;padding:2px 5px;border-radius:4px;font-size:12px;}
+  .ac .tap{margin-top:10px;font-size:12px;color:var(--blue);font-weight:700;}
+
+  .contrib-demo{margin-top:22px;background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);overflow:hidden;}
+  .contrib-demo .h{background:#0b1f44;color:#cfe0ff;font-family:monospace;font-size:12.5px;padding:10px 16px;display:flex;align-items:center;gap:10px;}
+  .contrib-demo .h .fn{margin-left:auto;opacity:.7;}
+  .csv{margin:0;border-collapse:collapse;width:100%;font-family:monospace;font-size:12.5px;}
+  .csv th,.csv td{text-align:left;padding:9px 14px;border-bottom:1px solid var(--line);white-space:nowrap;}
+  .csv th{background:#f1f5fc;color:var(--ink-soft);font-size:11px;letter-spacing:.04em;}
+  .csv tr.added{animation:flashrow 1.1s ease;}
+  @keyframes flashrow{from{background:#c7f0d6;}to{background:#eafaf0;}}
+  .csv tr.added td{background:#eafaf0;}
+  .csv td.src{color:var(--good);}
+  .add-row{padding:14px 16px;border-top:1px dashed var(--line);text-align:center;}
+  .add-row button{font-family:inherit;font-weight:700;font-size:13.5px;background:var(--blue);color:#fff;border:none;padding:10px 18px;border-radius:9px;cursor:pointer;}
+  .add-row button:hover{background:var(--blue-deep);}
+  .add-row .note{display:block;margin-top:8px;font-size:12px;color:var(--ink-soft);}
+
+  .phase{display:grid;grid-template-columns:130px 1fr;gap:22px;padding:22px 0;border-bottom:1px solid var(--line);}
+  @media(max-width:600px){.phase{grid-template-columns:1fr;gap:8px;}}
+  .phase:last-child{border-bottom:none;}
+  .phase .ph{font-weight:800;color:var(--blue);font-size:15px;}
+  .phase .ph small{display:block;font-weight:700;color:var(--accent);font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;margin-top:3px;}
+  .phase h3{font-size:19px;margin-bottom:7px;}
+  .phase p{font-size:15px;color:var(--ink-soft);margin:0;}
+  .stat{display:inline-block;margin-top:8px;font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:3px 10px;border-radius:999px;}
+  .stat.now{background:var(--sky-soft);color:var(--blue-deep);}
+  .stat.next{background:#f1f0fb;color:var(--violet);}
+
+  .cta{background:linear-gradient(135deg,var(--blue-deep),var(--blue-darker));color:#fff;border-radius:20px;padding:42px 40px;text-align:center;box-shadow:var(--shadow);}
+  .cta h2{font-size:clamp(24px,3.4vw,32px);color:#fff;margin-bottom:10px;}
+  .cta p{color:#cddcff;font-size:16.5px;max-width:560px;margin:0 auto 22px;}
+  .cta .ctarow{justify-content:center;}
+
+  footer{padding:46px 0 56px;text-align:center;color:var(--ink-soft);}
+  footer .big{font-size:19px;font-weight:700;color:var(--blue-deep);font-style:italic;margin-bottom:6px;}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <span class="brand"><span class="mk"></span>Itafika</span>
+    <a class="lnk" href="#try">Try it</a>
+    <a class="lnk" href="#how">How it works</a>
+    <a class="lnk" href="#api">API</a>
+    <a class="lnk" href="#contribute">Contribute</a>
+    <a class="lnk" href="#roadmap">Roadmap</a>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="wrap">
+    <h1>Itafika</h1>
+    <div class="tag">An open-source logistics aggregator API for Kenya.</div>
+    <div class="mean">“Itafika” — Swahili: <em>it will arrive.</em></div>
+    <p class="hero-lead">One clean API any online shop plugs into to solve delivery — <b>locations, transport modes, and rates already built in.</b> At checkout, a customer picks a location and sees real ways to get the goods to them, each with a price and a time. No developer ever models Kenya's delivery system from scratch.</p>
+    <div class="ctarow">
+      <a class="btn primary" href="#try">▶ Try the quote API</a>
+      <a class="btn ghost" href="#contribute">Become a contributor</a>
+    </div>
+  </div>
+</header>
+
+<section id="try">
+  <div class="wrap">
+    <h2 class="sec-title">One call in. A checkout-ready list out.</h2>
+    <p class="lede" style="margin-bottom:26px;">This playground runs the real Phase 1 quote logic against Itafika's seed dataset. Change the route and the package — watch the options recompute. This is exactly what a shop's checkout receives.</p>
+
+    <div class="pg-wrap">
+      <div class="pg-head">
+        <span class="dotrow"><i style="background:#ff6058"></i><i style="background:#ffbd2e"></i><i style="background:#28c840"></i></span>
+        <span class="t">itafika · quote playground</span>
+        <span class="live"><span class="d"></span>seed data</span>
+      </div>
+      <div class="pg-body">
+        <div class="pg-form">
+          <div class="fld">
+            <label>From</label>
+            <select id="origin"></select>
+          </div>
+          <div class="fld">
+            <label>To</label>
+            <select id="dest"></select>
+          </div>
+          <div class="fld">
+            <label>Package weight</label>
+            <div class="wt">
+              <input type="range" id="weight" min="0.5" max="20" step="0.5" value="2.5">
+              <span class="val" id="wval">2.5 kg</span>
+            </div>
+          </div>
+          <div class="fld">
+            <label>Package type</label>
+            <div class="seg" id="ptype">
+              <button data-t="apparel" class="on">apparel</button>
+              <button data-t="documents">documents</button>
+              <button data-t="electronics">electronics</button>
+            </div>
+          </div>
+          <button class="go" id="goBtn">Get quotes →</button>
+        </div>
+        <div class="pg-out">
+          <div class="pg-tabs">
+            <button class="on" data-tab="cards">Checkout view</button>
+            <button data-tab="json">API response</button>
+          </div>
+          <div class="route-line" id="routeLine"></div>
+          <div id="cardsView"></div>
+          <div id="jsonView" style="display:none;"></div>
+        </div>
+      </div>
+    </div>
+    <p style="margin-top:16px;font-size:13.5px;color:var(--ink-soft);">Tip: try a route nobody serves yet (e.g. an upcountry-to-upcountry pair) to see what a <em>contribution opportunity</em> looks like.</p>
+  </div>
+</section>
+
+<section id="how">
+  <div class="wrap">
+    <h2 class="sec-title">An infrastructure abstraction layer</h2>
+    <p class="lede" style="margin-bottom:26px;">Itafika does for delivery what Daraja did for payments — put a clean interface in front of a fragmented system, and let a generation build on top of it.</p>
+    <div class="compare">
+      <div class="ccard">
+        <div class="lab">The precedent · Daraja</div>
+        <h3>One clean rail over M-Pesa</h3>
+        <p>Before Daraja, touching M-Pesa meant wrestling the system directly. Daraja hid the mess behind a predictable API — and fintech exploded on top of it.</p>
+      </div>
+      <div class="ccard" style="border-color:var(--blue);">
+        <div class="lab" style="color:var(--blue)">The move · Itafika</div>
+        <h3>One clean interface over delivery</h3>
+        <p>Itafika asks one question — <em>how can this package get from here to there, and what are the options?</em> — and returns one orderly answer across riders, matatus, buses, and couriers.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2 class="sec-title">Provider-agnostic by design</h2>
+    <p class="lede" style="margin-bottom:26px;">The core engine never contains logic for a specific courier. It speaks to small adapters; each translates the standard request for its own world. Adding a provider is a contribution at the edge — never a change to the core. <b>Tap a box to see what it does.</b></p>
+    <div class="arch">
+      <div class="node n-client">E-commerce Client (Shop)</div>
+      <div class="lbl">JSON API ↓</div>
+      <div class="arrow"></div>
+      <div class="node n-core" data-arch="core">Core Routing Engine</div>
+      <div class="arrow"></div>
+      <div class="lbl">standard request, fanned out to every adapter ↓</div>
+      <div class="fan">
+        <div class="ad ad-r" data-arch="rider">🛵 Rider<span class="src">Bolt · Gatika</span></div>
+        <div class="ad ad-m" data-arch="matatu">🚐 Matatu<span class="src">2NK · Mololine</span></div>
+        <div class="ad ad-b" data-arch="bus">🚌 Bus<span class="src">Easy Coach</span></div>
+        <div class="ad ad-c" data-arch="courier">📦 Courier<span class="src">G4S · Fargo</span></div>
+      </div>
+      <div class="arch-detail" id="archDetail">
+        <h4><span class="pip" style="background:var(--blue)"></span>The Core Routing Engine</h4>
+        <p>Receives every request in one standardized shape, fans it out to all adapters, collects their answers, and returns a unified list. It knows nothing about any specific provider — that's the whole point. <em>Click any adapter to see its job.</em></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="api">
+  <div class="wrap">
+    <h2 class="sec-title">A small, complete surface</h2>
+    <p class="lede" style="margin-bottom:24px;">Five endpoints, frozen as the canonical contract in <code>spec/openapi.yaml</code>. Click through them.</p>
+    <div class="ep-wrap">
+      <div class="ep-list" id="epList"></div>
+      <div class="ep-pane" id="epPane"></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2 class="sec-title">Every provider, five universal states</h2>
+    <p class="lede" style="margin-bottom:26px;">Providers each track differently. Itafika normalizes them into one vocabulary, so a shop reads the same five states no matter who carries the package. <b>Advance the shipment.</b></p>
+    <div class="track">
+      <div class="steps" id="steps">
+        <span class="prog" id="prog" style="width:0;"></span>
+      </div>
+      <div class="ctl">
+        <button id="trkBack">◀ Back</button>
+        <button class="solid" id="trkPlay">▶ Advance</button>
+        <button id="trkReset">Reset</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="contribute">
+  <div class="wrap">
+    <h2 class="sec-title">Three ways to make it yours</h2>
+    <p class="lede" style="margin-bottom:24px;">Itafika only works if the people who depend on it help build it. The most valuable contribution isn't always code. <b>Tap a card.</b></p>
+    <div class="three">
+      <div class="ac" data-ac>
+        <div class="ic">🗺️</div>
+        <h3>Contribute data</h3>
+        <p>No code required. Add a stage, hub, or a rate you actually know — the highest-leverage thing most people can do.</p>
+        <div class="more">Edit <code>spec/data/*.csv</code>, add your row with a <code>source</code>, open a PR. Correcting a stale rate counts just as much as adding one.</div>
+        <div class="tap">Tap to expand ↓</div>
+      </div>
+      <div class="ac" data-ac>
+        <div class="ic">🔌</div>
+        <h3>Write an adapter</h3>
+        <p>Teach Itafika one provider. Implement one interface — <code>LogisticsProviderInterface</code> — and the core never changes.</p>
+        <div class="more">Three flavours: <b>static</b> (reads the dataset), <b>live</b> (calls a real API/scraper), and <b>human-in-the-loop</b> (a WhatsApp bot where a rider replies “Accept”).</div>
+        <div class="tap">Tap to expand ↓</div>
+      </div>
+      <div class="ac" data-ac>
+        <div class="ic">⚙️</div>
+        <h3>Build the core</h3>
+        <p>The engine, server, and spec tooling — in TypeScript. Spec-first, so contract changes start in <code>openapi.yaml</code>.</p>
+        <div class="more">Every API change pairs with an ADR in <code>docs/decisions/</code>, keeping the standard and the reference server honest with each other.</div>
+        <div class="tap">Tap to expand ↓</div>
+      </div>
+    </div>
+
+    <div class="contrib-demo">
+      <div class="h">spec/data/rates.csv <span class="fn">+ your contribution</span></div>
+      <div style="overflow-x:auto;">
+        <table class="csv" id="csvTbl">
+          <thead><tr><th>provider_id</th><th>origin</th><th>destination</th><th>base_kes</th><th>per_kg</th><th>time</th><th>source</th></tr></thead>
+          <tbody>
+            <tr><td>mololine</td><td>ZONE_NBI_CBD_01</td><td>ZONE_NKR_MAIN</td><td>400</td><td>0</td><td>3 hours</td><td class="src">field-2026-06</td></tr>
+            <tr><td>2nk</td><td>ZONE_NBI_CBD_01</td><td>ZONE_NYR_MAIN</td><td>300</td><td>0</td><td>3 hours</td><td class="src">field-2026-06</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="add-row">
+        <button id="addRow">+ Add my local route</button>
+        <span class="note">That's the entire contribution flow — a row, a source, a pull request.</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="roadmap">
+  <div class="wrap">
+    <h2 class="sec-title">Useful on day one. Built to grow at the edges.</h2>
+    <div class="phase">
+      <div class="ph">Phase 1<small>MVP · now</small></div>
+      <div>
+        <h3>The static API</h3>
+        <p>Seeded static rates and standardized zone IDs behind the four endpoints; the quote engine returns real, useful numbers. Open-sourced immediately — standardized locations and price estimation are valuable on their own.</p>
+        <span class="stat now">In progress</span>
+      </div>
+    </div>
+    <div class="phase">
+      <div class="ph">Phase 2<small>Community</small></div>
+      <div>
+        <h3>Open adapter contribution</h3>
+        <p>Publish <code>LogisticsProviderInterface</code> and invite the community to extend coverage provider by provider — live courier rates, a WhatsApp bot for manual riders, a new town's stage map. The core never changes; the edges grow.</p>
+        <span class="stat next">Planned</span>
+      </div>
+    </div>
+    <div class="phase">
+      <div class="ph">Phase 3<small>Settlement</small></div>
+      <div>
+        <h3>Payments &amp; escrow</h3>
+        <p>Integrate Daraja / M-Pesa so cash-on-delivery can trigger a split — delivery fee to the rider or SACCO, balance to the merchant. Changes the regulatory posture, so it comes last and with care.</p>
+        <span class="stat next">Planned</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section style="border-bottom:none;">
+  <div class="wrap">
+    <div class="cta">
+      <h2>Help map how Kenya delivers</h2>
+      <p>The lasting asset isn't the code — it's the open, community-maintained picture of how parcels actually move. Add a rate. Write an adapter. Make delivery something every shop can simply consume.</p>
+      <div class="ctarow">
+        <a class="btn primary" href="#contribute">Start contributing</a>
+        <a class="btn ghost" href="#try">Try the API again</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="big">Itafika — so that any shop can simply say: it will arrive.</div>
+    <div>Open-source logistics aggregator API for Kenya · MIT licensed</div>
+  </div>
+</footer>
+
+<script>
+const ZONES = [
+  {id:"ZONE_NBI_CBD_01",name:"RNG Plaza",type:"cbd_hub",town:"Nairobi"},
+  {id:"ZONE_NBI_CBD_02",name:"Veteran House",type:"cbd_hub",town:"Nairobi"},
+  {id:"ZONE_NBI_CBD_03",name:"Peris Box (Tom Mboya St)",type:"cbd_hub",town:"Nairobi"},
+  {id:"ZONE_NBI_RES_01",name:"Kasarani",type:"residential_area",town:"Nairobi"},
+  {id:"ZONE_NKR_MAIN",name:"Nakuru Main Stage",type:"stage",town:"Nakuru"},
+  {id:"ZONE_NYR_MAIN",name:"Nyeri Main Stage",type:"stage",town:"Nyeri"},
+  {id:"ZONE_ELD_MAIN",name:"Eldoret Main Stage",type:"stage",town:"Eldoret"},
+  {id:"ZONE_MSA_MAIN",name:"Mombasa Stage (Mwembe Tayari)",type:"stage",town:"Mombasa"},
+  {id:"ZONE_KSM_MAIN",name:"Kisumu Main Stage",type:"stage",town:"Kisumu"},
+  {id:"ZONE_THK_MAIN",name:"Thika Stage",type:"stage",town:"Thika"},
+];
+const PROVIDERS = {
+  cbd_rider_pool:{name:"Independent Rider (CBD Pool)",type:"boda_rider",rel:0.92},
+  mololine:{name:"Mololine Sacco",type:"matatu_sacco",rel:0.98},
+  "2nk":{name:"2NK Sacco",type:"matatu_sacco",rel:0.97},
+  easycoach:{name:"Easy Coach",type:"bus",rel:0.96},
+  g4s:{name:"G4S Courier",type:"national_courier",rel:0.99},
+  fargo:{name:"Fargo Courier",type:"national_courier",rel:0.97},
+};
+const RATES = [
+  ["cbd_rider_pool","ZONE_NBI_CBD_01","ZONE_NBI_CBD_02",200,0,"30 mins",15],
+  ["cbd_rider_pool","ZONE_NBI_CBD_01","ZONE_NBI_CBD_03",200,0,"25 mins",15],
+  ["cbd_rider_pool","ZONE_NBI_CBD_01","ZONE_NBI_RES_01",300,0,"45 mins",15],
+  ["mololine","ZONE_NBI_CBD_01","ZONE_NKR_MAIN",400,0,"3 hours",20],
+  ["mololine","ZONE_NBI_CBD_01","ZONE_ELD_MAIN",500,20,"5 hours",20],
+  ["2nk","ZONE_NBI_CBD_01","ZONE_NYR_MAIN",300,0,"3 hours",20],
+  ["2nk","ZONE_NBI_CBD_01","ZONE_THK_MAIN",200,0,"90 mins",20],
+  ["easycoach","ZONE_NBI_CBD_01","ZONE_KSM_MAIN",500,30,"7 hours",30],
+  ["easycoach","ZONE_NBI_CBD_01","ZONE_MSA_MAIN",600,30,"9 hours",30],
+  ["g4s","ZONE_NBI_CBD_01","ZONE_NKR_MAIN",650,40,"next day",50],
+  ["g4s","ZONE_NBI_CBD_01","ZONE_MSA_MAIN",750,50,"next day",50],
+  ["fargo","ZONE_NBI_CBD_01","ZONE_NYR_MAIN",600,40,"next day",50],
+  ["fargo","ZONE_NBI_CBD_01","ZONE_KSM_MAIN",700,45,"next day",50],
+];
+const MODE = {
+  boda_rider:{ic:"🛵",c:"#2563eb",label:"Rider"},
+  matatu_sacco:{ic:"🚐",c:"#f0a020",label:"Matatu"},
+  bus:{ic:"🚌",c:"#0d9488",label:"Bus"},
+  national_courier:{ic:"📦",c:"#7c5cdb",label:"Courier"},
+};
+
+const $=s=>document.querySelector(s);
+const originSel=$("#origin"), destSel=$("#dest");
+ZONES.forEach(z=>{
+  const o1=document.createElement("option");o1.value=z.id;o1.textContent=z.name+" · "+z.town;originSel.appendChild(o1);
+  destSel.appendChild(o1.cloneNode(true));
+});
+originSel.value="ZONE_NBI_CBD_01";
+destSel.value="ZONE_NKR_MAIN";
+
+let ptype="apparel";
+document.querySelectorAll("#ptype button").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll("#ptype button").forEach(x=>x.classList.remove("on"));
+  b.classList.add("on");ptype=b.dataset.t;runQuote();
+});
+const weight=$("#weight"), wval=$("#wval");
+weight.oninput=()=>{wval.textContent=(+weight.value).toFixed(1)+" kg";runQuote();};
+originSel.onchange=runQuote; destSel.onchange=runQuote; $("#goBtn").onclick=runQuote;
+
+document.querySelectorAll(".pg-tabs button").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll(".pg-tabs button").forEach(x=>x.classList.remove("on"));
+  b.classList.add("on");
+  const t=b.dataset.tab;
+  $("#cardsView").style.display = t==="cards"?"block":"none";
+  $("#jsonView").style.display = t==="json"?"block":"none";
+});
+
+function zoneName(id){const z=ZONES.find(z=>z.id===id);return z?z.name:id;}
+
+function computeQuotes(o,d,w){
+  return RATES.filter(r=>r[1]===o&&r[2]===d&&(!r[6]||w<=r[6])).map(r=>{
+    const pid=r[0],base=r[3],perkg=r[4],time=r[5];
+    const p=PROVIDERS[pid];
+    const cost=Math.round((base+Math.ceil(w)*perkg)/10)*10;
+    return {quote_id:"qt_"+Math.random().toString(36).slice(2,9),provider_type:p.type,provider_name:p.name,estimated_cost_kes:cost,estimated_time:time,reliability_score:p.rel};
+  }).sort((a,b)=>a.estimated_cost_kes-b.estimated_cost_kes);
+}
+
+function runQuote(){
+  const o=originSel.value,d=destSel.value,w=+weight.value;
+  $("#routeLine").innerHTML = o===d
+    ? "<b>"+zoneName(o)+"</b> → <b>"+zoneName(d)+"</b>"
+    : "Deliver to <b>"+zoneName(d)+"</b> from <b>"+zoneName(o)+"</b> · "+w.toFixed(1)+" kg "+ptype;
+  const cardsEl=$("#cardsView"), jsonEl=$("#jsonView");
+
+  if(o===d){
+    cardsEl.innerHTML=emptyState("Origin and destination are the same","Pick two different zones to see delivery options.",false);
+    jsonEl.innerHTML=jsonBlock({error:{code:"invalid_request",message:"origin and destination must differ"}});
+    return;
+  }
+  const quotes=computeQuotes(o,d,w);
+  if(!quotes.length){
+    cardsEl.innerHTML=emptyState("No provider serves this route yet","This is exactly where Itafika grows. If you know how parcels move here, you can add the rate — and you'd be the first.",true);
+    jsonEl.innerHTML=jsonBlock({origin_zone_id:o,destination_zone_id:d,quotes:[]});
+    return;
+  }
+  const cheapest=quotes[0].estimated_cost_kes;
+  cardsEl.innerHTML=quotes.map((q,i)=>{
+    const m=MODE[q.provider_type];
+    const best=q.estimated_cost_kes===cheapest;
+    return '<div class="opt '+(best?'best':'')+'" style="animation-delay:'+(i*60)+'ms">'+
+      '<div class="mode" style="background:'+m.c+'">'+m.ic+'</div>'+
+      '<div class="meta">'+
+        '<div class="name">'+q.provider_name+
+          ' <span class="tagchip" style="background:'+m.c+'">'+m.label+'</span>'+
+          (best?' <span class="badge-best">cheapest</span>':'')+'</div>'+
+        '<div class="sub">⏱ '+q.estimated_time+'</div>'+
+        '<div class="rel"><span class="bar"><i style="width:'+Math.round(q.reliability_score*100)+'%"></i></span><span class="pct">'+Math.round(q.reliability_score*100)+'% reliable</span></div>'+
+      '</div>'+
+      '<div class="price"><div class="kes">KES '+q.estimated_cost_kes+'</div><div class="lbl">est.</div></div>'+
+    '</div>';
+  }).join("");
+
+  const reqJson={origin_zone_id:o,destination_zone_id:d,package_weight_kg:w,package_type:ptype};
+  const resJson={origin_zone_id:o,destination_zone_id:d,quotes:quotes.map(q=>({
+    quote_id:q.quote_id,provider_type:q.provider_type,provider_name:q.provider_name,
+    estimated_cost_kes:q.estimated_cost_kes,estimated_time:q.estimated_time,reliability_score:q.reliability_score}))};
+  jsonEl.innerHTML =
+    '<div style="font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:6px;">POST /v1/quotes — request</div>'+
+    jsonBlock(reqJson)+
+    '<div style="font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft);margin:14px 0 6px;">200 — response</div>'+
+    jsonBlock(resJson);
+}
+function emptyState(h,p,contrib){
+  return '<div class="empty"><div class="em">'+(contrib?'🌍':'🤝')+'</div><h4>'+h+'</h4><p>'+p+'</p>'+(contrib?'<span class="mini">↳ a contribution opportunity</span>':'')+'</div>';
+}
+function jsonBlock(obj){
+  let s=JSON.stringify(obj,null,2);
+  s=s.replace(/&/g,"&amp;").replace(/</g,"&lt;");
+  s=s.replace(/"([^"]+)":/g,'"<span class="k">$1</span>":')
+     .replace(/: "([^"]*)"/g,': "<span class="s">$1</span>"')
+     .replace(/: (\d+\.?\d*)/g,': <span class="n">$1</span>');
+  return '<pre class="json">'+s+'</pre>';
+}
+runQuote();
+
+const ARCH={
+  core:{c:"#2563eb",h:"The Core Routing Engine",p:"Receives every request in one standardized shape, fans it out to all adapters, collects their answers, and returns a unified list. It knows nothing about any specific provider — that's the whole point."},
+  rider:{c:"#2563eb",h:"Rider Adapter — boda_rider",p:"Handles independent riders and pools (Bolt, Gatika, local CBD pools). Best for fast, short, intra-town hops. A human-in-the-loop variant lets a rider confirm a job over a WhatsApp bot."},
+  matatu:{c:"#f0a020",h:"Matatu Adapter — matatu_sacco",p:"Wraps SACCO parcel desks (2NK, Mololine). The affordable, sub-5kg, upcountry parcel flow that funded players ignore. Often static-rate in Phase 1; the customer collects at the stage."},
+  bus:{c:"#0d9488",h:"Bus Adapter — bus",p:"Long-distance coaches (Easy Coach) carrying parcels alongside passengers. Great reach and capacity for heavier boxes over long routes."},
+  courier:{c:"#7c5cdb",h:"Courier Adapter — national_courier",p:"National couriers (G4S, Fargo) with door delivery and the highest reliability. Pricier, weight-tiered, and the most likely to expose a real rate API for a live adapter."},
+};
+document.querySelectorAll("[data-arch]").forEach(el=>el.onclick=()=>{
+  document.querySelectorAll(".ad").forEach(a=>a.classList.remove("on"));
+  if(el.classList.contains("ad"))el.classList.add("on");
+  const a=ARCH[el.dataset.arch];
+  $("#archDetail").innerHTML='<h4><span class="pip" style="background:'+a.c+'"></span>'+a.h+'</h4><p>'+a.p+'</p>';
+});
+
+const EPS=[
+  {v:"GET",path:"/v1/zones",t:"List locations",d:"List supported drop-off / pick-up locations. Optionally filter by type.",
+   req:"GET /v1/zones?type=stage",res:{zones:[{id:"ZONE_NKR_MAIN",name:"Nakuru Main Stage",type:"stage",town:"Nakuru"}]}},
+  {v:"GET",path:"/v1/zones/search",t:"Search locations",d:"Free-text search across zone names — for an autocomplete at checkout.",
+   req:"GET /v1/zones/search?q=nyeri",res:{query:"nyeri",zones:[{id:"ZONE_NYR_MAIN",name:"Nyeri Main Stage",type:"stage",town:"Nyeri"}]}},
+  {v:"POST",path:"/v1/quotes",t:"Get delivery options",d:"The heart of Itafika. Returns every option across all transport classes with cost, time, and reliability.",
+   req:{origin_zone_id:"ZONE_NBI_CBD_01",destination_zone_id:"ZONE_NKR_MAIN",package_weight_kg:2.5,package_type:"apparel"},
+   res:{quotes:[{provider_type:"matatu_sacco",provider_name:"Mololine Sacco",estimated_cost_kes:400,estimated_time:"3 hours",reliability_score:0.98}]}},
+  {v:"POST",path:"/v1/shipments",t:"Book a quote",d:"Locks in a chosen quote, records the shipment, and returns a tracking ID.",
+   req:{quote_id:"qt_2mn41bq",sender:{name:"Asha",phone:"+254712345678"},recipient:{name:"John",phone:"+254723456789"}},
+   res:{tracking_id:"trk_kf93md2",status:"package_picked",created_at:"2026-06-08T08:14:00Z"}},
+  {v:"GET",path:"/v1/shipments/{id}/track",t:"Track a shipment",d:"Returns the universal status and history — one vocabulary across every provider.",
+   req:"GET /v1/shipments/trk_kf93md2/track",res:{tracking_id:"trk_kf93md2",status:"in_transit",history:[{status:"package_picked",at:"2026-06-08T08:14:00Z"},{status:"in_transit",at:"2026-06-08T08:40:00Z"}]}},
+];
+const epList=$("#epList"), epPane=$("#epPane");
+EPS.forEach((e,i)=>{
+  const b=document.createElement("button");
+  b.innerHTML='<span class="verb '+e.v.toLowerCase()+'">'+e.v+'</span>'+e.t;
+  if(i===2)b.classList.add("on");
+  b.onclick=()=>{document.querySelectorAll("#epList button").forEach(x=>x.classList.remove("on"));b.classList.add("on");renderEp(i);};
+  epList.appendChild(b);
+});
+function renderEp(i){
+  const e=EPS[i];
+  const reqBlock = typeof e.req==="string"?'<pre class="json">'+e.req.replace(/</g,"&lt;")+'</pre>':jsonBlock(e.req);
+  epPane.innerHTML='<h4><span class="verb '+e.v.toLowerCase()+'">'+e.v+'</span> '+e.t+'</h4>'+
+    '<div class="path">'+e.path+'</div>'+
+    '<p class="d">'+e.d+'</p>'+
+    '<div class="ep-grid">'+
+      '<div><div class="h">Request</div>'+reqBlock+'</div>'+
+      '<div><div class="h">Response</div>'+jsonBlock(e.res)+'</div>'+
+    '</div>';
+}
+renderEp(2);
+
+const STATES=[
+  {k:"package_picked",ic:"📥"},{k:"in_transit",ic:"🛣️"},{k:"at_sorting_hub",ic:"🏬"},
+  {k:"ready_for_pickup",ic:"📍"},{k:"delivered",ic:"✅"}
+];
+const stepsEl=$("#steps"); let cur=0;
+STATES.forEach((s,i)=>{
+  const d=document.createElement("div");d.className="stp";d.dataset.i=i;
+  d.innerHTML='<span class="ball">'+s.ic+'</span><span class="nm">'+s.k+'</span>';
+  d.onclick=()=>{cur=i;paintSteps();};
+  stepsEl.appendChild(d);
+});
+function paintSteps(){
+  document.querySelectorAll(".stp").forEach((el,i)=>{
+    el.classList.toggle("done",i<cur);
+    el.classList.toggle("cur",i===cur);
+  });
+  const pct=cur/(STATES.length-1);
+  $("#prog").style.width="calc((100% - 48px) * "+pct+")";
+}
+$("#trkPlay").onclick=()=>{cur=Math.min(cur+1,STATES.length-1);paintSteps();};
+$("#trkBack").onclick=()=>{cur=Math.max(cur-1,0);paintSteps();};
+$("#trkReset").onclick=()=>{cur=0;paintSteps();};
+paintSteps();
+
+document.querySelectorAll("[data-ac]").forEach(c=>c.onclick=()=>c.classList.toggle("open"));
+
+const SAMPLES=[
+  ["fargo","ZONE_NBI_CBD_01","ZONE_ELD_MAIN","550","30","next day","you-2026-06"],
+  ["2nk","ZONE_NBI_CBD_01","ZONE_NKR_MAIN","350","0","3 hours","you-2026-06"],
+  ["easycoach","ZONE_NBI_CBD_01","ZONE_NYR_MAIN","400","20","4 hours","you-2026-06"],
+];
+let added=0;
+$("#addRow").onclick=()=>{
+  const s=SAMPLES[added%SAMPLES.length];added++;
+  const tb=$("#csvTbl").querySelector("tbody");
+  const tr=document.createElement("tr");tr.className="added";
+  tr.innerHTML=s.map((c,i)=>i===6?'<td class="src">'+c+'</td>':'<td>'+c+'</td>').join("");
+  tb.appendChild(tr);
+  tr.scrollIntoView({behavior:"smooth",block:"nearest"});
+};
+</script>
+</body>
+</html>

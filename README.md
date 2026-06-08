@@ -1,0 +1,139 @@
+# Itafika
+
+**An open-source logistics aggregator API for Kenya.**
+
+*"Itafika"* — Swahili, *it will arrive.*
+
+Itafika is a single, clean, predictable interface that any online shop can plug into to solve delivery and shipping. Locations, transport modes, and rates are already built in — so no developer has to model Kenya's delivery system from the ground up.
+
+At checkout, a shop's customer picks a location and sees real options for getting the goods to them — a boda rider, a matatu or bus parcel service, a national courier — each with a price and an estimated time. The shop made one API call to get that. They didn't map a single stage, model a single rate, or integrate a single courier.
+
+> **Delivery as something you consume, not something you build.**
+
+---
+
+## Why this exists
+
+Kenya's e-commerce is a billion-dollar market and climbing, but delivery is the part that breaks the experience — not because there are too few ways to move a parcel, but because there are too many and none are standardized. Every shop re-solves the same problem from scratch, badly, and leaves the cheap informal options (matatu and bus parcel networks) off the table because wiring them up by hand is hopeless.
+
+Itafika does that work **once, in the open, for everyone.** It is the abstraction layer for Kenyan delivery — what Daraja is to payments. It is **not** a delivery company; it is the open standard *beneath* anyone who would otherwise integrate every provider by hand.
+
+For the full vision, see [`docs/Itafika-Concept-Doc.md`](docs/Itafika-Concept-Doc.md) (or the visual version, [`docs/Itafika.html`](docs/Itafika.html)).
+
+---
+
+## What's in this repository
+
+This is a **monorepo** with a deliberate split between the *standard* and a *reference implementation*.
+
+```
+itafika/
+├── spec/                  ★ the canonical, language-agnostic standard
+│   ├── openapi.yaml        · the Phase 1 API contract
+│   ├── adapter-contract.md · how to write a provider adapter
+│   └── data/               · the open zones + rates dataset (+ schema)
+├── packages/              the reference implementation (TypeScript)
+│   ├── core/               · routing engine + types generated from the spec
+│   ├── adapters/           · rider / matatu / courier adapters
+│   └── server/             · Fastify HTTP server
+├── examples/              a tiny shop calling the API
+├── docs/                  concept doc, visual page, architecture decisions
+│   └── decisions/          · ADRs (why we made each technical choice)
+├── CONTRIBUTING.md        how to add an adapter or data
+├── GOVERNANCE.md          how decisions get made
+└── LICENSE                MIT
+```
+
+**The `spec/` directory is the product.** Anyone could reimplement Itafika in Go or Python from `spec/` alone. `packages/server` is simply *the reference implementation* of that standard.
+
+---
+
+## The API at a glance (Phase 1)
+
+| Method | Endpoint | Purpose |
+|--------|----------|---------|
+| `GET`  | `/v1/zones` | List supported drop-off / pick-up locations |
+| `GET`  | `/v1/zones/search?q=` | Search locations by name |
+| `POST` | `/v1/quotes` | Get delivery options + prices between two zones |
+| `POST` | `/v1/shipments` | Lock in a chosen quote, get a tracking ID |
+| `GET`  | `/v1/shipments/{tracking_id}/track` | Unified tracking status |
+
+The heart is `POST /v1/quotes`:
+
+```jsonc
+// request
+{
+  "origin_zone_id": "ZONE_NBI_CBD_01",
+  "destination_zone_id": "ZONE_NKR_MAIN",
+  "package_weight_kg": 2.5,
+  "package_type": "apparel"
+}
+
+// response
+{
+  "quotes": [
+    {
+      "provider_type": "boda_rider",
+      "provider_name": "Independent Rider (CBD Pool)",
+      "estimated_cost_kes": 250,
+      "estimated_time": "45 mins",
+      "reliability_score": 0.92
+    },
+    {
+      "provider_type": "matatu_sacco",
+      "provider_name": "Mololine Sacco",
+      "estimated_cost_kes": 400,
+      "estimated_time": "3 hours",
+      "reliability_score": 0.98
+    }
+  ]
+}
+```
+
+The full contract — every field, type, and example — lives in [`spec/openapi.yaml`](spec/openapi.yaml).
+
+---
+
+## Customizable by design
+
+Because Itafika is open source, the defaults are a **starting point, not a cage.** A shop with its own negotiated courier rate overrides it. Want to add a mode, hide one, or change how options are ranked? Do it on your end — without ever rebuilding the foundation.
+
+---
+
+## Status
+
+🚧 **Phase 1 — pre-release.** The API contract is being frozen and the first dataset seeded. See the roadmap below.
+
+| Phase | What | State |
+|-------|------|-------|
+| **1 — Static API (MVP)** | Seeded static rates + standardized zone IDs behind the four endpoints. Quotes return real, useful numbers. | In progress |
+| **2 — Open adapters** | Publish `LogisticsProviderInterface`; community contributes live provider adapters. | Planned |
+| **3 — Payments & escrow** | Daraja / M-Pesa integration with COD split-billing. | Planned |
+
+---
+
+## Quickstart (reference implementation)
+
+> Requires Node.js ≥ 20 and pnpm. (Scaffolding lands with the Phase 1 server.)
+
+```bash
+pnpm install
+pnpm --filter @itafika/server dev      # starts the API on :3000, SQLite seeded from spec/data
+curl http://localhost:3000/v1/zones
+```
+
+---
+
+## Contributing
+
+The whole strategy depends on people contributing adapters and data. If you can describe how parcels move in your town — the stages, the providers, the rates — you can contribute, even without writing an adapter.
+
+Start with [`CONTRIBUTING.md`](CONTRIBUTING.md). To write a provider adapter, read [`spec/adapter-contract.md`](spec/adapter-contract.md).
+
+## License
+
+[MIT](LICENSE) — use it in anything, including commercially. The code is meant to be copied; the lasting asset is the open, community-maintained representation of how delivery actually works in Kenya.
+
+---
+
+*Itafika — so that any shop can simply say: it will arrive.*
