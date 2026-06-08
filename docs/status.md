@@ -20,8 +20,11 @@ The current branch has a working Phase 1 foundation:
 - a `pnpm` monorepo
 - `@itafika/core` with generated API types and a quote engine
 - `@itafika/worker` as the Cloudflare Worker reference API
+- `@itafika/adapters` with a reference static adapter
 - D1 migrations and a seed flow
-- the four Phase 1 HTTP endpoints
+- dataset validation for `spec/data/`
+- CI for validation, tests, and typecheck
+- the Phase 1 HTTP endpoints, including dataset freshness
 - a small checkout example in `examples/simple-shop`
 - automated tests for the core package and the Worker package
 
@@ -31,6 +34,7 @@ The Worker currently supports:
 
 - `GET /v1/zones`
 - `GET /v1/zones/search`
+- `GET /v1/freshness`
 - `POST /v1/quotes`
 - `POST /v1/deliveries`
 - `GET /v1/deliveries/{tracking_id}/track`
@@ -38,6 +42,8 @@ The Worker currently supports:
 Current behavior is intentionally simple:
 
 - quotes are computed from the seeded dataset in D1
+- quotes expire after 24 hours
+- a quote can only be booked once
 - booking a delivery records it in D1
 - tracking returns the recorded delivery status and history
 
@@ -56,7 +62,6 @@ This is normal for the current phase. The important thing is to describe it clea
 
 These are part of the project direction, but they are not implemented in this repository yet:
 
-- a real adapter package with provider-specific code
 - live provider integrations
 - background jobs with Queues
 - long-running booking flows with Workflows

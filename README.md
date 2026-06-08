@@ -76,6 +76,7 @@ Phase 1 can stay simple: a Worker reads the seeded dataset from D1 and returns q
 |--------|----------|---------|
 | `GET`  | `/v1/zones` | List supported drop-off / pick-up locations |
 | `GET`  | `/v1/zones/search?q=` | Search locations by name |
+| `GET`  | `/v1/freshness` | List per-town dataset freshness dates |
 | `POST` | `/v1/quotes` | Get delivery options + prices between two zones |
 | `POST` | `/v1/deliveries` | Lock in a chosen quote, get a tracking ID |
 | `GET`  | `/v1/deliveries/{tracking_id}/track` | Unified tracking status |
