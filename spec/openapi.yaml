@@ -187,9 +187,9 @@ paths:
       tags: [Deliveries]
       summary: Lock in a chosen quote and create a delivery
       description: |
-        Accepts a quote the customer selected, records the delivery, generates a
-        tracking ID, and notifies the relevant adapter. In Phase 1 the booking is
-        recorded but provider dispatch may be a stub depending on the adapter.
+        Accepts a quote the customer selected, records the delivery, and generates
+        a tracking ID. In Phase 1 the reference Worker records the booking, while
+        provider dispatch through adapters remains follow-on integration work.
       operationId: createDelivery
       requestBody:
         required: true

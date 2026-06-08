@@ -4,10 +4,14 @@
 > language — implements this contract. The TypeScript reference interface lives at
 > `packages/adapters/src/types.ts` and uses the shared types generated from
 > [`openapi.yaml`](openapi.yaml).
+>
+> The contract is canonical now. The Phase 1 reference Worker does **not** yet
+> route every quote and booking through adapter instances at runtime; that
+> integration work is still in progress.
 
 ## What an adapter is
 
-An **adapter** teaches Itafika how to talk to exactly one provider — an independent rider pool, a matatu/bus SACCO's parcel service, or a national courier. The Core Routing Engine never contains provider-specific logic. It calls every adapter through the same small interface, collects their answers, and returns them to the shop.
+An **adapter** teaches Itafika how to talk to exactly one provider — an independent rider pool, a matatu/bus SACCO's parcel service, or a national courier. The target engine architecture never contains provider-specific logic. In the fully wired model, it calls every adapter through the same small interface, collects their answers, and returns them to the shop.
 
 ```
 Core Routing Engine
@@ -18,7 +22,7 @@ Core Routing Engine
    └──► G4SAdapter              (national_courier)
 ```
 
-This is the entire open-source extension mechanism: to add a provider, you write one adapter. You never touch the core.
+This is the intended open-source extension mechanism: to add a provider, you write one adapter. The contract is stable now; the remaining work is wiring the reference runtime to use adapters for all provider flows.
 
 ## The interface
 

@@ -14,6 +14,7 @@ Per [GOVERNANCE.md](../../GOVERNANCE.md), any change to the spec is accompanied 
 | [0007](0007-clarify-phase1-validation-and-reserved-fields.md) | Clarify Phase 1 validation rules and reserved quote fields | Accepted |
 | [0008](0008-expose-dataset-freshness.md) | Expose dataset freshness through the API | Accepted |
 | [0009](0009-define-worker-boundaries.md) | Define Worker policy, validation, and service boundaries | Accepted |
+| [0010](0010-clarify-adapter-contract-vs-phase1-integration.md) | Clarify adapter contract versus Phase 1 runtime integration | Accepted |
 
 ## Format
 
