@@ -12,6 +12,7 @@ export type DeliveryRequest = components["schemas"]["DeliveryRequest"];
 export type Delivery = components["schemas"]["Delivery"];
 export type TrackingStatus = components["schemas"]["TrackingStatus"];
 export type TrackingEvent = components["schemas"]["TrackingEvent"];
+export type TrackingEventCreateRequest = components["schemas"]["TrackingEventCreateRequest"];
 export type TrackingResponse = components["schemas"]["TrackingResponse"];
 
 export interface Provider {

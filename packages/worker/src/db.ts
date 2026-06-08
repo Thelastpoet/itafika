@@ -6,13 +6,14 @@ import type {
   QuoteData,
   Rate,
   TrackingEvent,
+  TrackingEventCreateRequest,
   TrackingResponse,
   TrackingStatus,
   Zone,
   ZoneType,
   FreshnessEntry,
 } from "@itafika/core";
-import { latestTrackingStatus } from "@itafika/core";
+import { canAdvanceTrackingStatus, latestTrackingStatus } from "@itafika/core";
 
 interface ZoneRow {
   id: string;
@@ -193,4 +194,30 @@ export async function trackDelivery(db: D1Database, trackingId: string): Promise
   const status = latestTrackingStatus(history);
   if (status === null) return null;
   return { tracking_id: delivery.tracking_id, status, history };
+}
+
+export async function appendTrackingEvent(
+  db: D1Database,
+  trackingId: string,
+  request: TrackingEventCreateRequest,
+  now: string,
+): Promise<TrackingResponse | "not_found" | "invalid_transition"> {
+  const current = await trackDelivery(db, trackingId);
+  if (!current) return "not_found";
+
+  if (!canAdvanceTrackingStatus(current.status, request.status)) {
+    return "invalid_transition";
+  }
+
+  await db.batch([
+    db.prepare("INSERT INTO tracking_events (tracking_id, status, at, note) VALUES (?,?,?,?)").bind(
+      trackingId,
+      request.status,
+      now,
+      request.note ?? null,
+    ),
+    db.prepare("UPDATE deliveries SET status = ? WHERE tracking_id = ?").bind(request.status, trackingId),
+  ]);
+
+  return trackDelivery(db, trackingId) as Promise<TrackingResponse>;
 }

@@ -6,6 +6,7 @@ const PHONE_RE = /^\+[1-9]\d{7,14}$/;
 const NAME_MAX_LENGTH = 120;
 const PHONE_MAX_LENGTH = 16;
 const PACKAGE_DESCRIPTION_MAX_LENGTH = 500;
+const TRACKING_NOTE_MAX_LENGTH = 500;
 
 export function clampLimit(raw: string | null): number {
   const n = raw === null ? 100 : Number(raw);
@@ -30,6 +31,10 @@ export function parseContact(value: unknown): Contact | null {
 
 export function parsePackageDescription(value: unknown): string | null {
   return normalizeText(value, PACKAGE_DESCRIPTION_MAX_LENGTH);
+}
+
+export function parseTrackingNote(value: unknown): string | null {
+  return normalizeText(value, TRACKING_NOTE_MAX_LENGTH);
 }
 
 export function isQuoteId(value: string): boolean {

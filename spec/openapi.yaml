@@ -257,6 +257,49 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/Error' }
 
+  /v1/deliveries/{tracking_id}/events:
+    post:
+      tags: [Deliveries]
+      summary: Append a tracking event to a delivery
+      description: |
+        Adds a new event to the delivery's unified tracking history.
+        In Phase 1 this is a manual/internal update path used before full
+        adapter-driven or webhook-driven tracking flows exist.
+      operationId: createTrackingEvent
+      parameters:
+        - name: tracking_id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^trk_[a-f0-9]{32}$'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/TrackingEventCreateRequest' }
+            example:
+              status: in_transit
+              note: "Handed over to linehaul driver at Nairobi stage"
+      responses:
+        '201':
+          description: Event recorded and tracking state updated.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TrackingResponse' }
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          description: Unknown tracking ID.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '409':
+          description: Status regression is not allowed.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
 components:
   schemas:
 
@@ -399,6 +442,16 @@ components:
         at: { type: string, format: date-time }
         note: { type: string }
       required: [status, at]
+
+    TrackingEventCreateRequest:
+      type: object
+      properties:
+        status: { $ref: '#/components/schemas/TrackingStatus' }
+        note:
+          type: string
+          minLength: 1
+          maxLength: 500
+      required: [status]
 
     TrackingResponse:
       type: object

@@ -151,6 +151,59 @@ describe("deliveries", () => {
 		expect(body.history.map((event) => event.status)).toEqual(["package_picked", "in_transit"]);
 	});
 
+	it("appends a manual tracking event and returns updated history", async () => {
+		const quote_id = await bookableQuoteId();
+		const created = await json({
+			quote_id,
+			sender: { name: "Asha Mwangi", phone: "+254712345678" },
+			recipient: { name: "John Otieno", phone: "+254723456789" },
+		});
+		const delivery = (await created.json()) as { tracking_id: string };
+
+		const updated = await SELF.fetch(`https://api.itafika.dev/v1/deliveries/${delivery.tracking_id}/events`, {
+			method: "POST",
+			headers: { "content-type": "application/json" },
+			body: JSON.stringify({ status: "in_transit", note: "Loaded onto upcountry parcel van" }),
+		});
+		expect(updated.status).toBe(201);
+		const body = (await updated.json()) as { status: string; history: { status: string; note?: string }[] };
+		expect(body.status).toBe("in_transit");
+		expect(body.history.map((event) => event.status)).toEqual(["package_picked", "in_transit"]);
+		expect(body.history[1]?.note).toBe("Loaded onto upcountry parcel van");
+	});
+
+	it("rejects backward manual status transitions", async () => {
+		const quote_id = await bookableQuoteId();
+		const created = await json({
+			quote_id,
+			sender: { name: "Asha Mwangi", phone: "+254712345678" },
+			recipient: { name: "John Otieno", phone: "+254723456789" },
+		});
+		const delivery = (await created.json()) as { tracking_id: string };
+
+		await SELF.fetch(`https://api.itafika.dev/v1/deliveries/${delivery.tracking_id}/events`, {
+			method: "POST",
+			headers: { "content-type": "application/json" },
+			body: JSON.stringify({ status: "in_transit" }),
+		});
+
+		const regressed = await SELF.fetch(`https://api.itafika.dev/v1/deliveries/${delivery.tracking_id}/events`, {
+			method: "POST",
+			headers: { "content-type": "application/json" },
+			body: JSON.stringify({ status: "package_picked" }),
+		});
+		expect(regressed.status).toBe(409);
+	});
+
+	it("returns 404 when appending an event to an unknown tracking id", async () => {
+		const res = await SELF.fetch("https://api.itafika.dev/v1/deliveries/trk_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/events", {
+			method: "POST",
+			headers: { "content-type": "application/json" },
+			body: JSON.stringify({ status: "in_transit" }),
+		});
+		expect(res.status).toBe(404);
+	});
+
 	it("does not allow the same quote to be booked twice", async () => {
 		const quote_id = await bookableQuoteId();
 		const payload = {

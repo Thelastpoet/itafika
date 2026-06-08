@@ -88,9 +88,9 @@ export interface paths {
         put?: never;
         /**
          * Lock in a chosen quote and create a delivery
-         * @description Accepts a quote the customer selected, records the delivery, generates a
-         *     tracking ID, and notifies the relevant adapter. In Phase 1 the booking is
-         *     recorded but provider dispatch may be a stub depending on the adapter.
+         * @description Accepts a quote the customer selected, records the delivery, and generates
+         *     a tracking ID. In Phase 1 the reference Worker records the booking, while
+         *     provider dispatch through adapters remains follow-on integration work.
          */
         post: operations["createDelivery"];
         delete?: never;
@@ -115,6 +115,28 @@ export interface paths {
         get: operations["trackDelivery"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/deliveries/{tracking_id}/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Append a tracking event to a delivery
+         * @description Adds a new event to the delivery's unified tracking history.
+         *     In Phase 1 this is a manual/internal update path used before full
+         *     adapter-driven or webhook-driven tracking flows exist.
+         */
+        post: operations["createTrackingEvent"];
         delete?: never;
         options?: never;
         head?: never;
@@ -214,6 +236,10 @@ export interface components {
             status: components["schemas"]["TrackingStatus"];
             /** Format: date-time */
             at: string;
+            note?: string;
+        };
+        TrackingEventCreateRequest: {
+            status: components["schemas"]["TrackingStatus"];
             note?: string;
         };
         TrackingResponse: {
@@ -536,6 +562,57 @@ export interface operations {
             400: components["responses"]["BadRequest"];
             /** @description Unknown tracking ID. */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    createTrackingEvent: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tracking_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                /**
+                 * @example {
+                 *       "status": "in_transit",
+                 *       "note": "Handed over to linehaul driver at Nairobi stage"
+                 *     }
+                 */
+                "application/json": components["schemas"]["TrackingEventCreateRequest"];
+            };
+        };
+        responses: {
+            /** @description Event recorded and tracking state updated. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TrackingResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            /** @description Unknown tracking ID. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Status regression is not allowed. */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };

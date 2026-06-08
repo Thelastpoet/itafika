@@ -1,12 +1,13 @@
-import type { DeliveryRequest, QuoteRequest, ZoneType } from "@itafika/core";
+import type { DeliveryRequest, QuoteRequest, TrackingEventCreateRequest, ZoneType } from "@itafika/core";
 import {
+  appendTrackingEvent,
   listFreshness,
   listZones,
   searchZones,
   trackDelivery,
 } from "./db.js";
 import { bookDelivery } from "./delivery-service.js";
-import { clampLimit, isQuoteId, isTrackingId, parseContact, parsePackageDescription } from "./validation.js";
+import { clampLimit, isQuoteId, isTrackingId, parseContact, parsePackageDescription, parseTrackingNote } from "./validation.js";
 import { createQuotes } from "./quote-service.js";
 
 const json = (data: unknown, status = 200): Response =>
@@ -72,6 +73,35 @@ async function handleCreateDelivery(request: Request, env: Env): Promise<Respons
   return json(delivery, 201);
 }
 
+async function handleCreateTrackingEvent(request: Request, env: Env, trackingId: string): Promise<Response> {
+  let body: Partial<TrackingEventCreateRequest>;
+  try {
+    body = (await request.json()) as Partial<TrackingEventCreateRequest>;
+  } catch {
+    return fail("invalid_request", "Request body must be valid JSON", 400);
+  }
+
+  if (typeof body.status !== "string") {
+    return fail("invalid_request", "status is required", 400);
+  }
+
+  const event: TrackingEventCreateRequest = { status: body.status as TrackingEventCreateRequest["status"] };
+  if (body.note !== undefined) {
+    const note = parseTrackingNote(body.note);
+    if (note === null) {
+      return fail("invalid_request", "note must be a non-empty string up to 500 characters", 400);
+    }
+    event.note = note;
+  }
+
+  const result = await appendTrackingEvent(env.DB, trackingId, event, new Date().toISOString());
+  if (result === "not_found") return fail("not_found", "Unknown tracking ID", 404);
+  if (result === "invalid_transition") {
+    return fail("invalid_status_transition", "tracking status cannot move backwards", 409);
+  }
+  return json(result, 201);
+}
+
 export default {
   async fetch(request, env): Promise<Response> {
     const url = new URL(request.url);
@@ -114,6 +144,15 @@ export default {
         const result = await trackDelivery(env.DB, trackingId);
         if (!result) return fail("not_found", "Unknown tracking ID", 404);
         return json(result);
+      }
+
+      const events = pathname.match(/^\/v1\/deliveries\/([^/]+)\/events$/);
+      if (method === "POST" && events) {
+        const trackingId = decodeURIComponent(events[1]!);
+        if (!isTrackingId(trackingId)) {
+          return fail("invalid_request", "tracking_id must be a valid tracking identifier", 400);
+        }
+        return await handleCreateTrackingEvent(request, env, trackingId);
       }
 
       return fail("not_found", `No route for ${method} ${pathname}`, 404);
