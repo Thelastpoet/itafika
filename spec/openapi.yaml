@@ -27,7 +27,7 @@ tags:
     description: Locations — CBD hubs, upcountry stages, residential areas.
   - name: Quotes
     description: Delivery options and prices between two zones.
-  - name: Shipments
+  - name: Deliveries
     description: Booking a chosen quote and tracking it.
 
 paths:
@@ -153,20 +153,20 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/Error' }
 
-  /v1/shipments:
+  /v1/deliveries:
     post:
-      tags: [Shipments]
-      summary: Lock in a chosen quote and create a shipment
+      tags: [Deliveries]
+      summary: Lock in a chosen quote and create a delivery
       description: |
-        Accepts a quote the customer selected, records the shipment, generates a
+        Accepts a quote the customer selected, records the delivery, generates a
         tracking ID, and notifies the relevant adapter. In Phase 1 the booking is
         recorded but provider dispatch may be a stub depending on the adapter.
-      operationId: createShipment
+      operationId: createDelivery
       requestBody:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/ShipmentRequest' }
+            schema: { $ref: '#/components/schemas/DeliveryRequest' }
             example:
               quote_id: qt_2mn41bq
               sender:
@@ -178,10 +178,10 @@ paths:
               package_description: "Sealed apparel box, 2.5kg"
       responses:
         '201':
-          description: Shipment created.
+          description: Delivery created.
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Shipment' }
+              schema: { $ref: '#/components/schemas/Delivery' }
         '400':
           $ref: '#/components/responses/BadRequest'
         '404':
@@ -190,15 +190,15 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/Error' }
 
-  /v1/shipments/{tracking_id}/track:
+  /v1/deliveries/{tracking_id}/track:
     get:
-      tags: [Shipments]
-      summary: Get the unified tracking status of a shipment
+      tags: [Deliveries]
+      summary: Get the unified tracking status of a delivery
       description: |
-        Returns the shipment's current universal status and its history.
+        Returns the delivery's current universal status and its history.
         Every provider's own states are normalised into Itafika's five
         universal statuses.
-      operationId: trackShipment
+      operationId: trackDelivery
       parameters:
         - name: tracking_id
           in: path
@@ -239,7 +239,7 @@ components:
 
     TrackingStatus:
       type: string
-      description: The five universal shipment statuses.
+      description: The five universal delivery statuses.
       enum: [package_picked, in_transit, at_sorting_hub, ready_for_pickup, delivered]
 
     Coordinates:
@@ -285,7 +285,7 @@ components:
       properties:
         quote_id:
           type: string
-          description: Opaque ID used to book this quote via POST /v1/shipments.
+          description: Opaque ID used to book this quote via POST /v1/deliveries.
         provider_type: { $ref: '#/components/schemas/ProviderType' }
         provider_name:
           type: string
@@ -313,7 +313,7 @@ components:
           description: E.164 format, e.g. +254712345678.
       required: [name, phone]
 
-    ShipmentRequest:
+    DeliveryRequest:
       type: object
       properties:
         quote_id: { type: string }
@@ -322,12 +322,12 @@ components:
         package_description: { type: string }
       required: [quote_id, sender, recipient]
 
-    Shipment:
+    Delivery:
       type: object
       properties:
         tracking_id:
           type: string
-          description: Use with GET /v1/shipments/{tracking_id}/track.
+          description: Use with GET /v1/deliveries/{tracking_id}/track.
         status: { $ref: '#/components/schemas/TrackingStatus' }
         quote: { $ref: '#/components/schemas/Quote' }
         sender: { $ref: '#/components/schemas/Contact' }

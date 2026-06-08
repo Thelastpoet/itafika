@@ -60,7 +60,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/v1/shipments": {
+    "/v1/deliveries": {
         parameters: {
             query?: never;
             header?: never;
@@ -70,19 +70,19 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Lock in a chosen quote and create a shipment
-         * @description Accepts a quote the customer selected, records the shipment, generates a
+         * Lock in a chosen quote and create a delivery
+         * @description Accepts a quote the customer selected, records the delivery, generates a
          *     tracking ID, and notifies the relevant adapter. In Phase 1 the booking is
          *     recorded but provider dispatch may be a stub depending on the adapter.
          */
-        post: operations["createShipment"];
+        post: operations["createDelivery"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/v1/shipments/{tracking_id}/track": {
+    "/v1/deliveries/{tracking_id}/track": {
         parameters: {
             query?: never;
             header?: never;
@@ -90,12 +90,12 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Get the unified tracking status of a shipment
-         * @description Returns the shipment's current universal status and its history.
+         * Get the unified tracking status of a delivery
+         * @description Returns the delivery's current universal status and its history.
          *     Every provider's own states are normalised into Itafika's five
          *     universal statuses.
          */
-        get: operations["trackShipment"];
+        get: operations["trackDelivery"];
         put?: never;
         post?: never;
         delete?: never;
@@ -119,7 +119,7 @@ export interface components {
          */
         ProviderType: "boda_rider" | "matatu_sacco" | "bus" | "national_courier";
         /**
-         * @description The five universal shipment statuses.
+         * @description The five universal delivery statuses.
          * @enum {string}
          */
         TrackingStatus: "package_picked" | "in_transit" | "at_sorting_hub" | "ready_for_pickup" | "delivered";
@@ -151,7 +151,7 @@ export interface components {
             package_type?: string;
         };
         Quote: {
-            /** @description Opaque ID used to book this quote via POST /v1/shipments. */
+            /** @description Opaque ID used to book this quote via POST /v1/deliveries. */
             quote_id: string;
             provider_type: components["schemas"]["ProviderType"];
             /** @description Human-readable provider name shown to the customer. */
@@ -171,14 +171,14 @@ export interface components {
             /** @description E.164 format, e.g. +254712345678. */
             phone: string;
         };
-        ShipmentRequest: {
+        DeliveryRequest: {
             quote_id: string;
             sender: components["schemas"]["Contact"];
             recipient: components["schemas"]["Contact"];
             package_description?: string;
         };
-        Shipment: {
-            /** @description Use with GET /v1/shipments/{tracking_id}/track. */
+        Delivery: {
+            /** @description Use with GET /v1/deliveries/{tracking_id}/track. */
             tracking_id: string;
             status: components["schemas"]["TrackingStatus"];
             quote?: components["schemas"]["Quote"];
@@ -380,7 +380,7 @@ export interface operations {
             };
         };
     };
-    createShipment: {
+    createDelivery: {
         parameters: {
             query?: never;
             header?: never;
@@ -403,17 +403,17 @@ export interface operations {
                  *       "package_description": "Sealed apparel box, 2.5kg"
                  *     }
                  */
-                "application/json": components["schemas"]["ShipmentRequest"];
+                "application/json": components["schemas"]["DeliveryRequest"];
             };
         };
         responses: {
-            /** @description Shipment created. */
+            /** @description Delivery created. */
             201: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Shipment"];
+                    "application/json": components["schemas"]["Delivery"];
                 };
             };
             400: components["responses"]["BadRequest"];
@@ -428,7 +428,7 @@ export interface operations {
             };
         };
     };
-    trackShipment: {
+    trackDelivery: {
         parameters: {
             query?: never;
             header?: never;

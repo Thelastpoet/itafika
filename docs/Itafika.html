@@ -364,7 +364,7 @@
 <section>
   <div class="wrap">
     <h2 class="sec-title">Every provider, five universal states</h2>
-    <p class="lede" style="margin-bottom:26px;">Providers each track differently. Itafika normalizes them into one vocabulary, so a shop reads the same five states no matter who carries the package. <b>Advance the shipment.</b></p>
+    <p class="lede" style="margin-bottom:26px;">Providers each track differently. Itafika normalizes them into one vocabulary, so a shop reads the same five states no matter who carries the package. <b>Advance the delivery.</b></p>
     <div class="track">
       <div class="steps" id="steps">
         <span class="prog" id="prog" style="width:0;"></span>
@@ -635,11 +635,11 @@ const EPS=[
   {v:"POST",path:"/v1/quotes",t:"Get delivery options",d:"The heart of Itafika. Returns every option across all transport classes with cost, time, and reliability.",
    req:{origin_zone_id:"ZONE_NBI_CBD_01",destination_zone_id:"ZONE_NKR_MAIN",package_weight_kg:2.5,package_type:"apparel"},
    res:{quotes:[{quote_id:"qt_2mn41bq",provider_type:"matatu_sacco",provider_name:"Mololine Sacco",estimated_cost_kes:400,estimated_time:"3 hours",reliability_score:0.98}]}},
-  {v:"POST",path:"/v1/shipments",t:"Book a quote",d:"Locks in a chosen quote, records the shipment, and returns a tracking ID.",
+  {v:"POST",path:"/v1/deliveries",t:"Book a quote",d:"Locks in a chosen quote, records the delivery, and returns a tracking ID.",
    req:{quote_id:"qt_2mn41bq",sender:{name:"Asha",phone:"+254712345678"},recipient:{name:"John",phone:"+254723456789"}},
    res:{tracking_id:"trk_kf93md2",status:"package_picked",created_at:"2026-06-08T08:14:00Z"}},
-  {v:"GET",path:"/v1/shipments/{id}/track",t:"Track a shipment",d:"Returns the universal status and history — one vocabulary across every provider.",
-   req:"GET /v1/shipments/trk_kf93md2/track",res:{tracking_id:"trk_kf93md2",status:"in_transit",history:[{status:"package_picked",at:"2026-06-08T08:14:00Z"},{status:"in_transit",at:"2026-06-08T08:40:00Z"}]}},
+  {v:"GET",path:"/v1/deliveries/{id}/track",t:"Track a delivery",d:"Returns the universal status and history — one vocabulary across every provider.",
+   req:"GET /v1/deliveries/trk_kf93md2/track",res:{tracking_id:"trk_kf93md2",status:"in_transit",history:[{status:"package_picked",at:"2026-06-08T08:14:00Z"},{status:"in_transit",at:"2026-06-08T08:40:00Z"}]}},
 ];
 const epList=$("#epList"), epPane=$("#epPane");
 EPS.forEach((e,i)=>{

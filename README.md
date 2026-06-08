@@ -53,10 +53,10 @@ The reference implementation is designed for **Cloudflare Workers**:
 | Need | Cloudflare primitive |
 |------|----------------------|
 | Public API | Workers |
-| Zones, providers, rates, shipments, tracking events | D1 |
+| Zones, providers, rates, deliveries, tracking events | D1 |
 | Long-running booking or payment flows | Workflows |
 | Background refreshes, webhook processing, async provider jobs | Queues |
-| Per-shipment or per-provider coordination, when needed | Durable Objects |
+| Per-delivery or per-provider coordination, when needed | Durable Objects |
 
 Phase 1 can stay simple: a Worker reads the seeded dataset from D1 and returns quote options. Workflows, Queues, and Durable Objects are added only where the logistics lifecycle needs retries, background work, or strong coordination.
 
@@ -69,8 +69,8 @@ Phase 1 can stay simple: a Worker reads the seeded dataset from D1 and returns q
 | `GET`  | `/v1/zones` | List supported drop-off / pick-up locations |
 | `GET`  | `/v1/zones/search?q=` | Search locations by name |
 | `POST` | `/v1/quotes` | Get delivery options + prices between two zones |
-| `POST` | `/v1/shipments` | Lock in a chosen quote, get a tracking ID |
-| `GET`  | `/v1/shipments/{tracking_id}/track` | Unified tracking status |
+| `POST` | `/v1/deliveries` | Lock in a chosen quote, get a tracking ID |
+| `GET`  | `/v1/deliveries/{tracking_id}/track` | Unified tracking status |
 
 The heart is `POST /v1/quotes`:
 

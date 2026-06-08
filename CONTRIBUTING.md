@@ -30,15 +30,15 @@ Adapters live in [`packages/adapters/`](packages/adapters/). Start by copying th
 
 ## 3. Contribute to the core / Worker
 
-The reference implementation is a Cloudflare Worker written in TypeScript. The Worker exposes the API, the core routing engine computes quotes, and D1 stores zones, providers, rates, shipments, and tracking events.
+The reference implementation is a Cloudflare Worker written in TypeScript. The Worker exposes the API, the core routing engine computes quotes, and D1 stores zones, providers, rates, deliveries, and tracking events.
 
 Cloudflare primitives are used only where they match the job:
 
 - **Workers** serve the HTTP API.
-- **D1** stores the relational dataset and Phase 1 shipment records.
+- **D1** stores the relational dataset and Phase 1 delivery records.
 - **Queues** handle background jobs such as provider webhook processing or rate refreshes.
 - **Workflows** handle durable multi-step work such as booking, retries, human approval, payment, and settlement.
-- **Durable Objects** handle stateful coordination when one shipment, provider, or webhook stream needs a single authority.
+- **Durable Objects** handle stateful coordination when one delivery, provider, or webhook stream needs a single authority.
 
 Because the **spec is the source of truth**, changes that affect the API contract start with a change to [`spec/openapi.yaml`](spec/openapi.yaml) and a short ADR (see [`docs/decisions/`](docs/decisions/)) — never with code alone. This keeps the standard and the reference implementation from drifting apart.
 
