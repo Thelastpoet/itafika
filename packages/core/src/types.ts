@@ -6,6 +6,12 @@ export type Coordinates = components["schemas"]["Coordinates"];
 export type Zone = components["schemas"]["Zone"];
 export type QuoteRequest = components["schemas"]["QuoteRequest"];
 export type Quote = components["schemas"]["Quote"];
+export type Contact = components["schemas"]["Contact"];
+export type DeliveryRequest = components["schemas"]["DeliveryRequest"];
+export type Delivery = components["schemas"]["Delivery"];
+export type TrackingStatus = components["schemas"]["TrackingStatus"];
+export type TrackingEvent = components["schemas"]["TrackingEvent"];
+export type TrackingResponse = components["schemas"]["TrackingResponse"];
 
 export interface Provider {
   id: string;

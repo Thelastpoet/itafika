@@ -1,6 +1,14 @@
 import { quote } from "@itafika/core";
-import type { Quote, QuoteOption, QuoteRequest, ZoneType } from "@itafika/core";
-import { listZones, loadQuoteData, searchZones } from "./db.js";
+import type { Contact, DeliveryRequest, Quote, QuoteOption, QuoteRequest, ZoneType } from "@itafika/core";
+import {
+  createDelivery,
+  listZones,
+  loadQuoteData,
+  persistQuotes,
+  searchZones,
+  trackDelivery,
+  zonesExist,
+} from "./db.js";
 
 const json = (data: unknown, status = 200): Response =>
   new Response(JSON.stringify(data), { status, headers: { "content-type": "application/json" } });
@@ -14,8 +22,14 @@ function clampLimit(raw: string | null): number {
   return Math.min(500, Math.max(1, Math.trunc(n)));
 }
 
+const shortId = (prefix: string): string => `${prefix}_${crypto.randomUUID().replace(/-/g, "").slice(0, 8)}`;
+
 function withQuoteId(option: QuoteOption): Quote {
-  return { quote_id: `qt_${crypto.randomUUID().replace(/-/g, "").slice(0, 8)}`, ...option };
+  return { quote_id: shortId("qt"), ...option };
+}
+
+function isContact(c: unknown): c is Contact {
+  return typeof c === "object" && c !== null && typeof (c as Contact).name === "string" && typeof (c as Contact).phone === "string";
 }
 
 async function handleQuotes(request: Request, env: Env): Promise<Response> {
@@ -34,9 +48,34 @@ async function handleQuotes(request: Request, env: Env): Promise<Response> {
     return fail("invalid_request", "package_weight_kg must be a positive number", 400);
   }
 
+  if (!(await zonesExist(env.DB, origin_zone_id, destination_zone_id))) {
+    return fail("not_found", "One or both zone IDs are unknown", 404);
+  }
+
   const data = await loadQuoteData(env.DB, origin_zone_id, destination_zone_id);
   const quotes = quote({ origin_zone_id, destination_zone_id, package_weight_kg }, data).map(withQuoteId);
-  return json({ quotes });
+  await persistQuotes(env.DB, quotes, origin_zone_id, destination_zone_id, package_weight_kg, new Date().toISOString());
+  return json({ origin_zone_id, destination_zone_id, quotes });
+}
+
+async function handleCreateDelivery(request: Request, env: Env): Promise<Response> {
+  let body: Partial<DeliveryRequest>;
+  try {
+    body = (await request.json()) as Partial<DeliveryRequest>;
+  } catch {
+    return fail("invalid_request", "Request body must be valid JSON", 400);
+  }
+
+  if (typeof body.quote_id !== "string") return fail("invalid_request", "quote_id is required", 400);
+  if (!isContact(body.sender)) return fail("invalid_request", "sender.name and sender.phone are required", 400);
+  if (!isContact(body.recipient)) return fail("invalid_request", "recipient.name and recipient.phone are required", 400);
+
+  const req: DeliveryRequest = { quote_id: body.quote_id, sender: body.sender, recipient: body.recipient };
+  if (typeof body.package_description === "string") req.package_description = body.package_description;
+
+  const delivery = await createDelivery(env.DB, req);
+  if (!delivery) return fail("not_found", "The quote_id is unknown or has expired", 404);
+  return json(delivery, 201);
 }
 
 export default {
@@ -61,6 +100,17 @@ export default {
 
       if (method === "POST" && pathname === "/v1/quotes") {
         return await handleQuotes(request, env);
+      }
+
+      if (method === "POST" && pathname === "/v1/deliveries") {
+        return await handleCreateDelivery(request, env);
+      }
+
+      const track = pathname.match(/^\/v1\/deliveries\/([^/]+)\/track$/);
+      if (method === "GET" && track) {
+        const result = await trackDelivery(env.DB, decodeURIComponent(track[1]!));
+        if (!result) return fail("not_found", "Unknown tracking ID", 404);
+        return json(result);
       }
 
       return fail("not_found", `No route for ${method} ${pathname}`, 404);
