@@ -1,12 +1,8 @@
-import type { Contact, Provider, ProviderType, QuoteRequest, Rate, TrackingStatus } from "@itafika/core";
+import type { Contact, Provider, ProviderType, QuoteOption, QuoteRequest, Rate, TrackingStatus } from "@itafika/core";
 
-export interface ProviderInfo extends Provider {}
+export type ProviderInfo = Provider;
 
-export interface ProviderQuote {
-  estimated_cost_kes: number;
-  estimated_time: string;
-  reliability_score?: number;
-}
+export type ProviderQuote = QuoteOption;
 
 export interface BookingOrder {
   quote_id: string;

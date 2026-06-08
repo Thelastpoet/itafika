@@ -13,6 +13,16 @@ const rates = [
     provider_id: "mololine",
     origin_zone_id: "ZONE_NBI_CBD_01",
     destination_zone_id: "ZONE_NKR_MAIN",
+    base_cost_kes: 600,
+    cost_per_kg_kes: 0,
+    est_time: "2 hours",
+    max_weight_kg: 20,
+    source: "test",
+  },
+  {
+    provider_id: "mololine",
+    origin_zone_id: "ZONE_NBI_CBD_01",
+    destination_zone_id: "ZONE_NKR_MAIN",
     base_cost_kes: 400,
     cost_per_kg_kes: 0,
     est_time: "3 hours",
@@ -44,6 +54,20 @@ describe("StaticRateAdapter", () => {
     ).resolves.toEqual({
       estimated_cost_kes: 560,
       estimated_time: "5 hours",
+      reliability_score: 0.98,
+    });
+  });
+
+  it("chooses the cheapest applicable rate for the provider", async () => {
+    await expect(
+      adapter.quote({
+        origin_zone_id: "ZONE_NBI_CBD_01",
+        destination_zone_id: "ZONE_NKR_MAIN",
+        package_weight_kg: 2,
+      }),
+    ).resolves.toEqual({
+      estimated_cost_kes: 400,
+      estimated_time: "3 hours",
       reliability_score: 0.98,
     });
   });
