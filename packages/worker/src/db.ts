@@ -110,21 +110,25 @@ export async function persistQuotes(
   destinationZoneId: string,
   weightKg: number,
   createdAt: string,
+  expiresAt: string,
 ): Promise<void> {
   if (quotes.length === 0) return;
   await db.batch(
     quotes.map((q) =>
       db
         .prepare(
-          "INSERT INTO quotes (quote_id, provider_type, provider_name, estimated_cost_kes, estimated_time, reliability_score, origin_zone_id, destination_zone_id, package_weight_kg, created_at) VALUES (?,?,?,?,?,?,?,?,?,?)",
+          "INSERT INTO quotes (quote_id, provider_type, provider_name, estimated_cost_kes, estimated_time, reliability_score, origin_zone_id, destination_zone_id, package_weight_kg, created_at, expires_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
         )
-        .bind(q.quote_id, q.provider_type, q.provider_name, q.estimated_cost_kes, q.estimated_time, q.reliability_score ?? null, originZoneId, destinationZoneId, weightKg, createdAt),
+        .bind(q.quote_id, q.provider_type, q.provider_name, q.estimated_cost_kes, q.estimated_time, q.reliability_score ?? null, originZoneId, destinationZoneId, weightKg, createdAt, expiresAt),
     ),
   );
 }
 
 export async function createDelivery(db: D1Database, req: DeliveryRequest): Promise<Delivery | null> {
-  const quoteRow = await db.prepare("SELECT * FROM quotes WHERE quote_id = ?").bind(req.quote_id).first<QuoteRow>();
+  const quoteRow = await db
+    .prepare("SELECT * FROM quotes WHERE quote_id = ? AND (expires_at IS NULL OR expires_at > ?)")
+    .bind(req.quote_id, new Date().toISOString())
+    .first<QuoteRow>();
   if (!quoteRow) return null;
 
   const trackingId = `trk_${crypto.randomUUID().replace(/-/g, "")}`;

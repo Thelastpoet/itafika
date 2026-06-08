@@ -121,6 +121,34 @@ describe("deliveries", () => {
 		expect(res.status).toBe(404);
 	});
 
+	it("returns 404 booking an expired quote", async () => {
+		await env.DB
+			.prepare(
+				"INSERT INTO quotes (quote_id, provider_type, provider_name, estimated_cost_kes, estimated_time, reliability_score, origin_zone_id, destination_zone_id, package_weight_kg, created_at, expires_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+			)
+			.bind(
+				"qt_bbbbbbbbbbbbbbbbbbbbbbbb",
+				"matatu_sacco",
+				"Mololine Sacco",
+				500,
+				"5 hours",
+				0.98,
+				"ZONE_NBI_CBD_01",
+				"ZONE_ELD_MAIN",
+				2.5,
+				"2026-06-01T08:00:00.000Z",
+				"2026-06-01T09:00:00.000Z",
+			)
+			.run();
+
+		const res = await json({
+			quote_id: "qt_bbbbbbbbbbbbbbbbbbbbbbbb",
+			sender: { name: "A", phone: "+254700000000" },
+			recipient: { name: "B", phone: "+254700000001" },
+		});
+		expect(res.status).toBe(404);
+	});
+
 	it("returns 400 when sender is missing", async () => {
 		const res = await json({ quote_id: "qt_aaaaaaaaaaaaaaaaaaaaaaaa", recipient: { name: "B", phone: "+254700000001" } });
 		expect(res.status).toBe(400);

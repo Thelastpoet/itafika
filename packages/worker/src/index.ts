@@ -22,6 +22,7 @@ const PHONE_RE = /^\+[1-9]\d{7,14}$/;
 const NAME_MAX_LENGTH = 120;
 const PHONE_MAX_LENGTH = 16;
 const PACKAGE_DESCRIPTION_MAX_LENGTH = 500;
+const QUOTE_TTL_HOURS = 24;
 
 function clampLimit(raw: string | null): number {
   const n = raw === null ? 100 : Number(raw);
@@ -51,6 +52,10 @@ function parseContact(value: unknown): Contact | null {
   return { name, phone };
 }
 
+function addHours(iso: string, hours: number): string {
+  return new Date(Date.parse(iso) + hours * 60 * 60 * 1000).toISOString();
+}
+
 async function handleQuotes(request: Request, env: Env): Promise<Response> {
   let body: Partial<QuoteRequest>;
   try {
@@ -73,7 +78,16 @@ async function handleQuotes(request: Request, env: Env): Promise<Response> {
 
   const data = await loadQuoteData(env.DB, origin_zone_id, destination_zone_id);
   const quotes = quote({ origin_zone_id, destination_zone_id, package_weight_kg }, data).map(withQuoteId);
-  await persistQuotes(env.DB, quotes, origin_zone_id, destination_zone_id, package_weight_kg, new Date().toISOString());
+  const createdAt = new Date().toISOString();
+  await persistQuotes(
+    env.DB,
+    quotes,
+    origin_zone_id,
+    destination_zone_id,
+    package_weight_kg,
+    createdAt,
+    addHours(createdAt, QUOTE_TTL_HOURS),
+  );
   return json({ origin_zone_id, destination_zone_id, quotes });
 }
 
