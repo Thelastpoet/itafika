@@ -25,6 +25,8 @@ servers:
 tags:
   - name: Zones
     description: Locations — CBD hubs, upcountry stages, residential areas.
+  - name: Dataset
+    description: Metadata about the currently loaded open dataset.
   - name: Quotes
     description: Delivery options and prices between two zones.
   - name: Deliveries
@@ -101,6 +103,29 @@ paths:
                     town: Nairobi
         '400':
           $ref: '#/components/responses/BadRequest'
+
+  /v1/freshness:
+    get:
+      tags: [Dataset]
+      summary: List dataset freshness by town
+      operationId: listFreshness
+      responses:
+        '200':
+          description: The last-reviewed date for each town currently loaded in the dataset.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  freshness:
+                    type: array
+                    items: { $ref: '#/components/schemas/FreshnessEntry' }
+              example:
+                freshness:
+                  - town: Nairobi
+                    last_updated: "2026-06-08"
+                  - town: Nakuru
+                    last_updated: "2026-06-08"
 
   /v1/quotes:
     post:
@@ -272,6 +297,18 @@ components:
           description: The town or city the zone belongs to.
         coordinates: { $ref: '#/components/schemas/Coordinates' }
       required: [id, name, type, town]
+
+    FreshnessEntry:
+      type: object
+      properties:
+        town:
+          type: string
+          description: Town or city name matching the dataset freshness record.
+        last_updated:
+          type: string
+          pattern: '^\d{4}-\d{2}-\d{2}$'
+          description: Date when the dataset for this town was last reviewed.
+      required: [town, last_updated]
 
     QuoteRequest:
       type: object

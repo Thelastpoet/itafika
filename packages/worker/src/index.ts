@@ -2,6 +2,7 @@ import { quote } from "@itafika/core";
 import type { Contact, DeliveryRequest, Quote, QuoteOption, QuoteRequest, ZoneType } from "@itafika/core";
 import {
   createDelivery,
+  listFreshness,
   listZones,
   loadQuoteData,
   persistQuotes,
@@ -145,6 +146,11 @@ export default {
         if (!q) return fail("invalid_request", "query parameter q is required", 400);
         const zones = await searchZones(env.DB, q, clampLimit(url.searchParams.get("limit")));
         return json({ zones });
+      }
+
+      if (method === "GET" && pathname === "/v1/freshness") {
+        const freshness = await listFreshness(env.DB);
+        return json({ freshness });
       }
 
       if (method === "POST" && pathname === "/v1/quotes") {

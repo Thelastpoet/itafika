@@ -38,6 +38,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/freshness": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List dataset freshness by town */
+        get: operations["listFreshness"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/quotes": {
         parameters: {
             query?: never;
@@ -138,6 +155,12 @@ export interface components {
             /** @description The town or city the zone belongs to. */
             town: string;
             coordinates?: components["schemas"]["Coordinates"];
+        };
+        FreshnessEntry: {
+            /** @description Town or city name matching the dataset freshness record. */
+            town: string;
+            /** @description Date when the dataset for this town was last reviewed. */
+            last_updated: string;
         };
         QuoteRequest: {
             origin_zone_id: string;
@@ -319,6 +342,42 @@ export interface operations {
                 };
             };
             400: components["responses"]["BadRequest"];
+        };
+    };
+    listFreshness: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The last-reviewed date for each town currently loaded in the dataset. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "freshness": [
+                     *         {
+                     *           "town": "Nairobi",
+                     *           "last_updated": "2026-06-08"
+                     *         },
+                     *         {
+                     *           "town": "Nakuru",
+                     *           "last_updated": "2026-06-08"
+                     *         }
+                     *       ]
+                     *     }
+                     */
+                    "application/json": {
+                        freshness?: components["schemas"]["FreshnessEntry"][];
+                    };
+                };
+            };
         };
     };
     createQuote: {

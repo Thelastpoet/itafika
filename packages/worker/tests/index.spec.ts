@@ -9,6 +9,8 @@ beforeAll(async () => {
 		env.DB.prepare("INSERT INTO providers (id, name, type, reliability_score) VALUES (?,?,?,?)").bind("g4s", "G4S Courier", "national_courier", 0.99),
 		env.DB.prepare("INSERT INTO rates (provider_id, origin_zone_id, destination_zone_id, base_cost_kes, cost_per_kg_kes, est_time, max_weight_kg, source) VALUES (?,?,?,?,?,?,?,?)").bind("mololine", "ZONE_NBI_CBD_01", "ZONE_ELD_MAIN", 500, 20, "5 hours", 20, "test"),
 		env.DB.prepare("INSERT INTO rates (provider_id, origin_zone_id, destination_zone_id, base_cost_kes, cost_per_kg_kes, est_time, max_weight_kg, source) VALUES (?,?,?,?,?,?,?,?)").bind("g4s", "ZONE_NBI_CBD_01", "ZONE_ELD_MAIN", 650, 40, "next day", 50, "test"),
+		env.DB.prepare("INSERT INTO freshness (town, last_updated) VALUES (?,?)").bind("Eldoret", "2026-06-08"),
+		env.DB.prepare("INSERT INTO freshness (town, last_updated) VALUES (?,?)").bind("Nairobi", "2026-06-08"),
 	]);
 });
 
@@ -32,6 +34,18 @@ describe("GET /v1/zones/search", () => {
 	it("requires q", async () => {
 		const res = await SELF.fetch("https://api.itafika.dev/v1/zones/search");
 		expect(res.status).toBe(400);
+	});
+});
+
+describe("GET /v1/freshness", () => {
+	it("lists dataset freshness by town", async () => {
+		const res = await SELF.fetch("https://api.itafika.dev/v1/freshness");
+		expect(res.status).toBe(200);
+		const body = (await res.json()) as { freshness: { town: string; last_updated: string }[] };
+		expect(body.freshness).toEqual([
+			{ town: "Eldoret", last_updated: "2026-06-08" },
+			{ town: "Nairobi", last_updated: "2026-06-08" },
+		]);
 	});
 });
 

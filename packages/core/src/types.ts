@@ -4,6 +4,7 @@ export type ZoneType = components["schemas"]["ZoneType"];
 export type ProviderType = components["schemas"]["ProviderType"];
 export type Coordinates = components["schemas"]["Coordinates"];
 export type Zone = components["schemas"]["Zone"];
+export type FreshnessEntry = components["schemas"]["FreshnessEntry"];
 export type QuoteRequest = components["schemas"]["QuoteRequest"];
 export type Quote = components["schemas"]["Quote"];
 export type Contact = components["schemas"]["Contact"];

@@ -10,6 +10,7 @@ import type {
   TrackingStatus,
   Zone,
   ZoneType,
+  FreshnessEntry,
 } from "@itafika/core";
 
 interface ZoneRow {
@@ -30,6 +31,11 @@ interface RateRow {
   est_time: string;
   max_weight_kg: number | null;
   source: string;
+}
+
+interface FreshnessRow {
+  town: string;
+  last_updated: string;
 }
 
 interface QuoteRow {
@@ -78,6 +84,11 @@ export async function searchZones(db: D1Database, q: string, limit: number): Pro
     .bind(like, like, limit)
     .all<ZoneRow>();
   return results.map(toZone);
+}
+
+export async function listFreshness(db: D1Database): Promise<FreshnessEntry[]> {
+  const { results } = await db.prepare("SELECT town, last_updated FROM freshness ORDER BY town").all<FreshnessRow>();
+  return results.map((row) => ({ town: row.town, last_updated: row.last_updated }));
 }
 
 export async function zonesExist(db: D1Database, ...ids: string[]): Promise<boolean> {
