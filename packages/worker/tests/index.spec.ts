@@ -126,6 +126,31 @@ describe("deliveries", () => {
 		expect(body.history.map((e) => e.status)).toEqual(["package_picked"]);
 	});
 
+	it("uses the latest tracking event as the current status", async () => {
+		const quote_id = await bookableQuoteId();
+		const created = await json({
+			quote_id,
+			sender: { name: "Asha Mwangi", phone: "+254712345678" },
+			recipient: { name: "John Otieno", phone: "+254723456789" },
+		});
+		const delivery = (await created.json()) as { tracking_id: string };
+
+		await env.DB
+			.prepare("UPDATE deliveries SET status = ? WHERE tracking_id = ?")
+			.bind("package_picked", delivery.tracking_id)
+			.run();
+		await env.DB
+			.prepare("INSERT INTO tracking_events (tracking_id, status, at) VALUES (?,?,?)")
+			.bind(delivery.tracking_id, "in_transit", "2026-06-08T09:00:00.000Z")
+			.run();
+
+		const tracked = await SELF.fetch(`https://api.itafika.dev/v1/deliveries/${delivery.tracking_id}/track`);
+		expect(tracked.status).toBe(200);
+		const body = (await tracked.json()) as { status: string; history: { status: string }[] };
+		expect(body.status).toBe("in_transit");
+		expect(body.history.map((event) => event.status)).toEqual(["package_picked", "in_transit"]);
+	});
+
 	it("does not allow the same quote to be booked twice", async () => {
 		const quote_id = await bookableQuoteId();
 		const payload = {

@@ -12,6 +12,7 @@ import type {
   ZoneType,
   FreshnessEntry,
 } from "@itafika/core";
+import { latestTrackingStatus } from "@itafika/core";
 
 interface ZoneRow {
   id: string;
@@ -178,9 +179,9 @@ export async function createDelivery(
 
 export async function trackDelivery(db: D1Database, trackingId: string): Promise<TrackingResponse | null> {
   const delivery = await db
-    .prepare("SELECT tracking_id, status FROM deliveries WHERE tracking_id = ?")
+    .prepare("SELECT tracking_id FROM deliveries WHERE tracking_id = ?")
     .bind(trackingId)
-    .first<{ tracking_id: string; status: TrackingStatus }>();
+    .first<{ tracking_id: string }>();
   if (!delivery) return null;
 
   const { results } = await db
@@ -189,5 +190,7 @@ export async function trackDelivery(db: D1Database, trackingId: string): Promise
     .all<{ status: TrackingStatus; at: string; note: string | null }>();
 
   const history: TrackingEvent[] = results.map((e) => (e.note !== null ? { status: e.status, at: e.at, note: e.note } : { status: e.status, at: e.at }));
-  return { tracking_id: delivery.tracking_id, status: delivery.status, history };
+  const status = latestTrackingStatus(history);
+  if (status === null) return null;
+  return { tracking_id: delivery.tracking_id, status, history };
 }
