@@ -49,7 +49,7 @@ describe("POST /v1/quotes", () => {
 		const body = (await res.json()) as { quotes: { provider_name: string; estimated_cost_kes: number; quote_id: string }[] };
 		expect(body.quotes.map((q) => q.provider_name)).toEqual(["Mololine Sacco", "G4S Courier"]);
 		expect(body.quotes[0]?.estimated_cost_kes).toBe(560);
-		expect(body.quotes[0]?.quote_id).toMatch(/^qt_/);
+		expect(body.quotes[0]?.quote_id).toMatch(/^qt_[a-f0-9]{24}$/);
 	});
 
 	it("rejects a non-positive weight", async () => {
@@ -100,7 +100,7 @@ describe("deliveries", () => {
 		});
 		expect(created.status).toBe(201);
 		const delivery = (await created.json()) as { tracking_id: string; status: string; quote: { quote_id: string } };
-		expect(delivery.tracking_id).toMatch(/^trk_/);
+		expect(delivery.tracking_id).toMatch(/^trk_[a-f0-9]{32}$/);
 		expect(delivery.status).toBe("package_picked");
 		expect(delivery.quote.quote_id).toBe(quote_id);
 
@@ -114,7 +114,7 @@ describe("deliveries", () => {
 
 	it("returns 404 booking an unknown quote", async () => {
 		const res = await json({
-			quote_id: "qt_unknown",
+			quote_id: "qt_aaaaaaaaaaaaaaaaaaaaaaaa",
 			sender: { name: "A", phone: "+254700000000" },
 			recipient: { name: "B", phone: "+254700000001" },
 		});
@@ -122,12 +122,38 @@ describe("deliveries", () => {
 	});
 
 	it("returns 400 when sender is missing", async () => {
-		const res = await json({ quote_id: "qt_whatever", recipient: { name: "B", phone: "+254700000001" } });
+		const res = await json({ quote_id: "qt_aaaaaaaaaaaaaaaaaaaaaaaa", recipient: { name: "B", phone: "+254700000001" } });
+		expect(res.status).toBe(400);
+	});
+
+	it("returns 400 for invalid contact details", async () => {
+		const quote_id = await bookableQuoteId();
+		const res = await json({
+			quote_id,
+			sender: { name: "   ", phone: "0712345678" },
+			recipient: { name: "B", phone: "+254700000001" },
+		});
+		expect(res.status).toBe(400);
+	});
+
+	it("returns 400 for oversized package descriptions", async () => {
+		const quote_id = await bookableQuoteId();
+		const res = await json({
+			quote_id,
+			sender: { name: "Asha Mwangi", phone: "+254712345678" },
+			recipient: { name: "John Otieno", phone: "+254723456789" },
+			package_description: "x".repeat(501),
+		});
 		expect(res.status).toBe(400);
 	});
 
 	it("returns 404 tracking an unknown id", async () => {
-		const res = await SELF.fetch("https://api.itafika.dev/v1/deliveries/trk_nope/track");
+		const res = await SELF.fetch("https://api.itafika.dev/v1/deliveries/trk_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/track");
 		expect(res.status).toBe(404);
+	});
+
+	it("returns 400 for malformed tracking ids", async () => {
+		const res = await SELF.fetch("https://api.itafika.dev/v1/deliveries/trk_nope/track");
+		expect(res.status).toBe(400);
 	});
 });

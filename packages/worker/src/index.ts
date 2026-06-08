@@ -16,20 +16,39 @@ const json = (data: unknown, status = 200): Response =>
 const fail = (code: string, message: string, status: number): Response =>
   json({ error: { code, message } }, status);
 
+const QUOTE_ID_RE = /^qt_[a-f0-9]{24}$/;
+const TRACKING_ID_RE = /^trk_[a-f0-9]{32}$/;
+const PHONE_RE = /^\+[1-9]\d{7,14}$/;
+const NAME_MAX_LENGTH = 120;
+const PHONE_MAX_LENGTH = 16;
+const PACKAGE_DESCRIPTION_MAX_LENGTH = 500;
+
 function clampLimit(raw: string | null): number {
   const n = raw === null ? 100 : Number(raw);
   if (!Number.isFinite(n)) return 100;
   return Math.min(500, Math.max(1, Math.trunc(n)));
 }
 
-const shortId = (prefix: string): string => `${prefix}_${crypto.randomUUID().replace(/-/g, "").slice(0, 8)}`;
+const opaqueId = (prefix: string, hexLength: number): string =>
+  `${prefix}_${crypto.randomUUID().replace(/-/g, "").slice(0, hexLength)}`;
 
 function withQuoteId(option: QuoteOption): Quote {
-  return { quote_id: shortId("qt"), ...option };
+  return { quote_id: opaqueId("qt", 24), ...option };
 }
 
-function isContact(c: unknown): c is Contact {
-  return typeof c === "object" && c !== null && typeof (c as Contact).name === "string" && typeof (c as Contact).phone === "string";
+function normalizeText(value: unknown, maxLength: number): string | null {
+  if (typeof value !== "string") return null;
+  const normalized = value.trim();
+  if (normalized.length === 0 || normalized.length > maxLength) return null;
+  return normalized;
+}
+
+function parseContact(value: unknown): Contact | null {
+  if (typeof value !== "object" || value === null) return null;
+  const name = normalizeText((value as Contact).name, NAME_MAX_LENGTH);
+  const phone = normalizeText((value as Contact).phone, PHONE_MAX_LENGTH);
+  if (name === null || phone === null || !PHONE_RE.test(phone)) return null;
+  return { name, phone };
 }
 
 async function handleQuotes(request: Request, env: Env): Promise<Response> {
@@ -66,12 +85,28 @@ async function handleCreateDelivery(request: Request, env: Env): Promise<Respons
     return fail("invalid_request", "Request body must be valid JSON", 400);
   }
 
-  if (typeof body.quote_id !== "string") return fail("invalid_request", "quote_id is required", 400);
-  if (!isContact(body.sender)) return fail("invalid_request", "sender.name and sender.phone are required", 400);
-  if (!isContact(body.recipient)) return fail("invalid_request", "recipient.name and recipient.phone are required", 400);
+  if (typeof body.quote_id !== "string" || !QUOTE_ID_RE.test(body.quote_id)) {
+    return fail("invalid_request", "quote_id must be a valid quote identifier", 400);
+  }
 
-  const req: DeliveryRequest = { quote_id: body.quote_id, sender: body.sender, recipient: body.recipient };
-  if (typeof body.package_description === "string") req.package_description = body.package_description;
+  const sender = parseContact(body.sender);
+  if (sender === null) {
+    return fail("invalid_request", "sender.name and sender.phone must be valid", 400);
+  }
+
+  const recipient = parseContact(body.recipient);
+  if (recipient === null) {
+    return fail("invalid_request", "recipient.name and recipient.phone must be valid", 400);
+  }
+
+  const req: DeliveryRequest = { quote_id: body.quote_id, sender, recipient };
+  if (body.package_description !== undefined) {
+    const packageDescription = normalizeText(body.package_description, PACKAGE_DESCRIPTION_MAX_LENGTH);
+    if (packageDescription === null) {
+      return fail("invalid_request", "package_description must be a non-empty string up to 500 characters", 400);
+    }
+    req.package_description = packageDescription;
+  }
 
   const delivery = await createDelivery(env.DB, req);
   if (!delivery) return fail("not_found", "The quote_id is unknown or has expired", 404);
@@ -108,7 +143,11 @@ export default {
 
       const track = pathname.match(/^\/v1\/deliveries\/([^/]+)\/track$/);
       if (method === "GET" && track) {
-        const result = await trackDelivery(env.DB, decodeURIComponent(track[1]!));
+        const trackingId = decodeURIComponent(track[1]!);
+        if (!TRACKING_ID_RE.test(trackingId)) {
+          return fail("invalid_request", "tracking_id must be a valid tracking identifier", 400);
+        }
+        const result = await trackDelivery(env.DB, trackingId);
         if (!result) return fail("not_found", "Unknown tracking ID", 404);
         return json(result);
       }

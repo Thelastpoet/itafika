@@ -127,7 +127,7 @@ export async function createDelivery(db: D1Database, req: DeliveryRequest): Prom
   const quoteRow = await db.prepare("SELECT * FROM quotes WHERE quote_id = ?").bind(req.quote_id).first<QuoteRow>();
   if (!quoteRow) return null;
 
-  const trackingId = `trk_${crypto.randomUUID().replace(/-/g, "").slice(0, 8)}`;
+  const trackingId = `trk_${crypto.randomUUID().replace(/-/g, "")}`;
   const status: TrackingStatus = "package_picked";
   const createdAt = new Date().toISOString();
 
