@@ -9,6 +9,7 @@
 		"test": "vitest run",
 		"typecheck": "tsc --noEmit",
 		"cf-typegen": "wrangler types",
+		"data:validate": "node scripts/validate-data.mjs",
 		"seed:build": "node scripts/build-seed.mjs",
 		"db:migrate:local": "wrangler d1 migrations apply itafika --local",
 		"db:migrate:remote": "wrangler d1 migrations apply itafika --remote",

@@ -1,11 +1,14 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
+import { execFileSync } from "node:child_process";
 import { parse } from "csv-parse/sync";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const dataDir = join(here, "../../../spec/data");
 const out = join(here, "../seed.sql");
+
+execFileSync(process.execPath, [join(here, "validate-data.mjs")], { stdio: "inherit" });
 
 const readCsv = (file) =>
   parse(readFileSync(join(dataDir, file), "utf8"), { columns: true, skip_empty_lines: true, trim: true });

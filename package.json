@@ -9,6 +9,7 @@
     "node": ">=20"
   },
   "scripts": {
+    "data:validate": "pnpm --filter @itafika/worker data:validate",
     "gen:types": "pnpm --filter @itafika/core gen:types",
     "test": "pnpm -r test",
     "typecheck": "pnpm -r typecheck",

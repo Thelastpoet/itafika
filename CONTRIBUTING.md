@@ -18,9 +18,12 @@ How:
 
 1. Open the dataset under [`spec/data/`](spec/data/) and read [`spec/data/SCHEMA.md`](spec/data/SCHEMA.md) so your entry matches the format.
 2. Add or correct rows.
-3. Open a pull request. In the description, say **how you know** the rate (you ship this route weekly, you called the SACCO, you're an agent, etc.) — provenance is what keeps the dataset trustworthy.
+3. Run `pnpm data:validate`.
+4. Open a pull request. In the description, say **how you know** the rate (you ship this route weekly, you called the SACCO, you're an agent, etc.) — provenance is what keeps the dataset trustworthy.
 
 Rates drift. Correcting a stale rate is just as valuable as adding a new one.
+
+If you want a worked example, read [`docs/contribute-data.md`](docs/contribute-data.md).
 
 ## 2. Contribute a provider adapter
 
