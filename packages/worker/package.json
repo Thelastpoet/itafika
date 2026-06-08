@@ -11,7 +11,9 @@
 		"cf-typegen": "wrangler types",
 		"seed:build": "node scripts/build-seed.mjs",
 		"db:migrate:local": "wrangler d1 migrations apply itafika --local",
-		"db:seed:local": "pnpm seed:build && wrangler d1 execute itafika --local --file=seed.sql"
+		"db:migrate:remote": "wrangler d1 migrations apply itafika --remote",
+		"db:seed:local": "pnpm seed:build && wrangler d1 execute itafika --local --file=seed.sql",
+		"db:seed:remote": "pnpm seed:build && wrangler d1 execute itafika --remote --file=seed.sql"
 	},
 	"dependencies": {
 		"@itafika/core": "workspace:*"

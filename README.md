@@ -24,6 +24,8 @@ For the current implementation state, see [`docs/status.md`](docs/status.md).
 
 For the next practical work queue, see [`docs/next-phase.md`](docs/next-phase.md).
 
+For deployment of the current Worker reference implementation, see [`docs/deploy-worker.md`](docs/deploy-worker.md).
+
 ---
 
 ## What's in this repository
@@ -142,6 +144,8 @@ pnpm --filter @itafika/worker db:seed:local
 pnpm --filter @itafika/worker dev      # starts the Worker locally
 curl http://localhost:8787/v1/zones
 ```
+
+For remote deployment, use [`docs/deploy-worker.md`](docs/deploy-worker.md).
 
 ---
 

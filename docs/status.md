@@ -74,6 +74,8 @@ Hosted deployment still needs project-specific setup:
 - apply remote migrations
 - seed the remote database
 
+Use [`docs/deploy-worker.md`](deploy-worker.md) for the exact deployment steps.
+
 Until that is done, the Worker should be treated as development software, not a finished hosted service.
 
 ## What contributors should assume

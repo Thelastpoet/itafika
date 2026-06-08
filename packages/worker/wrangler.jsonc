@@ -4,7 +4,8 @@
 	"main": "src/index.ts",
 	"compatibility_date": "2026-06-08",
 	"observability": {
-		"enabled": true
+		"enabled": true,
+		"head_sampling_rate": 1
 	},
 	"upload_source_maps": true,
 	"compatibility_flags": [
@@ -14,7 +15,10 @@
 		{
 			"binding": "DB",
 			"database_name": "itafika",
+			// Replace this placeholder before running remote migrate/seed or deploy.
 			"database_id": "local-itafika",
+			// Optional, but useful if you want `wrangler dev --remote`.
+			// "preview_database_id": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
 			"migrations_dir": "migrations"
 		}
 	]
