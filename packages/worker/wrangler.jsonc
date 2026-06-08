@@ -1,0 +1,21 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "itafika-api",
+	"main": "src/index.ts",
+	"compatibility_date": "2026-06-08",
+	"observability": {
+		"enabled": true
+	},
+	"upload_source_maps": true,
+	"compatibility_flags": [
+		"nodejs_compat"
+	],
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "itafika",
+			"database_id": "local-itafika",
+			"migrations_dir": "migrations"
+		}
+	]
+}
