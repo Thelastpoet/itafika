@@ -2,7 +2,7 @@ import type { Contact, Provider, ProviderType, QuoteOption, QuoteRequest, Rate, 
 
 export type ProviderInfo = Provider;
 
-export type ProviderQuote = QuoteOption;
+export type ProviderQuote = Pick<QuoteOption, "estimated_cost_kes" | "estimated_time" | "reliability_score">;
 
 export interface BookingOrder {
   quote_id: string;
