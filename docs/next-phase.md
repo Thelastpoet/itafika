@@ -72,6 +72,26 @@ Done when:
 
 - tracking history can grow in a meaningful and reviewable way
 
+### P1 — Define policy boundaries before adding smarter ranking
+
+Why this matters:
+
+- the project should not bury business heuristics in core code
+- ranking and selection policy needs a clear home before it grows
+- contributors need to know whether behavior belongs in spec, data, config, adapters, or implementation glue
+
+Tasks:
+
+- define engineering rules for policy ownership
+- decide where quote-ranking policy belongs
+- keep the current default ranking simple until that boundary is agreed
+- only reintroduce smarter ranking once it is spec-backed, data-backed, or explicitly configurable
+
+Done when:
+
+- no hidden domain policy is living in core logic
+- future ranking work has a clear architectural home
+
 ## What should wait
 
 These are important, but not the best next use of effort:

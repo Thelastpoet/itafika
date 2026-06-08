@@ -61,19 +61,6 @@ describe("quote", () => {
     });
   });
 
-  it("prefers higher reliability for higher-care package types", () => {
-    const options = quote(
-      {
-        origin_zone_id: "ZONE_NBI_CBD_01",
-        destination_zone_id: "ZONE_ELD_MAIN",
-        package_weight_kg: 2.5,
-        package_type: "electronics",
-      },
-      data,
-    );
-    expect(options.map((o) => o.provider_name)).toEqual(["G4S Courier", "Mololine Sacco"]);
-  });
-
   it("excludes rates whose weight cap is exceeded", () => {
     const options = quote(
       { origin_zone_id: "ZONE_NBI_CBD_01", destination_zone_id: "ZONE_ELD_MAIN", package_weight_kg: 30 },

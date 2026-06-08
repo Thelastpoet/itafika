@@ -6,6 +6,8 @@ There are three ways to contribute, from easiest to most involved.
 
 Before you start, check [`docs/status.md`](docs/status.md). It explains what is already implemented, what is partial, and what is still planned.
 
+Also read [`docs/engineering-principles.md`](docs/engineering-principles.md). It sets the rules for boundaries, policy ownership, and how we avoid architectural drift.
+
 ## 1. Contribute data (no code required)
 
 This is the highest-leverage thing most people can do. Two kinds of data:
