@@ -40,6 +40,9 @@ importers:
 
   packages/worker:
     dependencies:
+      '@itafika/adapters':
+        specifier: workspace:*
+        version: link:../adapters
       '@itafika/core':
         specifier: workspace:*
         version: link:../core

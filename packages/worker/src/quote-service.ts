@@ -1,5 +1,5 @@
-import { quote } from "@itafika/core";
 import type { Quote, QuoteOption, QuoteRequest } from "@itafika/core";
+import { StaticRateAdapter, aggregateQuotes } from "@itafika/adapters";
 
 import { loadQuoteData, persistQuotes, pruneExpiredQuotes, zonesExist } from "./db.js";
 import { createQuoteId, quoteExpiresAt } from "./policy.js";
@@ -24,7 +24,8 @@ export async function createQuotes(
   await pruneExpiredQuotes(db, now);
 
   const data = await loadQuoteData(db, origin_zone_id, destination_zone_id);
-  const quotes = quote({ origin_zone_id, destination_zone_id, package_weight_kg }, data).map(withQuoteId);
+  const providers = data.providers.map((provider) => new StaticRateAdapter({ provider, rates: data.rates }));
+  const quotes = (await aggregateQuotes(providers, request)).map(withQuoteId);
 
   await persistQuotes(
     db,

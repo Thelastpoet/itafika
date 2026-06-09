@@ -17,6 +17,7 @@
 		"db:seed:remote": "pnpm seed:build && wrangler d1 execute itafika --remote --file=seed.sql"
 	},
 	"dependencies": {
+		"@itafika/adapters": "workspace:*",
 		"@itafika/core": "workspace:*"
 	},
 	"devDependencies": {

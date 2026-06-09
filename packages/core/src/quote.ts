@@ -1,4 +1,4 @@
-import type { Provider, QuoteData, QuoteOption, QuoteRequest, Rate } from "./types.js";
+import type { Rate } from "./types.js";
 
 export function estimateCostKes(rate: Pick<Rate, "base_cost_kes" | "cost_per_kg_kes">, weightKg: number): number {
   const raw = rate.base_cost_kes + Math.ceil(weightKg) * rate.cost_per_kg_kes;
@@ -7,34 +7,4 @@ export function estimateCostKes(rate: Pick<Rate, "base_cost_kes" | "cost_per_kg_
 
 export function rateAppliesToWeight(rate: Pick<Rate, "max_weight_kg">, weightKg: number): boolean {
   return rate.max_weight_kg === undefined || weightKg <= rate.max_weight_kg;
-}
-
-export function quote(request: QuoteRequest, data: QuoteData): QuoteOption[] {
-  const weightKg = request.package_weight_kg;
-  const providersById = new Map<string, Provider>(data.providers.map((p) => [p.id, p]));
-
-  const options: QuoteOption[] = [];
-  for (const rate of data.rates) {
-    if (rate.origin_zone_id !== request.origin_zone_id) continue;
-    if (rate.destination_zone_id !== request.destination_zone_id) continue;
-    if (!rateAppliesToWeight(rate, weightKg)) continue;
-
-    const provider = providersById.get(rate.provider_id);
-    if (!provider) continue;
-
-    options.push({
-      provider_type: provider.type,
-      provider_name: provider.name,
-      estimated_cost_kes: estimateCostKes(rate, weightKg),
-      estimated_time: rate.est_time,
-      reliability_score: provider.reliability_score,
-    });
-  }
-
-  options.sort(
-    (a, b) =>
-      a.estimated_cost_kes - b.estimated_cost_kes ||
-      (b.reliability_score ?? 0) - (a.reliability_score ?? 0),
-  );
-  return options;
 }
