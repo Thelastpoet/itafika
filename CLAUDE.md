@@ -14,6 +14,8 @@ The repo is **Phase 1, pre-release**, but the reference implementation exists an
 
 `docs/status.md` is the plain-language source of truth for what is `Implemented` / `Partial` / `Planned` right now — **read it before assuming a feature's maturity** (e.g. the only adapter today is the static one; `package_type` is accepted but unused). `docs/next-phase.md` is the current work queue.
 
+The **checkout-delivery direction** (ADRs 0016–0019, `Proposed`) is specified in the contract but **not yet implemented**: collection point + `collection_type` on quotes, a `GET /v1/options` discovery surface, booking `instructions`/`alternate_collector`, and transport modes as a governed registry (`modes.csv` + `GET /v1/modes`, with `ProviderType` an open identifier). Treat these as direction, not current behavior.
+
 ## The spec-first rule (most important workflow constraint)
 
 **The spec leads. Code follows.** This is enforced, not a guideline:
