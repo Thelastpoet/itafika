@@ -76,7 +76,7 @@ pnpm --filter @itafika/worker run deploy          # wrangler deploy
 
 ## Reference-implementation stack
 
-TypeScript on Cloudflare Workers (ADRs 0001–0003). Worker boundaries (ADR 0009): thin HTTP layer in `src/index.ts`, request shape checks in `src/validation.ts`, ID/TTL rules in `src/policy.ts`, business logic in `*-service.ts`, all D1 access in `src/db.ts`. Use Cloudflare primitives deliberately, not by default: **Workers** for the HTTP API, **D1** for zones/providers/rates/deliveries/tracking events, and later **Queues** (background jobs), **Workflows** (durable booking/settlement), **Durable Objects** (single-authority coordination) — none of which Phase 1 uses yet. Schema changes are D1 migrations in `packages/worker/migrations/` (sequential `NNNN_name.sql`).
+TypeScript on Cloudflare Workers (ADRs 0001–0003). Worker boundaries (ADR 0009): thin HTTP layer in `src/index.ts`, request shape checks in `src/validation.ts`, ID/TTL rules in `src/policy.ts`, business logic in `*-service.ts`, all D1 access in `src/db.ts`. Use Cloudflare primitives deliberately, not by default: **Workers** for the HTTP API, **D1** for zones/providers/rates/deliveries/tracking events, and later **Queues** (background jobs, webhooks), **Workflows** (durable booking, provider retries), **Durable Objects** (single-authority coordination) — none of which Phase 1 uses yet. Schema changes are D1 migrations in `packages/worker/migrations/` (sequential `NNNN_name.sql`).
 
 ## Governance
 

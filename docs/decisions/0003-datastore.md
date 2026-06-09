@@ -31,7 +31,7 @@ The canonical, human-editable source of seed data remains [`spec/data/`](../../s
 - **Cloudflare-native.** D1 is directly available to Workers through bindings and works well with Wrangler for local development and migrations.
 - **Simple Phase 1.** The MVP can run as a Worker plus D1 without operating a separate database server.
 - **Reviewable data.** Contributors edit CSV files, not database rows. Seed scripts load those files into D1.
-- **Room for later workflows.** Shipments, tracking events, payment state, and booking state can be stored in D1, while long-running steps use Workflows and Queues.
+- **Room for later workflows.** Shipments, tracking events, and booking state can be stored in D1, while long-running steps use Workflows and Queues.
 
 ## Consequences
 

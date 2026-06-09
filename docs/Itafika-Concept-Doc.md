@@ -38,7 +38,7 @@ Itafika exists to make that work happen **once, in the open, for everyone.**
 
 ## 3. The principle: an infrastructure abstraction layer
 
-The model is what Daraja did for payments. Before Daraja, touching M-Pesa meant wrestling with a fragmented, opaque system directly. Daraja put a clean, predictable interface in front of the mess, and an entire generation of fintech got built on top of it.
+The model is what open standards did for other fragmented systems. GTFS gave transit data one shared shape so a generation of journey-planning apps could be built on top of it; OpenStreetMap turned scattered geographic knowledge into one queryable commons. In each case, a clean, predictable interface in front of the mess is what let an ecosystem grow.
 
 Itafika takes the same posture toward physical delivery. It is an **abstraction layer**: it hides a chaotic, fragmented physical system behind one consistent API. The shop that consumes it never has to know which SACCO serves which route, what a rider charges across town, or how a courier names its tracking states. It asks one question — *how can this package get from here to there, and what are the options?* — and gets one clean answer.
 
@@ -131,7 +131,7 @@ Cloudflare primitives map cleanly to the logistics lifecycle:
 | Public API | Workers |
 | Zones, providers, rates, deliveries, tracking events | D1 |
 | Webhook processing and background provider jobs | Queues |
-| Booking retries, human confirmation, payment, settlement | Workflows |
+| Booking retries, human-in-the-loop confirmation | Workflows |
 | Per-delivery or per-provider coordination | Durable Objects |
 
 The first release does not need every primitive at once. Phase 1 can be a Worker plus D1. The other pieces are introduced where the delivery lifecycle needs background work, retries, or stateful coordination.
@@ -191,7 +191,7 @@ The human-editable source of this data is `spec/data/`. The hosted Worker loads 
 
 **Phase 2 — Open adapter contribution.** Publish the `LogisticsProviderInterface` and invite the community to extend coverage provider by provider: an adapter that pulls live rates from a courier, a bridge that lets a manual rider confirm a status over WhatsApp, a new town's stage map. Queues handle background adapter work, and Workflows handle retry-heavy booking steps. The core never changes; the edges grow.
 
-**Phase 3 — Payments and escrow.** Integrate Daraja / M-Pesa so that, for cash-on-delivery, Itafika can trigger a split — routing the delivery fee to the rider or SACCO and the balance to the merchant. Workflows are the right home for these multi-step flows because they need retries, waiting, auditability, and careful state transitions. This layer changes Itafika's regulatory posture, so it is deliberately last and treated with care.
+**Phase 3 — Optimization and scale.** With coverage growing at the edges, the work turns to depth: broaden routes across more of Kenya, bring live rates online through adapters, and sharpen each provider's reliability score and the ranking of options from observed real-world delivery performance. The aggregator gets more accurate and more complete as it is used. The core stays the same; the answers it returns get better.
 
 ---
 

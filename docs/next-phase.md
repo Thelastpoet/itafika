@@ -90,7 +90,6 @@ Done when:
 These are important, but not the best next use of effort:
 
 - broad live provider coverage
-- payment and settlement flows
 - Workflows-based long-running booking
 - Queues-based provider jobs
 - Durable Objects for coordination

@@ -70,7 +70,6 @@ These are part of the project direction, but they are not implemented in this re
 - background jobs with Queues
 - long-running booking flows with Workflows
 - Durable Objects for coordination where needed
-- payment and settlement flows
 
 ## Deployment notes
 

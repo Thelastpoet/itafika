@@ -19,7 +19,7 @@ The project is licensed under the **MIT License**.
 
 ## Options considered
 
-- **Apache-2.0** — also permissive, with an explicit patent grant and more corporate-friendly legal robustness. A reasonable alternative; rejected in favour of MIT's brevity and ubiquity. If patent concerns become material (e.g. around Phase 3 payment flows), a future ADR may revisit this.
+- **Apache-2.0** — also permissive, with an explicit patent grant and more corporate-friendly legal robustness. A reasonable alternative; rejected in favour of MIT's brevity and ubiquity. If patent concerns become material, a future ADR may revisit this.
 - **Copyleft (GPL/AGPL)** — rejected. It would discourage the commercial and proprietary adoption that drives a standard's reach.
 
 ## Consequences
