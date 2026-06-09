@@ -24,6 +24,7 @@ Per [GOVERNANCE.md](../../GOVERNANCE.md), any change to the spec is accompanied 
 | [0017](0017-add-delivery-options-discovery-surface.md) | Add a delivery-options discovery surface | Proposed |
 | [0018](0018-capture-delivery-instructions-and-collection-identity.md) | Capture delivery instructions and collection identity | Proposed |
 | [0019](0019-transport-modes-as-a-registry.md) | Model transport modes as a governed registry | Proposed |
+| [0020](0020-non-developer-data-contribution-via-form-to-pr.md) | Non-developer data contributions via a form that opens a PR | Proposed |
 
 ADRs 0016–0019 are a related set that set the **direction** for evolving Itafika from
 a quoting engine into a checkout-delivery layer. They are `Proposed`: the spec states

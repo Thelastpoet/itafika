@@ -103,6 +103,33 @@ Done when:
 
 - a shop can render the full checkout delivery step from Itafika data alone
 
+### P3 — Non-developer data contribution path (ADR 0020)
+
+Why this matters:
+
+- the project promises data contribution with "no code required" (`CONTRIBUTING.md`),
+  but the real path is CSV + `data:validate` + a GitHub PR — unusable for the riders,
+  SACCO desk staff, and agents whose knowledge is the point
+- closing this gap is what makes "the dataset is the asset" actually crowdsourceable
+
+Tasks (contribution tooling — no API contract change):
+
+- a separate contribution Worker (or Pages + Functions) hosting a schema-aware,
+  plain-language form (mirrors `SCHEMA.md`, requires `source`/provenance)
+- on submit, open a PR against `spec/data/*.csv` via the GitHub API (token as a
+  Worker secret); **never write to D1** — the canonical pipeline (validate → review →
+  merge → reseed) is unchanged
+- Cloudflare Turnstile + rate limiting on the public write endpoint
+- once live, point `CONTRIBUTING.md` / `contribute-data.md` at the form first
+
+Done when:
+
+- someone who has never used Git can submit a sourced rate and it arrives as a
+  reviewable PR
+
+Later, if PR-per-submission gets noisy: a staging/moderation queue (ADR 0020's
+deferred option).
+
 ## What should wait
 
 These are important, but not the best next use of effort:
@@ -117,10 +144,11 @@ Those become much easier once the current code path is more complete.
 
 ## Suggested implementation order
 
-Two tracks. **P1 (dataset)** is data work and runs in parallel with the contract work
-below. **P2 (checkout-delivery)** has a strict internal order because the modes
-registry gates the rest. Each P2 step is blocked until its ADR moves from `Proposed`
-to `Accepted` (a non-author maintainer sign-off, per `GOVERNANCE.md`).
+Three tracks. **P1 (dataset)** and **P3 (non-developer contribution path)** are both
+independent and run in parallel with the contract work below. **P2 (checkout-delivery)**
+has a strict internal order because the modes registry gates the rest. Each P2 step is
+blocked until its ADR moves from `Proposed` to `Accepted` (a non-author maintainer
+sign-off, per `GOVERNANCE.md`).
 
 1. **Sign off ADRs 0016–0019.** They are `Proposed`; confirm the direction (especially
    the seed modes in 0019) before any implementation lands.
@@ -134,7 +162,9 @@ to `Accepted` (a non-author maintainer sign-off, per `GOVERNANCE.md`).
    time after sign-off.
 6. **(Parallel, ongoing) Improve the dataset (P1).** Sourced rates, broader coverage,
    provenance.
-7. **First live adapter (Phase 2)**, then adapter-driven `track()` / webhook updates
+7. **(Parallel, independent) Non-developer contribution path (P3, ADR 0020).** A form
+   that opens a PR against the CSVs — no API contract change, so unblocked now.
+8. **First live adapter (Phase 2)**, then adapter-driven `track()` / webhook updates
    into the one event log.
 
 Note: the "Recommended next phase" section above still frames the dataset as the single
