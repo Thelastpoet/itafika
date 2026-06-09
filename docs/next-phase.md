@@ -79,6 +79,30 @@ Done when:
 
 - the dataset is meaningfully more trustworthy, not just more structured
 
+### P2 — Checkout-delivery direction (ADRs 0016–0019)
+
+Why this matters:
+
+- today the contract returns A→B prices, but a real Kenyan checkout needs the full
+  delivery step: county → mode → provider → collection point → handover instructions
+- the spec now states these expectations (ADRs 0016–0019, all `Proposed`); the
+  implementation is open work
+
+Tasks (each additive within `/v1`, after the relevant ADR is signed off):
+
+- establish the modes registry (ADR 0019): add `modes.csv` + `GET /v1/modes`, type
+  `provider.type` as an FK into it, and validate it in `data:validate` — after which
+  new modes are pure data work
+- add `collection_type` to `rates.csv` and `county` to `zones.csv`, then backfill
+- regenerate types (`pnpm gen:types`) and implement the new fields/endpoint in core,
+  adapters, and the Worker: collection facts on quotes (0016), `GET /v1/options`
+  discovery (0017), booking instructions/identity (0018)
+- extend the static adapter's `coverage()` and the conformance kit accordingly
+
+Done when:
+
+- a shop can render the full checkout delivery step from Itafika data alone
+
 ## What should wait
 
 These are important, but not the best next use of effort:

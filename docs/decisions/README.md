@@ -20,6 +20,15 @@ Per [GOVERNANCE.md](../../GOVERNANCE.md), any change to the spec is accompanied 
 | [0013](0013-wire-worker-to-adapter-runtime.md) | Wire the Worker to the adapter runtime for quotes | Accepted |
 | [0014](0014-route-booking-through-adapter-runtime.md) | Route booking through the adapter runtime | Accepted |
 | [0015](0015-tracking-update-model.md) | Tracking update model — one event log, many producers | Accepted |
+| [0016](0016-surface-collection-point-and-type-on-quotes.md) | Surface collection point and collection type on quotes | Proposed |
+| [0017](0017-add-delivery-options-discovery-surface.md) | Add a delivery-options discovery surface | Proposed |
+| [0018](0018-capture-delivery-instructions-and-collection-identity.md) | Capture delivery instructions and collection identity | Proposed |
+| [0019](0019-transport-modes-as-a-registry.md) | Model transport modes as a governed registry | Proposed |
+
+ADRs 0016–0019 are a related set that set the **direction** for evolving Itafika from
+a quoting engine into a checkout-delivery layer. They are `Proposed`: the spec states
+the expectation, but they await a non-author maintainer's sign-off and implementation
+per [GOVERNANCE.md](../../GOVERNANCE.md).
 
 ## Format
 

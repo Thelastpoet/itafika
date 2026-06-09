@@ -62,6 +62,18 @@ interface LogisticsProviderInterface {
    * Drives: GET /v1/deliveries/{tracking_id}/track
    */
   track?(providerRef: string): Promise<TrackingStatus>;
+
+  /**
+   * Declare the destination areas this provider serves and where it collects, so
+   * it can appear in the checkout discovery surface. Optional — an adapter that
+   * does not implement it simply does not appear in GET /v1/options.
+   *
+   * Specified by ADR 0017 (checkout-delivery direction); not yet wired in the
+   * reference runtime.
+   *
+   * Drives: GET /v1/options
+   */
+  coverage?(query: CoverageQuery): Promise<ProviderCoverage | null>;
 }
 ```
 
@@ -71,7 +83,7 @@ interface LogisticsProviderInterface {
 interface ProviderInfo {
   id: string;                 // stable slug, e.g. "mololine"
   name: string;               // display name, e.g. "Mololine Sacco"
-  type: ProviderType;         // boda_rider | matatu_sacco | bus | national_courier
+  type: ProviderType;         // a mode id from the modes registry (ADR 0019); the core never branches on it
   reliability_score: number;  // 0–1 baseline; the engine may adjust over time
 }
 
@@ -79,6 +91,11 @@ interface ProviderQuote {
   estimated_cost_kes: number;
   estimated_time: string;     // "45 mins", "3 hours", "next day"
   // reliability_score is taken from ProviderInfo unless the adapter overrides it
+
+  // Specified by ADR 0016 (checkout-delivery direction); not yet emitted by the
+  // static reference adapter.
+  collection_type?: CollectionType;      // office_pickup | door_delivery
+  collection_point?: CollectionPoint;    // for office_pickup: where to collect
 }
 
 interface BookingOrder {
@@ -86,8 +103,25 @@ interface BookingOrder {
   origin_zone_id: string;
   destination_zone_id: string;
   sender: Contact;
-  recipient: Contact;
+  recipient: Contact;                     // Contact may carry an optional id_number
   package_description?: string;
+
+  // Specified by ADR 0018 (checkout-delivery direction); not yet relayed by the
+  // static reference adapter.
+  instructions?: string;                  // handover instructions
+  alternate_collector?: Contact;          // someone else authorised to collect
+}
+
+// Specified by ADR 0017 (checkout-delivery direction).
+interface CoverageQuery {
+  origin_zone_id: string;
+  destination_town: string;
+}
+
+interface ProviderCoverage {
+  collection_type: CollectionType;
+  collection_points: CollectionPoint[];   // zones in the town this provider serves
+  from_cost_kes?: number;                  // indicative base cost; exact via quote()
 }
 
 interface BookingResult {
@@ -96,7 +130,7 @@ interface BookingResult {
 }
 ```
 
-`QuoteRequest`, `ProviderType`, `TrackingStatus`, and `Contact` are exactly the schemas defined in [`openapi.yaml`](openapi.yaml) — adapters share the contract's types, they don't invent their own.
+`QuoteRequest`, `ProviderType`, `TrackingStatus`, `Contact`, `CollectionType`, and `CollectionPoint` are exactly the schemas defined in [`openapi.yaml`](openapi.yaml) — adapters share the contract's types, they don't invent their own.
 
 ## The three kinds of adapter
 
