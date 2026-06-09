@@ -16,6 +16,62 @@ const json = (data: unknown, status = 200): Response =>
 const fail = (code: string, message: string, status: number): Response =>
   json({ error: { code, message } }, status);
 
+const empty = (status: number, headers: HeadersInit): Response => new Response(null, { status, headers });
+
+const methodNotAllowed = (allowedMethods: string[]): Response =>
+  new Response(
+    JSON.stringify({
+      error: {
+        code: "method_not_allowed",
+        message: `Method not allowed. Use ${allowedMethods.join(" or ")}.`,
+      },
+    }),
+    {
+      status: 405,
+      headers: {
+        "allow": allowedMethods.join(", "),
+        "content-type": "application/json",
+      },
+    },
+  );
+
+const options = (allowedMethods: string[]): Response =>
+  empty(204, {
+    "allow": allowedMethods.join(", "),
+  });
+
+const head = (response: Response): Response => {
+  const headers = new Headers(response.headers);
+  const contentLength = headers.get("content-length");
+  if (contentLength !== null) headers.set("content-length", contentLength);
+  return new Response(null, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+};
+
+async function handleReadRoute(
+  method: string,
+  handler: () => Promise<Response> | Response,
+): Promise<Response> {
+  const allowedMethods = ["GET", "HEAD", "OPTIONS"];
+  if (method === "OPTIONS") return options(allowedMethods);
+  if (method === "HEAD") return head(await handler());
+  if (method === "GET") return await handler();
+  return methodNotAllowed(allowedMethods);
+}
+
+async function handleWriteRoute(
+  method: string,
+  handler: () => Promise<Response> | Response,
+): Promise<Response> {
+  const allowedMethods = ["POST", "OPTIONS"];
+  if (method === "OPTIONS") return options(allowedMethods);
+  if (method === "POST") return await handler();
+  return methodNotAllowed(allowedMethods);
+}
+
 async function handleQuotes(request: Request, env: Env): Promise<Response> {
   let body: Partial<QuoteRequest>;
   try {
@@ -32,7 +88,7 @@ async function handleQuotes(request: Request, env: Env): Promise<Response> {
     return fail("invalid_request", "package_weight_kg must be a positive number", 400);
   }
 
-  const result = await createQuotes(env.DB, { origin_zone_id, destination_zone_id, package_weight_kg });
+  const result = await createQuotes(env.itafika, { origin_zone_id, destination_zone_id, package_weight_kg });
   if (!result.ok) return fail("not_found", "One or both zone IDs are unknown", 404);
   return json(result.body);
 }
@@ -68,7 +124,7 @@ async function handleCreateDelivery(request: Request, env: Env): Promise<Respons
     req.package_description = packageDescription;
   }
 
-  const delivery = await bookDelivery(env.DB, req);
+  const delivery = await bookDelivery(env.itafika, req);
   if (!delivery) return fail("not_found", "The quote_id is unknown or has expired", 404);
   return json(delivery, 201);
 }
@@ -94,7 +150,7 @@ async function handleCreateTrackingEvent(request: Request, env: Env, trackingId:
     event.note = note;
   }
 
-  const result = await appendTrackingEvent(env.DB, trackingId, event, new Date().toISOString());
+  const result = await appendTrackingEvent(env.itafika, trackingId, event, new Date().toISOString());
   if (result === "not_found") return fail("not_found", "Unknown tracking ID", 404);
   if (result === "invalid_transition") {
     return fail("invalid_status_transition", "tracking status cannot move backwards", 409);
@@ -109,50 +165,60 @@ export default {
     const { method } = request;
 
     try {
-      if (method === "GET" && pathname === "/v1/zones") {
-        const type = url.searchParams.get("type") as ZoneType | null;
-        const zones = await listZones(env.DB, type ?? undefined, clampLimit(url.searchParams.get("limit")));
-        return json({ zones });
+      if (pathname === "/v1/zones") {
+        return await handleReadRoute(method, async () => {
+          const type = url.searchParams.get("type") as ZoneType | null;
+          const zones = await listZones(env.itafika, type ?? undefined, clampLimit(url.searchParams.get("limit")));
+          return json({ zones });
+        });
       }
 
-      if (method === "GET" && pathname === "/v1/zones/search") {
-        const q = url.searchParams.get("q");
-        if (!q) return fail("invalid_request", "query parameter q is required", 400);
-        const zones = await searchZones(env.DB, q, clampLimit(url.searchParams.get("limit")));
-        return json({ zones });
+      if (pathname === "/v1/zones/search") {
+        return await handleReadRoute(method, async () => {
+          const q = url.searchParams.get("q");
+          if (!q) return fail("invalid_request", "query parameter q is required", 400);
+          const zones = await searchZones(env.itafika, q, clampLimit(url.searchParams.get("limit")));
+          return json({ zones });
+        });
       }
 
-      if (method === "GET" && pathname === "/v1/freshness") {
-        const freshness = await listFreshness(env.DB);
-        return json({ freshness });
+      if (pathname === "/v1/freshness") {
+        return await handleReadRoute(method, async () => {
+          const freshness = await listFreshness(env.itafika);
+          return json({ freshness });
+        });
       }
 
-      if (method === "POST" && pathname === "/v1/quotes") {
-        return await handleQuotes(request, env);
+      if (pathname === "/v1/quotes") {
+        return await handleWriteRoute(method, async () => await handleQuotes(request, env));
       }
 
-      if (method === "POST" && pathname === "/v1/deliveries") {
-        return await handleCreateDelivery(request, env);
+      if (pathname === "/v1/deliveries") {
+        return await handleWriteRoute(method, async () => await handleCreateDelivery(request, env));
       }
 
       const track = pathname.match(/^\/v1\/deliveries\/([^/]+)\/track$/);
-      if (method === "GET" && track) {
-        const trackingId = decodeURIComponent(track[1]!);
-        if (!isTrackingId(trackingId)) {
-          return fail("invalid_request", "tracking_id must be a valid tracking identifier", 400);
-        }
-        const result = await trackDelivery(env.DB, trackingId);
-        if (!result) return fail("not_found", "Unknown tracking ID", 404);
-        return json(result);
+      if (track) {
+        return await handleReadRoute(method, async () => {
+          const trackingId = decodeURIComponent(track[1]!);
+          if (!isTrackingId(trackingId)) {
+            return fail("invalid_request", "tracking_id must be a valid tracking identifier", 400);
+          }
+          const result = await trackDelivery(env.itafika, trackingId);
+          if (!result) return fail("not_found", "Unknown tracking ID", 404);
+          return json(result);
+        });
       }
 
       const events = pathname.match(/^\/v1\/deliveries\/([^/]+)\/events$/);
-      if (method === "POST" && events) {
-        const trackingId = decodeURIComponent(events[1]!);
-        if (!isTrackingId(trackingId)) {
-          return fail("invalid_request", "tracking_id must be a valid tracking identifier", 400);
-        }
-        return await handleCreateTrackingEvent(request, env, trackingId);
+      if (events) {
+        return await handleWriteRoute(method, async () => {
+          const trackingId = decodeURIComponent(events[1]!);
+          if (!isTrackingId(trackingId)) {
+            return fail("invalid_request", "tracking_id must be a valid tracking identifier", 400);
+          }
+          return await handleCreateTrackingEvent(request, env, trackingId);
+        });
       }
 
       return fail("not_found", `No route for ${method} ${pathname}`, 404);

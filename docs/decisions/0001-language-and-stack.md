@@ -18,7 +18,7 @@ The main platform pieces are:
 - **Workers** for the public HTTP API.
 - **D1** for zones, providers, rates, shipments, and tracking events.
 - **Queues** for background jobs such as webhook processing, rate refreshes, and adapter work that should not block a checkout request.
-- **Workflows** for durable multi-step processes such as booking, provider retries, human-in-the-loop confirmation, payment, and settlement.
+- **Workflows** for durable multi-step processes such as booking, provider retries, and human-in-the-loop confirmation.
 - **Durable Objects** for stateful coordination when one shipment, provider, or stream needs a single authority.
 - **Wrangler** for local development, D1 migrations, seed data, and deployment.
 

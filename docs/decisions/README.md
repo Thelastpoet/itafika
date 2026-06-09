@@ -17,6 +17,9 @@ Per [GOVERNANCE.md](../../GOVERNANCE.md), any change to the spec is accompanied 
 | [0010](0010-clarify-adapter-contract-vs-phase1-integration.md) | Clarify adapter contract versus Phase 1 runtime integration | Accepted |
 | [0011](0011-require-freshness-for-every-town.md) | Require freshness coverage for every dataset town | Accepted |
 | [0012](0012-add-manual-tracking-event-updates.md) | Add manual tracking event updates for Phase 1 | Accepted |
+| [0013](0013-wire-worker-to-adapter-runtime.md) | Wire the Worker to the adapter runtime for quotes | Accepted |
+| [0014](0014-route-booking-through-adapter-runtime.md) | Route booking through the adapter runtime | Accepted |
+| [0015](0015-tracking-update-model.md) | Tracking update model — one event log, many producers | Accepted |
 
 ## Format
 

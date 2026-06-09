@@ -16,7 +16,7 @@ At checkout, a shop's customer picks a location and sees real options for gettin
 
 Kenya's e-commerce is a billion-dollar market and climbing, but delivery is the part that breaks the experience — not because there are too few ways to move a parcel, but because there are too many and none are standardized. Every shop re-solves the same problem from scratch, badly, and leaves the cheap informal options (matatu and bus parcel networks) off the table because wiring them up by hand is hopeless.
 
-Itafika does that work **once, in the open, for everyone.** It is the abstraction layer for Kenyan delivery — what Daraja is to payments. It is **not** a delivery company; it is the open standard *beneath* anyone who would otherwise integrate every provider by hand.
+Itafika does that work **once, in the open, for everyone.** It is the abstraction layer for Kenyan delivery — the GTFS or OpenStreetMap of how parcels move. It is **not** a delivery company; it is the open standard *beneath* anyone who would otherwise integrate every provider by hand.
 
 For the full vision, see [`docs/Itafika-Concept-Doc.md`](docs/Itafika-Concept-Doc.md) (or the visual version at <https://itafika-tuu.pages.dev/>).
 
@@ -64,7 +64,7 @@ The reference implementation is designed for **Cloudflare Workers**:
 |------|----------------------|
 | Public API | Workers |
 | Zones, providers, rates, deliveries, tracking events | D1 |
-| Long-running booking or payment flows | Workflows |
+| Long-running booking flows, provider retries | Workflows |
 | Background refreshes, webhook processing, async provider jobs | Queues |
 | Per-delivery or per-provider coordination, when needed | Durable Objects |
 
@@ -82,6 +82,7 @@ Phase 1 can stay simple: a Worker reads the seeded dataset from D1 and returns q
 | `POST` | `/v1/quotes` | Get delivery options + prices between two zones |
 | `POST` | `/v1/deliveries` | Lock in a chosen quote, get a tracking ID |
 | `GET`  | `/v1/deliveries/{tracking_id}/track` | Unified tracking status |
+| `POST` | `/v1/deliveries/{tracking_id}/events` | Append a manual/internal tracking event |
 
 The heart is `POST /v1/quotes`:
 
@@ -124,15 +125,17 @@ Because Itafika is open source, the defaults are a **starting point, not a cage.
 
 The repository already contains a working core package, adapter package, Worker API, D1 migrations, seed flow, tests, and a simple shop example.
 
+The hosted reference Worker is also live at `https://itafika-api.emcie4.workers.dev`.
+
 It does **not** yet contain every planned part of the wider Itafika architecture.
 
 See [`docs/status.md`](docs/status.md) for the exact breakdown.
 
 | Phase | What | State |
 |-------|------|-------|
-| **1 — Static API (MVP)** | Seeded static rates + standardized zone IDs behind the current API, with quote lifecycle and tracking basics. | In active development |
-| **2 — Adapter runtime integration** | Wire the reference Worker to use adapter instances for provider flows, then grow live adapters. | Planned |
-| **3 — Payments & escrow** | Daraja / M-Pesa integration with COD split-billing. | Planned |
+| **1 — Static API (MVP)** | Seeded static rates + standardized zone IDs behind the current API, with quote lifecycle, booking, tracking, and manual event updates. | In active development |
+| **2 — Open adapter contribution** | Grow coverage provider by provider: live courier rates, manual-rider bridges, new town stage maps — all through the published adapter interface. | Planned |
+| **3 — Optimization & scale** | Broaden routes across Kenya and sharpen reliability and ranking from observed real-world delivery performance. | Planned |
 
 ---
 

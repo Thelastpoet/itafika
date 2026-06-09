@@ -28,6 +28,7 @@ The current branch has a working Phase 1 foundation:
 - the Phase 1 HTTP endpoints, including dataset freshness
 - a small checkout example in `examples/simple-shop`
 - automated tests for the core package and the Worker package
+- a live hosted reference Worker deployment
 
 ## What the Worker does today
 
@@ -39,22 +40,24 @@ The Worker currently supports:
 - `POST /v1/quotes`
 - `POST /v1/deliveries`
 - `GET /v1/deliveries/{tracking_id}/track`
+- `POST /v1/deliveries/{tracking_id}/events`
 
 Current behavior is intentionally simple:
 
-- quotes are computed from the seeded dataset in D1
+- quotes are computed from the seeded dataset in D1, through one static adapter per provider
 - quotes expire after 24 hours
 - a quote can only be booked once
-- booking a delivery records it in D1
+- booking runs through the originating provider's adapter (`book()`) and records the delivery in D1
 - tracking returns the recorded delivery status and history
+- tracking history can be advanced through a manual/internal event path; every event records its source (booking/manual/adapter) on one log
 
 ## What is partial or intentionally simple
 
 Some parts of the contract are in place before the full implementation behind them exists.
 
 - `package_type` is still part of the quote request shape, but it is not yet used in quote logic
-- booking creates a delivery record, but does not dispatch to a live provider system
-- tracking is unified, and Phase 1 now supports manual/internal tracking event updates; adapter-driven and webhook-driven updates still come later
+- booking dispatches through the adapter runtime, but the only adapter is the static one, so it records the booking rather than calling a live provider system
+- tracking is unified on one event log with a recorded source per event; adapter-driven (`track()`) and webhook-driven updates still come later
 - rates in `spec/data/` are still marked `seed-illustrative` unless replaced by sourced field data
 
 This is normal for the current phase. The important thing is to describe it clearly.
@@ -67,22 +70,35 @@ These are part of the project direction, but they are not implemented in this re
 - background jobs with Queues
 - long-running booking flows with Workflows
 - Durable Objects for coordination where needed
-- payment and settlement flows
 
 ## Deployment notes
 
 Local development works now.
 
-Hosted deployment still needs project-specific setup:
+The hosted reference Worker is live at:
 
-- create a real Cloudflare D1 database
+- `https://itafika-api.emcie4.workers.dev`
+
+Repository-level deployment still needs project-specific setup for any new environment:
+
+- create a real Cloudflare D1 database in that account
 - replace the placeholder `database_id` in `packages/worker/wrangler.jsonc`
 - apply remote migrations
 - seed the remote database
 
 Use [`docs/deploy-worker.md`](deploy-worker.md) for the exact deployment steps.
 
-Until that is done, the Worker should be treated as development software, not a finished hosted service.
+Even with a live deployment, the project should still be treated as active development software, not a finished production platform.
+
+## Current implementation priority
+
+Quotes and booking now run through the adapter runtime (ADRs 0013–0014) and tracking
+follows the one-log model (ADR 0015). The remaining Phase 1 code work is:
+
+- wire adapter-driven `track()` / webhooks into the same event log when a non-static adapter exists
+- begin the broader dataset replacement push, now that the core code path is in place
+
+The dataset replacement push is now the next major effort once the tracking seam above is settled.
 
 ## What contributors should assume
 

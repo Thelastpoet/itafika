@@ -1,10 +1,43 @@
 import type { Delivery, DeliveryRequest } from "@itafika/core";
+import { StaticRateAdapter } from "@itafika/adapters";
 
-import { createDelivery, pruneExpiredQuotes } from "./db.js";
+import { getBookableQuote, pruneExpiredQuotes, recordDelivery } from "./db.js";
 import { createTrackingId } from "./policy.js";
 
 export async function bookDelivery(db: D1Database, request: DeliveryRequest): Promise<Delivery | null> {
   const now = new Date().toISOString();
   await pruneExpiredQuotes(db, now);
-  return createDelivery(db, request, now, createTrackingId());
+
+  const quoteRow = await getBookableQuote(db, request.quote_id, now);
+  if (!quoteRow || quoteRow.provider_id === null) return null;
+
+  // Rebuild the adapter for the provider that produced this quote and book through it.
+  // The static adapter's book() needs only ProviderInfo; rates are irrelevant to booking.
+  const adapter = new StaticRateAdapter({
+    provider: {
+      id: quoteRow.provider_id,
+      name: quoteRow.provider_name,
+      type: quoteRow.provider_type,
+      reliability_score: quoteRow.reliability_score ?? 0,
+    },
+    rates: [],
+  });
+
+  const booking = await adapter.book({
+    quote_id: request.quote_id,
+    origin_zone_id: quoteRow.origin_zone_id,
+    destination_zone_id: quoteRow.destination_zone_id,
+    sender: request.sender,
+    recipient: request.recipient,
+    package_description: request.package_description,
+  });
+
+  return recordDelivery(db, {
+    trackingId: createTrackingId(),
+    quoteRow,
+    req: request,
+    status: booking.status,
+    providerRef: booking.provider_ref,
+    now,
+  });
 }

@@ -14,36 +14,65 @@ Use it with:
 
 The next highest-value phase is:
 
-**make Phase 1 easier to deploy, easier to extend, and easier to contribute to**
+**finish the remaining Phase 1 code work before the broader data refresh**
 
 That means:
 
-- improve the dataset itself, not only the data tooling
-- add the next useful delivery lifecycle behavior
-- keep the contributor workflow and release process easy to follow
+- build on the new delivery lifecycle path
+- define how provider flows move toward runtime adapter use
+- keep the hosted Worker and the codebase aligned as those pieces land
 
-This is more valuable right now than jumping straight to payments, Workflows, or live provider integrations.
+The large data improvement pass still matters, but it can follow after the current code path is more complete.
 
 ## Priority order
 
 ### Completed recently
 
 - deployment guide and remote D1 workflow
+- live hosted Worker deployment
 - adapter package skeleton with a static reference adapter
 - dataset validation workflow
 - dataset freshness endpoint
 - quote expiry and single-use booking policy
 - manual tracking event update path
+- first sourced Easy Coach rate replacement
 - CI for validation, tests, and typecheck
 - compatibility date aligned with the runtime currently used in local verification
+- quote flow wired through the adapter runtime (ADR 0013)
+- booking wired through the adapter runtime, with internal `provider_id`/`provider_ref` (ADR 0014)
+- tracking-update model decided: one event log, manual is Phase-1 truth, source recorded per event (ADR 0015)
+
+### P1 — Extend delivery lifecycle behavior
+
+Why this matters:
+
+- the API now has quote, booking, tracking, and manual event updates
+- the next code step is making that lifecycle more usable in practice
+
+Tasks:
+
+- build on the new manual/internal tracking event path
+- decide how adapter-driven, manual, and future webhook-driven updates should coexist
+- add tests around status progression as the path expands
+
+Done when:
+
+- tracking history can grow in a meaningful and reviewable way
+
+### Done — Move provider flow toward adapter runtime integration
+
+Quotes and booking now run through `LogisticsProviderInterface` (ADRs 0013, 0014),
+and the tracking-update model is decided (ADR 0015): one event log, manual is the
+Phase-1 source of truth, each event records its source. The remaining thread is
+adapter-driven `track()` / webhooks, which only becomes real with a non-static
+adapter — captured under "Extend delivery lifecycle behavior" above.
 
 ### P1 — Improve the actual dataset
 
 Why this matters:
 
-- the tooling is better now
 - the seed data is still partly illustrative
-- the open data is the core long-term asset of the project
+- the open data is still the core long-term asset of the project
 
 Tasks:
 
@@ -56,57 +85,21 @@ Done when:
 
 - the dataset is meaningfully more trustworthy, not just more structured
 
-### P1 — Extend delivery lifecycle behavior
-
-Why this matters:
-
-- the API now has a solid quote and booking core
-- the next meaningful product step is better delivery-state progression
-
-Tasks:
-
-- build on the new manual/internal tracking event path
-- decide how adapter-driven, manual, and future webhook-driven updates should coexist
-- add tests around status progression once the path is chosen
-
-Done when:
-
-- tracking history can grow in a meaningful and reviewable way
-
-### P1 — Define policy boundaries before adding smarter ranking
-
-Why this matters:
-
-- the project should not bury business heuristics in core code
-- ranking and selection policy needs a clear home before it grows
-- contributors need to know whether behavior belongs in spec, data, config, adapters, or implementation glue
-
-Tasks:
-
-- define engineering rules for policy ownership
-- decide where quote-ranking policy belongs
-- keep the current default ranking simple until that boundary is agreed
-- only reintroduce smarter ranking once it is spec-backed, data-backed, or explicitly configurable
-
-Done when:
-
-- no hidden domain policy is living in core logic
-- future ranking work has a clear architectural home
-
 ## What should wait
 
 These are important, but not the best next use of effort:
 
-- payment and settlement flows
+- broad live provider coverage
 - Workflows-based long-running booking
 - Queues-based provider jobs
 - Durable Objects for coordination
-- full live provider integrations
+- ranking-policy expansion beyond the current simple default
 
-Those become much easier once deployment, adapters, and contribution paths are more mature.
+Those become much easier once the current code path is more complete.
 
 ## Suggested implementation order
 
-1. improve the actual dataset
-2. extend delivery lifecycle behavior
-3. add any remaining operational polish that supports contributor flow
+1. extend delivery lifecycle behavior
+2. move provider flow toward adapter runtime integration
+3. improve the actual dataset
+4. add any remaining operational polish that supports contributor flow
