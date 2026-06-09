@@ -117,6 +117,26 @@ Those become much easier once the current code path is more complete.
 
 ## Suggested implementation order
 
-1. improve the actual dataset (sourced rates, broader coverage, provenance)
-2. build the first live adapter, exercising the runtime seam and the conformance kit
-3. wire adapter-driven `track()` / webhook updates into the one event log (with that adapter)
+Two tracks. **P1 (dataset)** is data work and runs in parallel with the contract work
+below. **P2 (checkout-delivery)** has a strict internal order because the modes
+registry gates the rest. Each P2 step is blocked until its ADR moves from `Proposed`
+to `Accepted` (a non-author maintainer sign-off, per `GOVERNANCE.md`).
+
+1. **Sign off ADRs 0016–0019.** They are `Proposed`; confirm the direction (especially
+   the seed modes in 0019) before any implementation lands.
+2. **Modes registry (0019).** `modes.csv` + `GET /v1/modes`, `provider.type` as an FK
+   into it, a `data:validate` rule. Gates the rest and makes new modes pure data work.
+3. **Collection facts on quotes (0016).** `collection_type` on `rates.csv` plus the
+   quote fields. Highest-value field, and discovery (0017) builds on it.
+4. **Discovery surface (0017).** `GET /v1/options`, `county` on zones, zone filters,
+   and the static adapter's `coverage()`.
+5. **Booking instructions/identity (0018).** Additive delivery fields; can land any
+   time after sign-off.
+6. **(Parallel, ongoing) Improve the dataset (P1).** Sourced rates, broader coverage,
+   provenance.
+7. **First live adapter (Phase 2)**, then adapter-driven `track()` / webhook updates
+   into the one event log.
+
+Note: the "Recommended next phase" section above still frames the dataset as the single
+highest-value effort. Whether checkout-delivery now outranks dataset polish is a steward
+call — both are captured here so the choice is explicit, not accidental.
