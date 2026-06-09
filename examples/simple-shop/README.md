@@ -1,10 +1,11 @@
 # Example: simple shop
 
-A ~50-line script showing what an online shop does at checkout: ask Itafika for
-delivery options between two zones, show them to the customer, book the chosen
-one, and read back tracking.
+A short script showing what an online shop does at checkout: resolve the customer's
+location to a zone (`/v1/zones/search`), ask Itafika for delivery options between two
+zones, show them to the customer, book the chosen one, and read back tracking.
 
-This example matches the current Phase 1 reference Worker. For broader project status, see [`docs/status.md`](../../docs/status.md).
+It mirrors the [integration guide](../../docs/integration-guide.md) step for step. For
+broader project status, see [`docs/status.md`](../../docs/status.md).
 
 ## Run it
 
@@ -22,8 +23,11 @@ Then, in another terminal:
 pnpm --filter @itafika/example-simple-shop start
 ```
 
-Point it at a different instance with `ITAFIKA_API`:
+Point it at the live Worker with `ITAFIKA_API`, and change the customer's destination
+with `DESTINATION`:
 
 ```bash
-ITAFIKA_API=https://api.itafika.dev pnpm --filter @itafika/example-simple-shop start
+ITAFIKA_API=https://itafika-api.emcie4.workers.dev \
+  DESTINATION=Nakuru \
+  pnpm --filter @itafika/example-simple-shop start
 ```

@@ -12,17 +12,19 @@ Use it with:
 
 ## Recommended next phase
 
-The next highest-value phase is:
+The Phase 1 reference **code path is essentially complete**: quotes and booking run
+through the adapter runtime, tracking is settled on the one-log model, and the adapter
+conformance kit now backs the open-contribution promise. The remaining pure-Phase-1
+code threads either depend on a live (non-static) adapter — which is Phase 2 — or are
+data work.
 
-**finish the remaining Phase 1 code work before the broader data refresh**
+So the next highest-value effort is:
 
-That means:
+**improve the actual dataset, then grow live adapter coverage (Phase 2)**
 
-- build on the new delivery lifecycle path
-- define how provider flows move toward runtime adapter use
-- keep the hosted Worker and the codebase aligned as those pieces land
-
-The large data improvement pass still matters, but it can follow after the current code path is more complete.
+The dataset is the project's long-term asset and is the first thing not blocked on
+anything else. Live adapter work is now unblocked too: the runtime seam and the
+conformance kit are both in place, so a first real adapter has everything it needs.
 
 ## Priority order
 
@@ -41,23 +43,15 @@ The large data improvement pass still matters, but it can follow after the curre
 - quote flow wired through the adapter runtime (ADR 0013)
 - booking wired through the adapter runtime, with internal `provider_id`/`provider_ref` (ADR 0014)
 - tracking-update model decided: one event log, manual is Phase-1 truth, source recorded per event (ADR 0015)
+- adapter conformance kit (`@itafika/adapters/conformance`) backing the contract's "pass the conformance tests" promise
 
-### P1 — Extend delivery lifecycle behavior
+### Phase-2-gated — Extend delivery lifecycle behavior
 
-Why this matters:
-
-- the API now has quote, booking, tracking, and manual event updates
-- the next code step is making that lifecycle more usable in practice
-
-Tasks:
-
-- build on the new manual/internal tracking event path
-- decide how adapter-driven, manual, and future webhook-driven updates should coexist
-- add tests around status progression as the path expands
-
-Done when:
-
-- tracking history can grow in a meaningful and reviewable way
+The lifecycle (quote, booking, tracking, manual events) is built, and how the update
+sources coexist is decided (ADR 0015: one log, manual is truth, source per event). The
+only remaining thread — adapter-driven `track()` and webhook-driven updates — needs a
+live (non-static) adapter to be meaningful, so it lands with the first live adapter in
+Phase 2, not as standalone Phase-1 work.
 
 ### Done — Move provider flow toward adapter runtime integration
 
@@ -99,7 +93,6 @@ Those become much easier once the current code path is more complete.
 
 ## Suggested implementation order
 
-1. extend delivery lifecycle behavior
-2. move provider flow toward adapter runtime integration
-3. improve the actual dataset
-4. add any remaining operational polish that supports contributor flow
+1. improve the actual dataset (sourced rates, broader coverage, provenance)
+2. build the first live adapter, exercising the runtime seam and the conformance kit
+3. wire adapter-driven `track()` / webhook updates into the one event log (with that adapter)

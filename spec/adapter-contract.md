@@ -122,7 +122,7 @@ Adapters differ only in *how* they answer, never in the interface.
 - [ ] Copy the static reference adapter in `packages/adapters/src/static-adapter.ts`.
 - [ ] Fill in `ProviderInfo` and implement `quote()` (and `book()` / `track()` if applicable).
 - [ ] If static, add or reference your provider's rows in [`data/`](data/) per [`data/SCHEMA.md`](data/SCHEMA.md).
-- [ ] Pass the adapter conformance tests.
+- [ ] Pass the adapter conformance tests: in a `*.test.ts`, call `describeAdapterConformance(...)` from `@itafika/adapters/conformance` with your adapter, a served route, an unserved route, and a booking order. It checks the correctness rules above (null for unserved routes, integer KES, universal statuses only, well-formed `ProviderInfo`).
 - [ ] Open a PR describing the provider, the routes it covers, and how you know the rates.
 
 See [CONTRIBUTING.md](../CONTRIBUTING.md) for the full process.

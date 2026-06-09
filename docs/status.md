@@ -21,7 +21,7 @@ The current branch has a working Phase 1 foundation:
 - a `pnpm` monorepo
 - `@itafika/core` with generated API types and a quote engine
 - `@itafika/worker` as the Cloudflare Worker reference API
-- `@itafika/adapters` with a reference static adapter
+- `@itafika/adapters` with a reference static adapter and a reusable adapter conformance kit (`@itafika/adapters/conformance`)
 - D1 migrations and a seed flow
 - dataset validation for `spec/data/`
 - CI for validation, tests, and typecheck
@@ -92,13 +92,13 @@ Even with a live deployment, the project should still be treated as active devel
 
 ## Current implementation priority
 
-Quotes and booking now run through the adapter runtime (ADRs 0013–0014) and tracking
-follows the one-log model (ADR 0015). The remaining Phase 1 code work is:
+The Phase 1 reference code path is essentially complete: quotes and booking run through
+the adapter runtime (ADRs 0013–0014), tracking follows the one-log model (ADR 0015),
+and the adapter conformance kit backs the open-contribution promise. What remains is no
+longer standalone Phase 1 code:
 
-- wire adapter-driven `track()` / webhooks into the same event log when a non-static adapter exists
-- begin the broader dataset replacement push, now that the core code path is in place
-
-The dataset replacement push is now the next major effort once the tracking seam above is settled.
+- **dataset** — replace illustrative rates with sourced field data and broaden coverage (the next major effort; data work, not code)
+- **first live adapter (Phase 2)** — now unblocked by the runtime seam and the conformance kit; adapter-driven `track()` / webhook updates land with it
 
 ## What contributors should assume
 

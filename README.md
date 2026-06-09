@@ -18,6 +18,8 @@ Kenya's e-commerce is a billion-dollar market and climbing, but delivery is the 
 
 Itafika does that work **once, in the open, for everyone.** It is the abstraction layer for Kenyan delivery — the GTFS or OpenStreetMap of how parcels move. It is **not** a delivery company; it is the open standard *beneath* anyone who would otherwise integrate every provider by hand.
 
+To integrate Itafika into your shop's checkout, start with the [**integration guide**](docs/integration-guide.md).
+
 For the full vision, see [`docs/Itafika-Concept-Doc.md`](docs/Itafika-Concept-Doc.md) (or the visual version at <https://itafika-tuu.pages.dev/>).
 
 For the current implementation state, see [`docs/status.md`](docs/status.md).
@@ -109,7 +111,7 @@ The heart is `POST /v1/quotes`:
 }
 ```
 
-The full contract — every field, type, and example — lives in [`spec/openapi.yaml`](spec/openapi.yaml).
+The full contract — every field, type, and example — lives in [`spec/openapi.yaml`](spec/openapi.yaml). For a step-by-step walkthrough of the whole checkout flow, see the [integration guide](docs/integration-guide.md).
 
 ---
 
