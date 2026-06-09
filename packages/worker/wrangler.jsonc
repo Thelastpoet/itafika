@@ -13,13 +13,10 @@
 	],
 	"d1_databases": [
 		{
-			"binding": "DB",
+			"binding": "itafika",
 			"database_name": "itafika",
-			// Replace this placeholder before running remote migrate/seed or deploy.
-			"database_id": "local-itafika",
-			// Optional, but useful if you want `wrangler dev --remote`.
-			// "preview_database_id": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
-			"migrations_dir": "migrations"
+			"database_id": "a385b49e-7991-4d61-88e0-39a59d451cfe",
+			"remote": true
 		}
 	]
 }

@@ -75,7 +75,7 @@ This builds `seed.sql` from the canonical dataset and executes it against the re
 Run:
 
 ```bash
-pnpm --filter @itafika/worker deploy
+pnpm --filter @itafika/worker run deploy
 ```
 
 ## 6. Smoke test the deployment
@@ -103,7 +103,7 @@ Remote commands:
 ```bash
 pnpm --filter @itafika/worker db:migrate:remote
 pnpm --filter @itafika/worker db:seed:remote
-pnpm --filter @itafika/worker deploy
+pnpm --filter @itafika/worker run deploy
 ```
 
 ## Important notes
