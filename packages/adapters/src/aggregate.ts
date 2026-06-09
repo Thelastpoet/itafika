@@ -1,11 +1,18 @@
 import type { LogisticsProviderInterface } from "./types.js";
 import type { QuoteOption, QuoteRequest } from "@itafika/core";
 
+/**
+ * A quote option enriched with the id of the provider whose adapter produced it.
+ * `provider_id` is internal: the reference Worker persists it so booking can rebuild
+ * the originating adapter, but it is never part of the public quote response.
+ */
+export type AggregatedQuote = QuoteOption & { provider_id: string };
+
 export async function aggregateQuotes(
   providers: readonly LogisticsProviderInterface[],
   request: QuoteRequest,
-): Promise<QuoteOption[]> {
-  const options: QuoteOption[] = [];
+): Promise<AggregatedQuote[]> {
+  const options: AggregatedQuote[] = [];
   const seenProviderIds = new Set<string>();
 
   for (const provider of providers) {
@@ -19,6 +26,7 @@ export async function aggregateQuotes(
       if (quote === null) continue;
 
       options.push({
+        provider_id: provider.info.id,
         provider_type: provider.info.type,
         provider_name: provider.info.name,
         estimated_cost_kes: quote.estimated_cost_kes,

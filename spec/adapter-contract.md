@@ -5,9 +5,10 @@
 > `packages/adapters/src/types.ts` and uses the shared types generated from
 > [`openapi.yaml`](openapi.yaml).
 >
-> The contract is canonical now. The Phase 1 reference Worker does **not** yet
-> route every quote and booking through adapter instances at runtime; that
-> integration work is still in progress.
+> The contract is canonical now. The Phase 1 reference Worker routes **quotes and
+> booking** through adapter instances at runtime (ADRs 0013, 0014). Adapter-driven
+> `track()` is not yet wired — tracking updates currently come from booking and the
+> manual/internal path, all converging on one event log (ADR 0015).
 
 ## What an adapter is
 
@@ -22,7 +23,7 @@ Core Routing Engine
    └──► G4SAdapter              (national_courier)
 ```
 
-This is the intended open-source extension mechanism: to add a provider, you write one adapter. The contract is stable now; the remaining work is wiring the reference runtime to use adapters for all provider flows.
+This is the intended open-source extension mechanism: to add a provider, you write one adapter. The contract is stable now; the reference runtime already routes quotes and booking through adapters, and the remaining work is wiring adapter-driven and webhook-driven tracking into the same model.
 
 ## The interface
 

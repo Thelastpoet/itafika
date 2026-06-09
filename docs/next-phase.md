@@ -38,6 +38,9 @@ The large data improvement pass still matters, but it can follow after the curre
 - first sourced Easy Coach rate replacement
 - CI for validation, tests, and typecheck
 - compatibility date aligned with the runtime currently used in local verification
+- quote flow wired through the adapter runtime (ADR 0013)
+- booking wired through the adapter runtime, with internal `provider_id`/`provider_ref` (ADR 0014)
+- tracking-update model decided: one event log, manual is Phase-1 truth, source recorded per event (ADR 0015)
 
 ### P1 — Extend delivery lifecycle behavior
 
@@ -56,22 +59,13 @@ Done when:
 
 - tracking history can grow in a meaningful and reviewable way
 
-### P1 — Move provider flow toward adapter runtime integration
+### Done — Move provider flow toward adapter runtime integration
 
-Why this matters:
-
-- booking still records deliveries but does not dispatch to providers
-- the adapter package now exists, but the Worker does not yet use adapter instances for provider flows
-
-Tasks:
-
-- decide how booking should call adapters in the reference runtime
-- decide how tracking updates should relate to adapters versus manual/internal updates
-- implement the first narrow adapter runtime path without pretending Phase 2 is complete
-
-Done when:
-
-- the codebase has a clear, real runtime path from API request to adapter behavior
+Quotes and booking now run through `LogisticsProviderInterface` (ADRs 0013, 0014),
+and the tracking-update model is decided (ADR 0015): one event log, manual is the
+Phase-1 source of truth, each event records its source. The remaining thread is
+adapter-driven `track()` / webhooks, which only becomes real with a non-static
+adapter — captured under "Extend delivery lifecycle behavior" above.
 
 ### P1 — Improve the actual dataset
 

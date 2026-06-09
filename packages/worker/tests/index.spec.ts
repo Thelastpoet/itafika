@@ -164,6 +164,34 @@ describe("deliveries", () => {
 		expect(body.history.map((e) => e.status)).toEqual(["package_picked"]);
 	});
 
+	it("books through the provider adapter and records its ref and event source", async () => {
+		const quote_id = await bookableQuoteId();
+		const created = await json({
+			quote_id,
+			sender: { name: "Asha Mwangi", phone: "+254712345678" },
+			recipient: { name: "John Otieno", phone: "+254723456789" },
+		});
+		expect(created.status).toBe(201);
+		const { tracking_id } = (await created.json()) as { tracking_id: string };
+
+		// provider_ref / provider_id are internal (not in the API response), so assert via D1.
+		const row = await env.itafika
+			.prepare(
+				"SELECT d.provider_ref AS provider_ref, q.provider_id AS provider_id FROM deliveries d JOIN quotes q ON q.quote_id = d.quote_id WHERE d.tracking_id = ?",
+			)
+			.bind(tracking_id)
+			.first<{ provider_ref: string; provider_id: string }>();
+		// cheapest provider for this route is mololine; the adapter mints a ref prefixed with its id
+		expect(row?.provider_id).toBe("mololine");
+		expect(row?.provider_ref).toMatch(/^mololine_[a-f0-9]{32}$/);
+
+		const event = await env.itafika
+			.prepare("SELECT source FROM tracking_events WHERE tracking_id = ? ORDER BY id LIMIT 1")
+			.bind(tracking_id)
+			.first<{ source: string }>();
+		expect(event?.source).toBe("booking");
+	});
+
 	it("uses the latest tracking event as the current status", async () => {
 		const quote_id = await bookableQuoteId();
 		const created = await json({

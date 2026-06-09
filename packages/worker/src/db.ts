@@ -14,6 +14,7 @@ import type {
   FreshnessEntry,
 } from "@itafika/core";
 import { canAdvanceTrackingStatus, latestTrackingStatus } from "@itafika/core";
+import type { PersistableQuote } from "./quote-service.js";
 
 interface ZoneRow {
   id: string;
@@ -40,13 +41,16 @@ interface FreshnessRow {
   last_updated: string;
 }
 
-interface QuoteRow {
+export interface QuoteRow {
   quote_id: string;
+  provider_id: string | null;
   provider_type: Quote["provider_type"];
   provider_name: string;
   estimated_cost_kes: number;
   estimated_time: string;
   reliability_score: number | null;
+  origin_zone_id: string;
+  destination_zone_id: string;
 }
 
 function toZone(r: ZoneRow): Zone {
@@ -118,7 +122,7 @@ export async function loadQuoteData(db: D1Database, originZoneId: string, destin
 
 export async function persistQuotes(
   db: D1Database,
-  quotes: Quote[],
+  quotes: PersistableQuote[],
   originZoneId: string,
   destinationZoneId: string,
   weightKg: number,
@@ -127,12 +131,12 @@ export async function persistQuotes(
 ): Promise<void> {
   if (quotes.length === 0) return;
   await db.batch(
-    quotes.map((q) =>
+    quotes.map(({ quote: q, provider_id }) =>
       db
         .prepare(
-          "INSERT INTO quotes (quote_id, provider_type, provider_name, estimated_cost_kes, estimated_time, reliability_score, origin_zone_id, destination_zone_id, package_weight_kg, created_at, expires_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+          "INSERT INTO quotes (quote_id, provider_id, provider_type, provider_name, estimated_cost_kes, estimated_time, reliability_score, origin_zone_id, destination_zone_id, package_weight_kg, created_at, expires_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
         )
-        .bind(q.quote_id, q.provider_type, q.provider_name, q.estimated_cost_kes, q.estimated_time, q.reliability_score ?? null, originZoneId, destinationZoneId, weightKg, createdAt, expiresAt),
+        .bind(q.quote_id, provider_id, q.provider_type, q.provider_name, q.estimated_cost_kes, q.estimated_time, q.reliability_score ?? null, originZoneId, destinationZoneId, weightKg, createdAt, expiresAt),
     ),
   );
 }
@@ -141,32 +145,56 @@ export async function pruneExpiredQuotes(db: D1Database, now: string): Promise<v
   await db.prepare("DELETE FROM quotes WHERE expires_at IS NOT NULL AND expires_at <= ?").bind(now).run();
 }
 
-export async function createDelivery(
-  db: D1Database,
-  req: DeliveryRequest,
-  now: string,
-  trackingId: string,
-): Promise<Delivery | null> {
-  const quoteRow = await db
+/**
+ * Returns the quote row only if it is still bookable: it exists, has not expired,
+ * and has not already been booked. Returns null otherwise. This runs before the
+ * adapter's book() call so the service never dispatches for an invalid quote.
+ */
+export async function getBookableQuote(db: D1Database, quoteId: string, now: string): Promise<QuoteRow | null> {
+  return db
     .prepare(
       "SELECT * FROM quotes WHERE quote_id = ? AND (expires_at IS NULL OR expires_at > ?) AND NOT EXISTS (SELECT 1 FROM deliveries WHERE deliveries.quote_id = quotes.quote_id)",
     )
-    .bind(req.quote_id, now)
+    .bind(quoteId, now)
     .first<QuoteRow>();
-  if (!quoteRow) return null;
+}
 
-  const status: TrackingStatus = "package_picked";
+function isUniqueViolation(error: unknown): boolean {
+  return error instanceof Error && /UNIQUE constraint failed/i.test(error.message);
+}
 
-  await db.batch([
-    db
-      .prepare(
-        "INSERT INTO deliveries (tracking_id, quote_id, status, sender_name, sender_phone, recipient_name, recipient_phone, package_description, created_at) VALUES (?,?,?,?,?,?,?,?,?)",
-      )
-      .bind(trackingId, req.quote_id, status, req.sender.name, req.sender.phone, req.recipient.name, req.recipient.phone, req.package_description ?? null, now),
-    db
-      .prepare("INSERT INTO tracking_events (tracking_id, status, at) VALUES (?,?,?)")
-      .bind(trackingId, status, now),
-  ]);
+/**
+ * Persists a booked delivery and its initial tracking event (source 'booking').
+ * The status and provider_ref come from the adapter's book() result. Returns null
+ * if a concurrent booking won the unique index on deliveries.quote_id.
+ */
+export async function recordDelivery(
+  db: D1Database,
+  args: {
+    trackingId: string;
+    quoteRow: QuoteRow;
+    req: DeliveryRequest;
+    status: TrackingStatus;
+    providerRef: string;
+    now: string;
+  },
+): Promise<Delivery | null> {
+  const { trackingId, quoteRow, req, status, providerRef, now } = args;
+  try {
+    await db.batch([
+      db
+        .prepare(
+          "INSERT INTO deliveries (tracking_id, quote_id, status, provider_ref, sender_name, sender_phone, recipient_name, recipient_phone, package_description, created_at) VALUES (?,?,?,?,?,?,?,?,?,?)",
+        )
+        .bind(trackingId, req.quote_id, status, providerRef, req.sender.name, req.sender.phone, req.recipient.name, req.recipient.phone, req.package_description ?? null, now),
+      db
+        .prepare("INSERT INTO tracking_events (tracking_id, status, at, source) VALUES (?,?,?,?)")
+        .bind(trackingId, status, now, "booking"),
+    ]);
+  } catch (error) {
+    if (isUniqueViolation(error)) return null;
+    throw error;
+  }
 
   return {
     tracking_id: trackingId,
@@ -210,11 +238,12 @@ export async function appendTrackingEvent(
   }
 
   await db.batch([
-    db.prepare("INSERT INTO tracking_events (tracking_id, status, at, note) VALUES (?,?,?,?)").bind(
+    db.prepare("INSERT INTO tracking_events (tracking_id, status, at, note, source) VALUES (?,?,?,?,?)").bind(
       trackingId,
       request.status,
       now,
       request.note ?? null,
+      "manual",
     ),
     db.prepare("UPDATE deliveries SET status = ? WHERE tracking_id = ?").bind(request.status, trackingId),
   ]);

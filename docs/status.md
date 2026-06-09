@@ -44,20 +44,20 @@ The Worker currently supports:
 
 Current behavior is intentionally simple:
 
-- quotes are computed from the seeded dataset in D1
+- quotes are computed from the seeded dataset in D1, through one static adapter per provider
 - quotes expire after 24 hours
 - a quote can only be booked once
-- booking a delivery records it in D1
+- booking runs through the originating provider's adapter (`book()`) and records the delivery in D1
 - tracking returns the recorded delivery status and history
-- tracking history can now be advanced through a manual/internal event path
+- tracking history can be advanced through a manual/internal event path; every event records its source (booking/manual/adapter) on one log
 
 ## What is partial or intentionally simple
 
 Some parts of the contract are in place before the full implementation behind them exists.
 
 - `package_type` is still part of the quote request shape, but it is not yet used in quote logic
-- booking creates a delivery record, but does not dispatch to a live provider system
-- tracking is unified, and Phase 1 now supports manual/internal tracking event updates; adapter-driven and webhook-driven updates still come later
+- booking dispatches through the adapter runtime, but the only adapter is the static one, so it records the booking rather than calling a live provider system
+- tracking is unified on one event log with a recorded source per event; adapter-driven (`track()`) and webhook-driven updates still come later
 - rates in `spec/data/` are still marked `seed-illustrative` unless replaced by sourced field data
 
 This is normal for the current phase. The important thing is to describe it clearly.
@@ -93,13 +93,13 @@ Even with a live deployment, the project should still be treated as active devel
 
 ## Current implementation priority
 
-The immediate priority is remaining Phase 1 code work:
+Quotes and booking now run through the adapter runtime (ADRs 0013–0014) and tracking
+follows the one-log model (ADR 0015). The remaining Phase 1 code work is:
 
-- extend how the new tracking event path is actually used
-- define and implement the next step toward adapter-driven provider flows
-- keep the API and runtime behavior coherent as those pieces land
+- wire adapter-driven `track()` / webhooks into the same event log when a non-static adapter exists
+- begin the broader dataset replacement push, now that the core code path is in place
 
-The broader dataset replacement push still matters, but it is not the next implementation priority right now.
+The dataset replacement push is now the next major effort once the tracking seam above is settled.
 
 ## What contributors should assume
 
