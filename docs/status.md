@@ -28,6 +28,7 @@ The current branch has a working Phase 1 foundation:
 - the Phase 1 HTTP endpoints, including dataset freshness
 - a small checkout example in `examples/simple-shop`
 - automated tests for the core package and the Worker package
+- a live hosted reference Worker deployment
 
 ## What the Worker does today
 
@@ -39,6 +40,7 @@ The Worker currently supports:
 - `POST /v1/quotes`
 - `POST /v1/deliveries`
 - `GET /v1/deliveries/{tracking_id}/track`
+- `POST /v1/deliveries/{tracking_id}/events`
 
 Current behavior is intentionally simple:
 
@@ -47,6 +49,7 @@ Current behavior is intentionally simple:
 - a quote can only be booked once
 - booking a delivery records it in D1
 - tracking returns the recorded delivery status and history
+- tracking history can now be advanced through a manual/internal event path
 
 ## What is partial or intentionally simple
 
@@ -73,16 +76,30 @@ These are part of the project direction, but they are not implemented in this re
 
 Local development works now.
 
-Hosted deployment still needs project-specific setup:
+The hosted reference Worker is live at:
 
-- create a real Cloudflare D1 database
+- `https://itafika-api.emcie4.workers.dev`
+
+Repository-level deployment still needs project-specific setup for any new environment:
+
+- create a real Cloudflare D1 database in that account
 - replace the placeholder `database_id` in `packages/worker/wrangler.jsonc`
 - apply remote migrations
 - seed the remote database
 
 Use [`docs/deploy-worker.md`](deploy-worker.md) for the exact deployment steps.
 
-Until that is done, the Worker should be treated as development software, not a finished hosted service.
+Even with a live deployment, the project should still be treated as active development software, not a finished production platform.
+
+## Current implementation priority
+
+The immediate priority is remaining Phase 1 code work:
+
+- extend how the new tracking event path is actually used
+- define and implement the next step toward adapter-driven provider flows
+- keep the API and runtime behavior coherent as those pieces land
+
+The broader dataset replacement push still matters, but it is not the next implementation priority right now.
 
 ## What contributors should assume
 

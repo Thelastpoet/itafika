@@ -82,6 +82,7 @@ Phase 1 can stay simple: a Worker reads the seeded dataset from D1 and returns q
 | `POST` | `/v1/quotes` | Get delivery options + prices between two zones |
 | `POST` | `/v1/deliveries` | Lock in a chosen quote, get a tracking ID |
 | `GET`  | `/v1/deliveries/{tracking_id}/track` | Unified tracking status |
+| `POST` | `/v1/deliveries/{tracking_id}/events` | Append a manual/internal tracking event |
 
 The heart is `POST /v1/quotes`:
 
@@ -124,13 +125,15 @@ Because Itafika is open source, the defaults are a **starting point, not a cage.
 
 The repository already contains a working core package, adapter package, Worker API, D1 migrations, seed flow, tests, and a simple shop example.
 
+The hosted reference Worker is also live at `https://itafika-api.emcie4.workers.dev`.
+
 It does **not** yet contain every planned part of the wider Itafika architecture.
 
 See [`docs/status.md`](docs/status.md) for the exact breakdown.
 
 | Phase | What | State |
 |-------|------|-------|
-| **1 — Static API (MVP)** | Seeded static rates + standardized zone IDs behind the current API, with quote lifecycle and tracking basics. | In active development |
+| **1 — Static API (MVP)** | Seeded static rates + standardized zone IDs behind the current API, with quote lifecycle, booking, tracking, and manual event updates. | In active development |
 | **2 — Adapter runtime integration** | Wire the reference Worker to use adapter instances for provider flows, then grow live adapters. | Planned |
 | **3 — Payments & escrow** | Daraja / M-Pesa integration with COD split-billing. | Planned |
 
