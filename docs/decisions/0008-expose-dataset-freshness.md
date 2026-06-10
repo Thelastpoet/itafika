@@ -1,29 +1,15 @@
-# ADR 0008 — Expose dataset freshness through the API
+# ADR 0008 — Show data freshness in the API
 
 **Status:** Accepted
 **Date:** 2026-06-08
 
 ## Context
 
-The Phase 1 dataset already includes `freshness.csv`, and the reference Worker already loads that data into D1.
-
-The point of the freshness metadata is to help consumers reason about staleness:
-
-- how recently a town's rates were reviewed
-- whether a quoted route is based on newer or older data
-- whether the hosted reference dataset is fresh enough for the consumer's use case
-
-Until now, the metadata existed in the repository and database but was not exposed through the API.
+The project already tracks how "fresh" the data is for each town in a CSV file. We want to make this information available to users through the API so they know how recent the rates are.
 
 ## Decision
 
-Add a small read-only endpoint:
-
-- `GET /v1/freshness`
-
-It returns the per-town freshness records currently loaded into the dataset.
-
-This keeps the data model honest: if freshness metadata is part of the canonical dataset and loaded into D1, consumers should be able to read it without scraping repository files.
+Add a `GET /v1/freshness` endpoint that returns the freshness records for each town currently in the dataset.
 
 ## Rationale
 

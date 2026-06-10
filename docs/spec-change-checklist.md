@@ -1,54 +1,41 @@
 # Spec Change Checklist
 
-Use this checklist when a change touches the canonical API or data contract.
+Use this checklist whenever you change the API or the core data rules. 
 
-This is for maintainers and contributors who are changing:
+This applies to anyone editing:
+- `spec/openapi.yaml` (The API structure)
+- `spec/adapter-contract.md` (Rules for delivery companies)
+- `spec/data/SCHEMA.md` (Rules for our data files)
+- Any other rule that affects how shops or delivery companies interact with Itafika.
 
-- `spec/openapi.yaml`
-- `spec/adapter-contract.md`
-- `spec/data/SCHEMA.md`
-- any contract behavior that consumers or implementers rely on
+## Before You Start Your Pull Request
+- [ ] Is this change really a "Rule"? If it's just a small code detail, it doesn't belong in the spec.
+- [ ] Can you explain the problem you are solving in plain English?
+- [ ] Is this change **Additive** (adds something new), a **Clarification** (makes a rule clearer), or **Breaking** (changes an existing rule in a way that might break shops)?
 
-## Before opening the PR
+## While Working on the PR
+- [ ] Update the correct file in the `spec/` folder.
+- [ ] If the change is a major decision, add a new file to `docs/decisions/`.
+- [ ] If you changed `spec/openapi.yaml`, run the command to update the TypeScript types.
+- [ ] Update any code that needs to follow the new spec.
+- [ ] Update the tests to match the new behavior.
+- [ ] Update the documentation (like the Integration Guide) if the change affects how developers use the API.
 
-- confirm that the change really belongs in `spec/` and is not only an implementation detail
-- describe the problem in plain language
-- identify whether the change is:
-  - additive
-  - clarification
-  - breaking
+## Before You Merge
+- [ ] Run these commands to make sure everything still works:
+  ```bash
+  pnpm test
+  pnpm typecheck
+  ```
+- [ ] Do the examples and documentation still match the new rules?
+- [ ] Does `docs/status.md` need to be updated?
 
-## In the PR
+## If the Change is "Breaking"
+- [ ] Can you find a way to make it "Additive" instead? (Avoid breaking things if possible).
+- [ ] Did you write down exactly how developers should update their code?
+- [ ] Did you get approval from the project maintainers?
 
-- update the relevant file in `spec/`
-- add or link the ADR in `docs/decisions/` if required by governance
-- update generated types if `spec/openapi.yaml` changed
-- update any implementation code that follows the spec
-- update tests that cover the affected behavior
-- update user-facing docs if the change affects what contributors or consumers should expect
+### The Rule of Thumb
+If a shop developer would need to know about this change to build their app, put it in the `spec/`. 
 
-## Before merge
-
-- run:
-
-```bash
-pnpm test
-pnpm typecheck
-```
-
-- check that the spec and implementation now agree
-- check that examples still match current behavior
-- check whether `docs/status.md` needs an update
-
-## Extra checks for breaking changes
-
-- confirm the change cannot stay additive
-- document the migration path
-- document the deprecation or versioning plan
-- get the required sign-off under `GOVERNANCE.md`
-
-## Rule of thumb
-
-If a consumer could build against it, document it in `spec/`.
-
-If only the reference implementation needs to know, keep it out of the canonical contract.
+If it's just a detail about how the code is written, keep it out of the spec.

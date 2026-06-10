@@ -1,41 +1,18 @@
-# ADR 0016 — Surface collection point and collection type on quotes
+# ADR 0016 — Show collection details on quotes
 
 **Status:** Accepted (2026-06-10)
 **Date:** 2026-06-09
 
-> One of four related ADRs (0016–0019) that set the direction for evolving Itafika
-> from a pure quoting engine into a **checkout-delivery layer** a Kenyan shop can
-> render directly. Direction and expectations only — implementation and the
-> non-author maintainer sign-off required by [GOVERNANCE.md](../../GOVERNANCE.md)
-> are follow-on, open to contribution.
-
 ## Context
 
-The single most Kenya-specific fact about a delivery is **where, and how, the
-recipient receives it**. Most parcels move office-to-office: the sender drops at a
-SACCO/bus parcel desk and the recipient *collects* at that provider's office or
-stage in their town. Riders and some couriers instead deliver to a door. A customer
-at checkout cannot decide between options without knowing this.
-
-Today the `Quote` schema carries `provider_type`, `provider_name`,
-`estimated_cost_kes`, `estimated_time`, and `reliability_score` — and **nothing
-about where or how the parcel is collected**. A shop therefore cannot render
-"collect at 2NK, Nyeri town stage" or "delivered to your address" from Itafika
-data, even though the rate matrix already knows the destination zone per provider.
-
-This is a gap between what Itafika *provides* and what a checkout *needs*. It is the
-highest-value of the four direction ADRs because the others build on it.
+In Kenya, most parcels are collected at an office or a "stage" (office pickup) rather than delivered to a door. Currently, our API doesn't show where or how a parcel will be collected, which makes it hard for a customer to choose an option at checkout.
 
 ## Decision
 
-Surface the collection facts the customer needs to choose, on the `Quote`:
+We will add collection details to the `Quote` response:
 
-- **`collection_type`** — a new enum `CollectionType`: `office_pickup | door_delivery`.
-  Whether the recipient collects at the provider's office/stage, or the parcel is
-  delivered to an address.
-- **`collection_point`** — for `office_pickup`, the zone where the parcel is
-  collected: `{ zone_id, name, town }`. Absent for `door_delivery` (the recipient's
-  own address is the destination).
+- **`collection_type`**: Either "office_pickup" or "door_delivery."
+- **`collection_point`**: For office pickups, this shows the specific location (town and zone) where the customer can collect their parcel.
 
 Both fields are **optional/additive** within `/v1`; existing required fields are
 unchanged. The collection facts are a property *of the option*, not a separate

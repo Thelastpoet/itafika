@@ -1,73 +1,64 @@
 # Itafika
 
-### An open-source logistics aggregator API for Kenya
-
-> This is the founding concept document. It explains the destination and the design direction.
->
-> It is **not** the implementation status document. For what currently exists in the repository, see [`docs/status.md`](status.md).
+### A free, open-source tool to connect all delivery services in Kenya
 
 *"Itafika"* — Swahili, *it will arrive*.
 
-A single, clean, predictable interface that any online shop can plug into to solve delivery and shipping — locations, transport modes, and rates already built in, so no developer has to model Kenya's delivery system from the ground up.
+Itafika gives you one simple way to handle delivery and shipping. Locations, transport modes, and rates are already built in — so you don't have to figure out how Kenyan delivery works from scratch.
 
 ---
 
-## 1. The idea, in one breath
+## 1. The idea in short
 
-Any online shop in Kenya plugs into Itafika and their delivery problem is sorted.
+Any online shop in Kenya can plug into Itafika to solve their delivery problems.
 
-At checkout, their customer picks a location and sees real options for getting the goods to them — a boda rider, a matatu or bus parcel service, a national courier — each with a price and an estimated time. The shop didn't build any of that. They didn't map a single stage, model a single rate, or integrate a single courier. They made one API call and got back a working set of delivery options.
+At checkout, a customer picks their location and sees real options to get their goods — a boda rider, a matatu or bus parcel service, or a national courier. Each option shows a price and an estimated time. The shop owner doesn't have to build any of this. They don't have to map stages or integrate with every courier themselves. They make one API call and get all the options.
 
-That is the whole promise: **delivery as something you consume, not something you build.**
-
-Everything else in this document — the architecture, the data model, the phased roadmap — exists in service of keeping that one experience simple for the shop while the system underneath stays honest about how messy Kenyan delivery actually is.
+**Delivery should be something you use, not something you have to build yourself.**
 
 ---
 
-## 2. The problem we are abstracting away
+## 2. The problem we are solving
 
-Kenya's e-commerce is growing fast — roughly a billion-dollar market and climbing — but delivery remains the part that breaks the experience. The reason is not a shortage of ways to move a parcel. It is the opposite: there are too many, and none of them speak the same language.
+Online shopping in Kenya is growing fast, but delivery is often the hardest part. It's not because there aren't enough ways to move a parcel, but because there are too many and they don't work together.
 
-A shop owner who wants to ship a 2kg box from Nairobi to Nyeri can use an independent boda rider, a matatu SACCO's parcel desk, a long-distance bus, or a national courier. Each has its own prices, its own coverage, its own idea of where a package gets dropped, and its own — usually nonexistent — software. Worse, locations themselves don't behave like addresses. "Drop it at the stage behind the chemist" is a real, common, and completely valid delivery instruction that no GPS pin captures cleanly.
+A shop owner who wants to ship a 2kg box from Nairobi to Nyeri can use a boda rider, a matatu SACCO's parcel desk, a long-distance bus, or a national courier. Each has its own prices, its own coverage, and its own way of describing locations. Often, there is no software at all. Also, locations in Kenya don't always behave like street addresses. "Drop it at the stage behind the chemist" is a common and valid instruction that GPS doesn't handle well.
 
-The result is that every e-commerce builder in Kenya re-solves the same problem from scratch, badly, in isolation. They hardcode a couple of couriers, guess at rates, and leave the cheaper informal options — the matatu and bus parcel networks that millions of Kenyans actually use — off the table entirely, because wiring them up by hand is hopeless.
+Right now, every developer in Kenya has to figure out delivery on their own, which is slow and difficult. They end up only using a few couriers and ignore cheaper options like matatus and buses because they are too hard to connect to.
 
-Itafika exists to make that work happen **once, in the open, for everyone.**
-
----
-
-## 3. The principle: an infrastructure abstraction layer
-
-The model is what open standards did for other fragmented systems. GTFS gave transit data one shared shape so a generation of journey-planning apps could be built on top of it; OpenStreetMap turned scattered geographic knowledge into one queryable commons. In each case, a clean, predictable interface in front of the mess is what let an ecosystem grow.
-
-Itafika takes the same posture toward physical delivery. It is an **abstraction layer**: it hides a chaotic, fragmented physical system behind one consistent API. The shop that consumes it never has to know which SACCO serves which route, what a rider charges across town, or how a courier names its tracking states. It asks one question — *how can this package get from here to there, and what are the options?* — and gets one clean answer.
-
-The job of the layer is translation: take the disorder of real Kenyan logistics and present it as something orderly, queryable, and standard.
+Itafika does that work **once, for everyone.**
 
 ---
 
-## 4. What a developer actually gets
+## 3. The goal: One simple system for everyone
 
-The experience for the shop is deliberately small. They ask for the delivery options between two points for a given package, and Itafika returns a structured list they can render straight into checkout:
+Itafika acts as a bridge. It hides the messy and fragmented world of Kenyan delivery behind one simple API. A shop owner using Itafika doesn't need to know which SACCO goes where or what a rider charges across town. They just ask one question — *how can this package get from here to there, and what are the options?* — and get one clear answer.
+
+Our job is to take the disorder of real-world logistics and turn it into something organized and easy to use.
+
+---
+
+## 4. What you get as a developer
+
+Integrating Itafika into your shop is simple. You just ask for delivery options between two points, and Itafika returns a list you can show at checkout:
 
 ```json
 POST /v1/quotes
 {
   "origin_zone_id": "ZONE_NBI_CBD_01",
   "destination_zone_id": "ZONE_NKR_MAIN",
-  "package_weight_kg": 2.5,
-  "package_type": "apparel"
+  "package_weight_kg": 2.5
 }
 ```
 
 ```json
+{
+  "quotes": [
     {
-      "quotes": [
-        {
-          "quote_id": "qt_2mn41bq",
-          "provider_type": "matatu_sacco",
-          "provider_name": "Mololine Sacco",
-          "estimated_cost_kes": 400,
+      "quote_id": "qt_2mn41bq",
+      "provider_type": "matatu_sacco",
+      "provider_name": "Mololine Sacco",
+      "estimated_cost_kes": 400,
       "estimated_time": "3 hours",
       "reliability_score": 0.98
     }
@@ -75,42 +66,40 @@ POST /v1/quotes
 }
 ```
 
-The customer picks one. The shop is done. No mapping, no rate tables, no courier integrations — those already shipped inside Itafika.
+The customer picks one, and the shop is done. No mapping or complicated courier connections needed — Itafika handles all that.
 
-And because Itafika is open source, the defaults are a **starting point, not a cage.** A shop with its own negotiated courier rate can override it. A shop that wants to add a mode, hide one, or change how options are ranked, can. They consume the sensible defaults and bend them to their own checkout — without ever rebuilding the foundation.
-
----
-
-## 5. Design principles
-
-**Batteries included.** Out of the box, Itafika already knows the locations, the transport modes, and the rates. A shop gets working delivery options on day one without seeding any data themselves.
-
-**Provider-agnostic at the core.** The engine never contains logic for a specific courier. It speaks to a small set of adapters, and each adapter translates for its own world. Adding Bolt, or 2NK, or G4S is a contribution at the edge — never a change to the core.
-
-**Customizable and forkable.** Defaults are meant to be overridden. Rates, modes, and ranking are all things a consumer can adjust on their end. Open source makes the foundation shared and the last mile yours.
-
-**Open by mission, not by accident.** The fragmented work of representing Kenyan delivery should be done once and owned by the community that depends on it — not locked inside any one company.
+Because Itafika is open source, you are never "locked in." You can use the default prices or add your own. You can hide certain delivery methods or change how options are ranked, all without rebuilding the whole system.
 
 ---
 
-## 6. Architecture
+## 5. How we design Itafika
 
-Itafika has two layers: the open standard and the hosted reference API.
+**Ready to use.** Out of the box, Itafika already knows the locations, the transport modes, and the rates. You get working delivery options on day one without having to add your own data.
 
-The **standard** lives in `spec/`: the OpenAPI contract, the adapter contract, and the open dataset. This is the part any team can reimplement in another language.
+**Works with any provider.** The core of Itafika doesn't care which courier is used. It talks to "adapters" that handle the specific details for each provider. Adding a new courier or matatu sacco is done at the edge, without changing the core system.
 
-The **reference API** runs on Cloudflare Workers. A Worker receives checkout requests, reads zones and rates from D1, asks the core quote engine for available options, and returns the same JSON shape defined in the OpenAPI contract.
+**Open and shared.** We believe the work of mapping Kenyan delivery should be done once and owned by the community, not locked inside a single company.
 
-Itafika also uses an **Adapter Pattern**. The Core Routing Engine handles every request in the same standardized way and never knows which physical provider will ultimately fulfill it. Small adapters translate the standard request into the language of each transport class.
+---
+
+## 6. How it works
+
+Itafika has two main parts: the **rules (the standard)** and a **working API**.
+
+The **standard** defines the API design, how to connect new providers, and the open dataset. Anyone can use these rules to build their own version of Itafika.
+
+The **working API** runs on Cloudflare. When it receives a request, it checks the database for locations and rates, finds the best options, and returns them to the shop.
+
+We use an **Adapter Pattern**. This means the main system doesn't need to know how each courier works. Small "adapters" act as translators between Itafika and the physical delivery providers.
 
 ```
                   ┌───────────────────────────────┐
-                  │     E-commerce Client (Shop)  │
+                  │      Shop / E-commerce        │
                   └───────────────┬───────────────┘
-                                  │ JSON API
+                                  │ API Call
                                   ▼
                   ┌───────────────────────────────┐
-                  │       Core Routing Engine     │
+                  │      Itafika Core Engine      │
                   └───────────────┬───────────────┘
                                   │
          ┌────────────────────────┼────────────────────────┐
@@ -122,46 +111,45 @@ Itafika also uses an **Adapter Pattern**. The Core Routing Engine handles every 
   (Bolt / Gatika / …)      (2NK / Mololine / …)    (G4S / Wells Fargo / …)
 ```
 
-This is also the open-source strategy made structural. Itafika ships the contract — a `LogisticsProviderInterface` — and the community fills in providers over time. The core stays small and stable; coverage grows at the edges through contribution.
+This way, the community can keep adding new providers over time without breaking the core system.
 
-Cloudflare primitives map cleanly to the logistics lifecycle:
+We use Cloudflare tools to handle different parts of the process:
 
-| Need | Primitive |
+| Need | Tool used |
 |------|-----------|
-| Public API | Workers |
-| Zones, providers, rates, deliveries, tracking events | D1 |
-| Webhook processing and background provider jobs | Queues |
-| Booking retries, human-in-the-loop confirmation | Workflows |
-| Per-delivery or per-provider coordination | Durable Objects |
+| Public API | Cloudflare Workers |
+| Locations, rates, and tracking | D1 Database |
+| Background tasks | Queues |
+| Retries and long flows | Workflows |
 
-The first release does not need every primitive at once. Phase 1 can be a Worker plus D1. The other pieces are introduced where the delivery lifecycle needs background work, retries, or stateful coordination.
+Phase 1 is simple and only uses the Worker and the Database. The other tools are added as we need more advanced features.
 
 ---
 
-## 7. Core modules and endpoints
+## 7. Main features and API endpoints
 
-Itafika is built from four modules. All four are part of the canonical spec from the start; in the earliest release some are intentionally static, but the shape is fixed so consumers can build against it with confidence.
+Itafika is built from four main parts. We've designed them to be stable so you can build your shop with confidence.
 
-**A. Location & Zone Mapping.** Because Kenyan delivery is described by stages and hubs, not street addresses, Itafika maintains a Zones & Stages database — CBD hubs (e.g. RNG Plaza, Veteran House), upcountry stages (e.g. Nyeri Stage, Eldoret Main Stage), and residential areas — each with a stable, human-readable ID.
+**A. Locations and Zones.** Since delivery in Kenya uses stages and hubs rather than street addresses, we keep a database of these locations. Each one has a simple ID you can use.
 
 ```
-GET /v1/zones                 List supported drop-off / pick-up locations
-GET /v1/zones/search?q=cbd    Search locations
+GET /v1/zones                 List all drop-off / pick-up locations
+GET /v1/zones/search?q=cbd    Search for a location
 ```
 
-**B. Quote Estimator.** The heart of the product. Given origin, destination, weight, and package type, it returns the full spread of options across every transport class, each with cost, estimated time, and a reliability score.
+**B. Delivery Quotes.** This is the heart of the product. You give it the origin, destination, and weight, and it shows you every available delivery option with price and time.
 
 ```
 POST /v1/quotes
 ```
 
-**C. Order & Booking.** Once a shop's customer selects a quote, this module locks it in, generates a tracking ID, and notifies the relevant adapter.
+**C. Booking.** Once your customer picks an option, this part locks it in and gives you a tracking ID.
 
 ```
 POST /v1/deliveries
 ```
 
-**D. Webhooks & Unified Tracking.** Providers each track differently. Itafika normalizes their states into five universal ones — `package_picked`, `in_transit`, `at_sorting_hub`, `ready_for_pickup`, `delivered` — so a shop reads one vocabulary regardless of who carries the package.
+**D. Tracking.** Different providers track differently. Itafika turns all their updates into five simple states: `package_picked`, `in_transit`, `at_sorting_hub`, `ready_for_pickup`, and `delivered`. You only have to learn one set of statuses.
 
 ```
 GET /v1/deliveries/{tracking_id}/track
@@ -169,52 +157,47 @@ GET /v1/deliveries/{tracking_id}/track
 
 ---
 
-## 8. Data model
+## 8. Our data model
 
-A clean relational core makes the whole thing legible and contributable.
+We keep our data simple and clear so anyone can help improve it.
 
-**Locations / Zones** — stable IDs, human-readable names, a type (CBD hub, stage, residential area), and coordinates.
+**Locations / Zones** — Names of stages and hubs, their type, and where they are located.
 
-**Providers** — transport type (rider, SACCO, national courier) and base connection details.
+**Providers** — The companies and services that move parcels (riders, saccos, couriers).
 
-**Rates** — the matrix where the value concentrates: `origin_zone_id` × `destination_zone_id`, with a base cost and a cost-per-kg for each provider type.
+**Rates** — This is the most valuable part. It lists the cost to move a parcel between any two zones for each provider.
 
-The Rates table is the asset. It is the encoded answer to *"what are all the ways to move a parcel from A to B in Kenya, and what does each cost"* — the thing no one has assembled cleanly and openly, and the thing every consumer of Itafika gets for free.
-
-The human-editable source of this data is `spec/data/`. The hosted Worker loads that data into D1 so the API can query it quickly.
+This information is kept in simple files that anyone can edit. The API uses this data to give you accurate prices.
 
 ---
 
 ## 9. Roadmap
 
-**Phase 1 — The static API (MVP).** No scraping, no live tracking, no heroics. Seed D1 from the open dataset: standard Nairobi CBD rider rates, common upcountry matatu and bus parcel rates, national courier options, and a starter set of zones and stages. Ship the Worker API with the quote engine returning useful numbers from reviewed data. Open-source it immediately — because standardized location IDs and reliable price estimation are valuable on their own, before a single live integration exists.
+**Phase 1 — Basic API (MVP).** We start with the most common routes and rates for Nairobi and other major towns. We've built the API to give useful quotes from this data right now. Even without live tracking for every provider, having standard locations and reliable price estimates is very useful for developers.
 
-**Phase 2 — Open adapter contribution.** Publish the `LogisticsProviderInterface` and invite the community to extend coverage provider by provider: an adapter that pulls live rates from a courier, a bridge that lets a manual rider confirm a status over WhatsApp, a new town's stage map. Queues handle background adapter work, and Workflows handle retry-heavy booking steps. The core never changes; the edges grow.
+**Phase 2 — Growing the system.** We'll invite more people to add new delivery providers and towns. Some providers will have live prices, while others might just use WhatsApp to confirm they've delivered a parcel. The system will handle these different ways of working behind the scenes.
 
-**Phase 3 — Optimization and scale.** With coverage growing at the edges, the work turns to depth: broaden routes across more of Kenya, bring live rates online through adapters, and sharpen each provider's reliability score and the ranking of options from observed real-world delivery performance. The aggregator gets more accurate and more complete as it is used. The core stays the same; the answers it returns get better.
-
----
-
-## 10. Why open source, and why nothing else fills this slot
-
-The serious logistics players in Kenya — the funded delivery companies, the agent networks, the on-demand apps — are all **closed products that own their own stack.** Each is useful. None is a public, open interface that any developer building a shop can call to get a standardized set of delivery options across riders, matatus, buses, and couriers. That layer simply does not exist.
-
-Itafika is not trying to be a delivery company. It is trying to be the open standard *underneath* anyone who would otherwise integrate all of them by hand — the GTFS, or the OpenStreetMap, of Kenyan parcel logistics. The defensible, lasting asset is not the code, which is meant to be copied; it is the open, community-maintained representation of how delivery actually works in Kenya, kept fresh by the people who rely on it.
-
-The work of mapping Kenya's delivery system should be done once and shared. That is the case for open source, and it is the reason Itafika should exist.
+**Phase 3 — Getting better with time.** As more people use Itafika, we will have more data on which providers are the most reliable. We'll use this to improve our reliability scores and help customers pick the best options.
 
 ---
 
-## 11. Status & next steps
+## 10. Why Itafika is different
 
-This document is the founding concept. It is intentionally complete on the *what* and the *why*, and deliberately light on bikeshedding the *how* — that comes next, with the people who build and adopt it.
+Most delivery companies in Kenya are "closed." They own their own system and only show their own prices. There is no shared, open system that lets a developer see options from riders, matatus, buses, and couriers all in one place.
 
-Immediate next steps:
+Itafika is not trying to be a delivery company. It's the open foundation that everyone can use. By sharing the work of mapping Kenyan delivery, we make it easier for every online shop to succeed.
 
-- Freeze the Phase 1 API contract so early adopters can build against a stable shape.
-- Seed the first useful dataset: Nairobi CBD hubs, common upcountry stages, and sourced static rates.
-- Build the Cloudflare Worker reference API.
-- Add D1 migrations and a seed command that loads `spec/data/`.
-- Publish the `LogisticsProviderInterface` so the first adapters can be contributed.
+---
+
+## 11. What's next?
+
+This document explains our vision. Now we are focused on building it.
+
+Our next steps:
+
+- Make sure the Phase 1 API design is stable so you can start building.
+- Add more locations and rates to our database.
+- Improve our working API on Cloudflare.
+- Help others connect more delivery providers to the system.
 
 *Itafika — so that any shop can simply say: it will arrive.*

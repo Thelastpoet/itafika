@@ -1,15 +1,15 @@
-# ADR 0004 — MIT license
+# ADR 0004 — Use the MIT License
 
 **Status:** Accepted
 **Date:** 2026-06-08
 
 ## Context
 
-Itafika's value is adoption: the more shops, frameworks, and providers build on the standard, the more useful and authoritative it becomes. The license should remove friction for everyone — individual developers, startups, and established companies — including commercial use.
+We want Itafika to be widely adopted by everyone, from individual developers to large companies. The license should be simple and allow for commercial use.
 
 ## Decision
 
-The project is licensed under the **MIT License**.
+The project uses the **MIT License**.
 
 ## Rationale
 

@@ -6,25 +6,25 @@ Per [GOVERNANCE.md](../../GOVERNANCE.md), any change to the spec is accompanied 
 
 | # | Title | Status |
 |---|-------|--------|
-| [0001](0001-language-and-stack.md) | TypeScript and Cloudflare Workers for the reference implementation | Accepted |
-| [0002](0002-spec-first-monorepo.md) | Spec-first, clearly separated monorepo | Accepted |
-| [0003](0003-datastore.md) | D1 as the reference datastore | Accepted |
-| [0004](0004-license.md) | MIT license | Accepted |
-| [0006](0006-rename-shipments-to-deliveries.md) | Rename the booking resource from "shipment" to "delivery" | Accepted |
-| [0007](0007-clarify-phase1-validation-and-reserved-fields.md) | Clarify Phase 1 validation rules and reserved quote fields | Accepted |
-| [0008](0008-expose-dataset-freshness.md) | Expose dataset freshness through the API | Accepted |
-| [0009](0009-define-worker-boundaries.md) | Define Worker policy, validation, and service boundaries | Accepted |
-| [0010](0010-clarify-adapter-contract-vs-phase1-integration.md) | Clarify adapter contract versus Phase 1 runtime integration | Accepted |
-| [0011](0011-require-freshness-for-every-town.md) | Require freshness coverage for every dataset town | Accepted |
-| [0012](0012-add-manual-tracking-event-updates.md) | Add manual tracking event updates for Phase 1 | Accepted |
-| [0013](0013-wire-worker-to-adapter-runtime.md) | Wire the Worker to the adapter runtime for quotes | Accepted |
-| [0014](0014-route-booking-through-adapter-runtime.md) | Route booking through the adapter runtime | Accepted |
-| [0015](0015-tracking-update-model.md) | Tracking update model — one event log, many producers | Accepted |
-| [0016](0016-surface-collection-point-and-type-on-quotes.md) | Surface collection point and collection type on quotes | Accepted |
-| [0017](0017-add-delivery-options-discovery-surface.md) | Add a delivery-options discovery surface | Accepted |
-| [0018](0018-capture-delivery-instructions-and-collection-identity.md) | Capture delivery instructions and collection identity | Accepted |
-| [0019](0019-transport-modes-as-a-registry.md) | Model transport modes as a governed registry | Accepted |
-| [0020](0020-non-developer-data-contribution-via-form-to-pr.md) | Non-developer data contributions via a form that opens a PR | Proposed |
+| [0001](0001-language-and-stack.md) | Use TypeScript and Cloudflare Workers | Accepted |
+| [0002](0002-spec-first-monorepo.md) | Use a spec-first monorepo structure | Accepted |
+| [0003](0003-datastore.md) | Use Cloudflare D1 for data storage | Accepted |
+| [0004](0004-license.md) | Use the MIT License | Accepted |
+| [0006](0006-rename-shipments-to-deliveries.md) | Rename "shipment" to "delivery" | Accepted |
+| [0007](0007-clarify-phase1-validation-and-reserved-fields.md) | Simplify validation and quote fields | Accepted |
+| [0008](0008-expose-dataset-freshness.md) | Show data freshness in the API | Accepted |
+| [0009](0009-define-worker-boundaries.md) | Organize Worker code by service boundaries | Accepted |
+| [0010](0010-clarify-adapter-contract-vs-phase1-integration.md) | Define how adapters and the Worker interact | Accepted |
+| [0011](0011-require-freshness-for-every-town.md) | Ensure all towns have freshness data | Accepted |
+| [0012](0012-add-manual-tracking-event-updates.md) | Allow manual tracking updates | Accepted |
+| [0013](0013-wire-worker-to-adapter-runtime.md) | Connect the Worker to adapters for quotes | Accepted |
+| [0014](0014-route-booking-through-adapter-runtime.md) | Use adapters for bookings | Accepted |
+| [0015](0015-tracking-update-model.md) | Simplify tracking as a single event log | Accepted |
+| [0016](0016-surface-collection-point-and-type-on-quotes.md) | Show collection details on quotes | Accepted |
+| [0017](0017-add-delivery-options-discovery-surface.md) | Add an endpoint to discover delivery options | Accepted |
+| [0018](0018-capture-delivery-instructions-and-collection-identity.md) | Collect delivery notes and ID info | Accepted |
+| [0019](0019-transport-modes-as-a-registry.md) | Use a registry for transport modes | Accepted |
+| [0020](0020-non-developer-data-contribution-via-form-to-pr.md) | Allow data updates via a web form | Proposed |
 
 ADRs 0016–0019 are a related set that evolved Itafika from a quoting engine into a
 checkout-delivery layer. They are `Accepted` and implemented in the reference Worker

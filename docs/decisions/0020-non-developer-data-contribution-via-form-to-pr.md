@@ -1,51 +1,21 @@
-# ADR 0020 — Non-developer data contributions enter via a form that opens a PR
+# ADR 0020 — Allow data updates via a web form
 
 **Status:** Proposed
 **Date:** 2026-06-09
 
-> A contribution-tooling decision, not an API-contract change — so it touches no
-> `spec/` file and needs no contract sign-off. It is recorded as an ADR because *how
-> non-developer data enters the canonical pipeline* is a real architectural decision
-> worth pinning before anyone builds it.
-
 ## Context
 
-Itafika repeatedly promises that contributing data needs **no code**:
-
-- `CONTRIBUTING.md` §1 — "Contribute data (no code required)"; and "Many contributors
-  are domain experts (riders, agents, SACCO staff) who may not be developers. Their
-  knowledge is the point."
-- `README.md`, `docs/contribute-data.md`, `docs/status.md`, and ADR 0007 echo the same
-  intent.
-
-But the actual documented path is: open the CSVs → read `SCHEMA.md` → add rows → run
-`pnpm data:validate` → open a GitHub pull request. That requires Git, GitHub, Node/pnpm,
-and CSV literacy — which the target contributor (a rider, a SACCO parcel-desk clerk, an
-agent) almost certainly does not have. **The promise of a friendly place exists; the
-friendly place does not.**
-
-A natural temptation is to put up a form that writes **directly to D1** so submissions
-appear in the live API immediately. That must be rejected — see below.
+We want people who aren't developers (like riders or agents) to be able to contribute data to Itafika. Right now, contributing requires knowing how to use Git and GitHub, which is a barrier for many domain experts.
 
 ## Decision
 
-Provide a **schema-aware contribution form** whose submissions are turned into a **pull
-request against `spec/data/*.csv`** via the GitHub API. The form is the friendly front
-door; the canonical pipeline behind it is unchanged.
+We will build a simple **web form** for data contributions. When someone submits the form, it will automatically create a "Pull Request" on GitHub.
 
-- **The form never writes to D1.** `spec/data/` is canonical; D1 is a projection
-  rebuilt from seed. The form produces a reviewable PR; nothing goes live until that PR
-  is validated, reviewed, and merged, then reseeded — exactly today's flow.
-- **A separate Worker** (or Pages + Functions app), not the public API Worker. The API
-  Worker stays a clean read surface; the contribution app is a write concern that holds
-  a GitHub token and a spam surface, which do not belong on the API.
-- **Provenance is mandatory.** The form requires the `source` field; no anonymous,
-  unsourced rates.
-- **The form mirrors `SCHEMA.md`** (including the planned `modes` / `collection_type` /
-  `county` fields, ADRs 0016–0019) so it cannot produce an invalid row, and surfaces
-  the same rules `data:validate` enforces.
-- **Public-write hardening:** Cloudflare Turnstile + rate limiting in front; the GitHub
-  token is a Worker secret, never committed.
+This ensures:
+- **Human review.** Data is reviewed by a maintainer before it's merged.
+- **No Git required.** Contributors don't need to know how Git or GitHub works.
+- **One source of truth.** The form updates the CSV files, which remain our authoritative data source.
+- **Security.** The form will use spam protection and a secure GitHub token.
 
 Data flow:
 

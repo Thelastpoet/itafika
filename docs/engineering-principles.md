@@ -1,165 +1,77 @@
 # Engineering Principles
 
-This document sets the engineering rules for the project.
+This document explains the rules we follow when building Itafika. Our goal is to keep the project easy to understand, easy to contribute to, and trustworthy for everyone using it.
 
-The goal is simple:
+## 1. The Spec is the Truth
 
-- keep the standard trustworthy
-- keep the implementation understandable
-- keep the open-source contribution path clean
-- prevent architectural drift as the project grows
+The "Spec" (in the `spec/` folder) defines how Itafika works for the outside world.
 
-These rules apply to code, docs, and data work.
+- Put rules in `spec/` if they affect the API or if other developers need to follow them.
+- If a change affects how a shop interacts with Itafika, it must be in the spec.
+- Don't put "how-to-code-it" details in the spec—only "what-it-does" rules.
 
-## 1. Spec first, but not spec everywhere
+## 2. No Hidden Rules in the Code
 
-The spec owns the public contract.
+Rules that change how the product works should never be buried deep in the code.
 
-Put behavior in `spec/` when:
+- **Bad:** Hardcoding a list of favorite couriers inside a TypeScript file.
+- **Good:** Putting courier preferences in a config file or the database.
 
-- API consumers depend on it
-- implementers in other languages need the same rule
-- changing it would affect compatibility
+If a rule affects the price, the route, or which provider is shown first, it must be visible in the `spec/` or `spec/data/` folders.
 
-Do **not** put implementation-only details in the spec.
+## 3. Keep "What" and "How" Separate
 
-## 2. No hidden business policy in core code
+We keep different parts of the logic separate so the code stays clean:
 
-Core code should not contain buried domain policy such as:
+- **Calculation:** How we figure out the cost.
+- **Ranking:** How we decide which option to show first.
+- **Lifecycle:** How a delivery moves from "booked" to "delivered."
 
-- hardcoded package-type preference lists
-- provider preference rules
-- route-specific exceptions
-- silent ranking heuristics
+If you are changing how we calculate prices, you shouldn't have to touch the code that handles tracking updates.
 
-If a rule affects product behavior, it must have an explicit home:
+## 4. Use Data, Not Hardcoding
 
-- `spec/` if it is contractual
-- `spec/data/` if it is domain data
-- explicit config if it is implementation-tunable
+It's easier for everyone to review a CSV file than to read complex code.
 
-## 3. Separate mechanism from policy
+- **Prefer:** Putting names, prices, and modes in CSV files.
+- **Avoid:** Using "magic numbers" or fixed text strings inside the code.
 
-We should keep these concerns separate:
+**The "Can I change it in a CSV?" Test:**
+If a value changes often (like a new town or a new price), it belongs in a CSV file (a "registry"). If changing it would break the core logic of the system (like changing the "Delivered" status), it stays in the code (a "contract").
 
-- cost calculation
-- quote ranking
-- delivery lifecycle rules
-- adapter behavior
-- HTTP validation and orchestration
+## 5. Keep Clear Boundaries
 
-Example:
+Don't mix up the layers:
 
-- the quote engine can calculate candidate options
-- a ranking policy can decide how those options are ordered
+- `spec/`: The rules and the data.
+- `packages/core`: The logic shared by everything.
+- `packages/adapters`: How we talk to different delivery companies.
+- `packages/worker`: The "engine" that runs the API and saves to the database.
 
-Those should not be mixed casually.
+## 6. Make Decisions Easy to Explain
 
-## 4. Prefer data-driven or config-driven behavior over hardcoding
+A developer should be able to answer "Why did the API do that?" without reading 1,000 lines of code. The answer should be found easily in the spec, the data files, or a clearly named piece of code.
 
-Open-source projects scale better when important behavior is reviewable without reading TypeScript internals.
+## 7. Keep It Simple First
 
-Prefer:
+If we haven't fully decided how a feature should work yet, keep the code minimal. It's better to have a simple rule that works than a "clever" one that is hard to fix later.
 
-- CSV or schema-backed data
-- explicit configuration
-- documented policy modules
+## 8. Tests Must Be Meaningful
 
-Avoid:
+Tests should confirm that our rules are being followed. They shouldn't just exist to "cover the code." If a test is hard to write, it's usually a sign that the code is too complicated.
 
-- magic constants with domain meaning
-- rules that only exist in implementation code
+## 9. Docs Must Match Reality
 
-**Closed vocabulary vs. open registry.** A value set may be a *closed enum* in the
-contract **only if the engine semantically reasons about each member**. Otherwise it is
-an *open registry* and belongs in data. Test: does the core branch on the value?
+If you change how the code works, you **must** update the documentation.
+- If the API changes, update the spec.
+- If the status changes, update `status.md`.
+- If you add a new step for contributors, update `CONTRIBUTING.md`.
 
-- The five tracking statuses are closed — the engine enforces forward-only transitions
-  and normalises every provider onto exactly them (ADR 0015). "Never invent a sixth" is
-  load-bearing.
-- Transport modes are an open registry (`modes.csv`, ADR 0019) — the core never
-  branches on a specific mode, so adding one is governed data, not a code or contract
-  change. Display metadata travels with each mode so consumers can render values they
-  have never seen.
+## 10. Fix the Structure Before Adding Complexity
 
-If you find yourself writing `if value == "some_literal"` in the core for a set that
-keeps growing, it should have been a registry.
+Before you add a "smart" new feature, ask:
+1. Which folder should own this?
+2. Is this a rule (spec), a piece of information (data), or just code?
+3. How will the next person find and change it?
 
-## 5. Keep boundaries clear
-
-Current intended boundaries:
-
-- `spec/` defines the standard
-- `packages/core` contains reusable domain logic
-- `packages/adapters` translates provider-specific behavior
-- `packages/worker` handles HTTP, validation, and persistence
-- `spec/data/` holds reviewable domain data
-
-Do not blur these layers without a clear reason.
-
-## 6. Make important behavior easy to explain
-
-A maintainer should be able to answer:
-
-- why was this quote ranked first?
-- why was this request accepted or rejected?
-- why is this field present?
-- where does this provider behavior come from?
-
-The answer should come from:
-
-- spec
-- data
-- config
-- a clearly named module
-
-It should not require digging through unrelated code.
-
-## 7. Defaults should be simple
-
-When the architecture is not settled yet:
-
-- keep behavior minimal
-- avoid premature heuristics
-- avoid pretending a placeholder rule is a finished policy model
-
-Simple and explicit is better than clever and hidden.
-
-## 8. Tests should lock behavior, not guesses
-
-Tests should confirm:
-
-- contractual behavior
-- invariants
-- data validation
-- lifecycle rules
-
-Tests should not normalize weak design decisions into permanence by accident.
-
-If a behavior feels hard to justify, it should not be locked in casually.
-
-## 9. Docs must match reality
-
-We keep separate documents for:
-
-- vision
-- current status
-- next phase
-- spec
-
-Do not let these drift:
-
-- if implementation changes behavior, update status/docs
-- if the public contract changes, update spec and generated types
-- if a rule is important enough to matter, document where it belongs
-
-## 10. Add structure before complexity
-
-Before adding smarter behavior, ask:
-
-1. what layer should own this?
-2. is it contract, data, config, adapter logic, or implementation glue?
-3. how will contributors discover and change it?
-4. how will we test it?
-
-If those answers are unclear, stop and define the boundary first.
+If you can't answer these, stop and simplify the design first.

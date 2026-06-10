@@ -1,22 +1,22 @@
 # Itafika
 
-**An open-source logistics aggregator API for Kenya.**
+**A free, open-source tool to connect all delivery services in Kenya.**
 
 *"Itafika"* — Swahili, *it will arrive.*
 
-Itafika is a single, clean, predictable interface that any online shop can plug into to solve delivery and shipping. Locations, transport modes, and rates are already built in — so no developer has to model Kenya's delivery system from the ground up.
+Itafika gives you one simple way to handle delivery and shipping. Locations, transport modes, and rates are already built in — so you don't have to figure out how Kenyan delivery works from scratch.
 
-At checkout, a shop's customer picks a location and sees real options for getting the goods to them — a boda rider, a matatu or bus parcel service, a national courier — each with a price and an estimated time. The shop made one API call to get that. They didn't map a single stage, model a single rate, or integrate a single courier.
+At checkout, a customer picks a location and sees real options to get their goods — a boda rider, a matatu or bus parcel service, or a national courier. Each option shows a price and an estimated time. The shop only needs to make one API call to get all this. They don't have to map stages or integrate with every courier themselves.
 
-> **Delivery as something you consume, not something you build.**
+> **Delivery should be something you use, not something you have to build yourself.**
 
 ---
 
 ## Why this exists
 
-Kenya's e-commerce is a billion-dollar market and climbing, but delivery is the part that breaks the experience — not because there are too few ways to move a parcel, but because there are too many and none are standardized. Every shop re-solves the same problem from scratch, badly, and leaves the cheap informal options (matatu and bus parcel networks) off the table because wiring them up by hand is hopeless.
+Online shopping in Kenya is growing fast, but delivery is often the hardest part. It's not because there aren't enough ways to move a parcel, but because there are too many and they don't work together. Every shop tries to solve this on their own, which is slow and difficult. Most shops leave out cheap options like matatus and buses because they are too hard to connect to.
 
-Itafika does that work **once, in the open, for everyone.** It is the abstraction layer for Kenyan delivery — the GTFS or OpenStreetMap of how parcels move. It is **not** a delivery company; it is the open standard *beneath* anyone who would otherwise integrate every provider by hand.
+Itafika does that work **once, for everyone.** It is the common standard for Kenyan delivery — like OpenStreetMap, but for moving parcels. It is **not** a delivery company; it is the shared foundation that anyone can use instead of building their own connections to every provider.
 
 To integrate Itafika into your shop's checkout, start with the [**integration guide**](docs/integration-guide.md).
 
@@ -30,47 +30,46 @@ For deployment of the current Worker reference implementation, see [`docs/deploy
 
 ---
 
-## What's in this repository
+## What's in this project
 
-This is a **spec-first monorepo** with a deliberate split between the open standard and the Cloudflare-native reference implementation.
+This project contains both the rules (the standard) and a working version of the API.
 
 ```
 itafika/
-├── spec/                  ★ the canonical, language-agnostic standard
-│   ├── openapi.yaml        · the Phase 1 API contract
-│   ├── adapter-contract.md · how to write a provider adapter
-│   └── data/               · the open zones + rates dataset (+ schema)
-├── packages/              Cloudflare-native reference implementation (TypeScript)
-│   ├── core/               · routing engine + shared domain helpers
-│   ├── adapters/           · reference provider adapter package
-│   └── worker/             · Cloudflare Worker API
-├── examples/               tiny shops calling the API
-├── docs/                  concept doc, visual page, architecture decisions
-│   ├── status.md           · what is implemented today
-│   ├── release-checklist.md · maintainer release/review checklist
-│   └── decisions/          · ADRs (why we made each technical choice)
-├── CONTRIBUTING.md        how to add an adapter or data
-├── GOVERNANCE.md          how decisions get made
+├── spec/                  ★ the rules and data that everyone can use
+│   ├── openapi.yaml        · the API design
+│   ├── adapter-contract.md · how to connect a new delivery provider
+│   └── data/               · the open list of locations and rates
+├── packages/              the working API code (TypeScript)
+│   ├── core/               · the engine that calculates prices and routes
+│   ├── adapters/           · examples of how to connect to providers
+│   └── worker/             · the live API you can talk to
+├── examples/               small examples of shops using the API
+├── docs/                  helpful guides and design documents
+│   ├── status.md           · what is working right now
+│   ├── release-checklist.md · checklist for maintainers
+│   └── decisions/          · why we made certain technical choices
+├── CONTRIBUTING.md        how to add new data or code
+├── GOVERNANCE.md          how we make decisions
 └── LICENSE                MIT
 ```
 
-**The `spec/` directory is the product.** Anyone could reimplement Itafika in Go, Python, Rust, or any other language from `spec/` alone. `packages/worker` is the hosted reference implementation of that standard.
+**The `spec/` folder is the most important part.** Anyone can build their own version of Itafika in any language (like Go or Python) just by following the rules in `spec/`. `packages/worker` is just one way to run it.
 
-The repository is still in development. Some ideas described in the concept doc are planned but not implemented yet. [`docs/status.md`](docs/status.md) is the place to check what exists today.
+The project is still being built. Some parts are ready, and some are still planned. Check [`docs/status.md`](docs/status.md) to see what is working today.
 
 ## Platform shape
 
-The reference implementation is designed for **Cloudflare Workers**:
+The current version is built to run on **Cloudflare**:
 
-| Need | Cloudflare primitive |
-|------|----------------------|
-| Public API | Workers |
-| Zones, providers, rates, deliveries, tracking events | D1 |
-| Long-running booking flows, provider retries | Workflows |
-| Background refreshes, webhook processing, async provider jobs | Queues |
-| Per-delivery or per-provider coordination, when needed | Durable Objects |
+| Need | Tool used |
+|------|-----------|
+| Public API | Cloudflare Workers |
+| Locations, rates, and tracking | D1 Database |
+| Long flows and retries | Workflows |
+| Background tasks | Queues |
 
-Phase 1 can stay simple: a Worker reads the seeded dataset from D1 and returns quote options. Workflows, Queues, and Durable Objects are added only where the logistics lifecycle needs retries, background work, or strong coordination.
+Phase 1 is simple: the API reads data from the database and gives you delivery quotes. More advanced features like retries and background tasks will be added later as needed.
 
 ---
 
@@ -78,25 +77,25 @@ Phase 1 can stay simple: a Worker reads the seeded dataset from D1 and returns q
 
 | Method | Endpoint | Purpose |
 |--------|----------|---------|
-| `GET`  | `/v1/zones` | List supported drop-off / pick-up locations |
-| `GET`  | `/v1/zones/search?q=` | Search locations by name |
-| `GET`  | `/v1/freshness` | List per-town dataset freshness dates |
-| `POST` | `/v1/quotes` | Get delivery options + prices between two zones |
-| `POST` | `/v1/deliveries` | Lock in a chosen quote, get a tracking ID |
-| `GET`  | `/v1/deliveries/{tracking_id}/track` | Unified tracking status |
-| `POST` | `/v1/deliveries/{tracking_id}/events` | Append a manual/internal tracking event |
+| `GET`  | `/v1/zones` | List all locations (drop-off / pick-up points) |
+| `GET`  | `/v1/zones/search?q=` | Search for a location by name |
+| `GET`  | `/v1/freshness` | See when the data for each town was last updated |
+| `POST` | `/v1/quotes` | Get delivery options and prices between two locations |
+| `POST` | `/v1/deliveries` | Pick a quote and get a tracking ID |
+| `GET`  | `/v1/deliveries/{tracking_id}/track` | See where your parcel is |
+| `POST` | `/v1/deliveries/{tracking_id}/events` | Add a manual update to a delivery |
 
-The heart is `POST /v1/quotes`:
+The most important part is `POST /v1/quotes`:
 
 ```jsonc
-// request
+// you send:
 {
   "origin_zone_id": "ZONE_NBI_CBD_01",
   "destination_zone_id": "ZONE_NKR_MAIN",
   "package_weight_kg": 2.5
 }
 
-// response
+// you get back:
 {
   "quotes": [
     {
@@ -111,63 +110,59 @@ The heart is `POST /v1/quotes`:
 }
 ```
 
-The full contract — every field, type, and example — lives in [`spec/openapi.yaml`](spec/openapi.yaml). For a step-by-step walkthrough of the whole checkout flow, see the [integration guide](docs/integration-guide.md).
+You can find all the details in [`spec/openapi.yaml`](spec/openapi.yaml). To see how to use this in a shop, check the [integration guide](docs/integration-guide.md).
 
 ---
 
-## Customizable by design
+## Use it your way
 
-Because Itafika is open source, the defaults are a **starting point, not a cage.** A shop with its own negotiated courier rate overrides it. Want to add a mode, hide one, or change how options are ranked? Do it on your end — without ever rebuilding the foundation.
+Itafika is open source, so you can change it to fit your needs. If your shop has a special price with a courier, you can use that instead of the default. You can hide certain delivery methods or change how options are ranked. You get a strong foundation for free, and you can build exactly what you need on top of it.
 
 ---
 
 ## Status
 
-🚧 **Phase 1 foundation — in active development.**
+🚧 **Phase 1 — Currently being built.**
 
-The repository already contains a working core package, adapter package, Worker API, D1 migrations, seed flow, tests, and a simple shop example.
+The basic parts are already working: the API, the database, tests, and a simple shop example.
 
-The hosted reference Worker is also live at `https://itafika-api.emcie4.workers.dev`.
+You can see the live API here: `https://itafika-api.emcie4.workers.dev`.
 
-It does **not** yet contain every planned part of the wider Itafika architecture.
-
-See [`docs/status.md`](docs/status.md) for the exact breakdown.
+Check [`docs/status.md`](docs/status.md) to see exactly what is ready.
 
 | Phase | What | State |
 |-------|------|-------|
-| **1 — Static API (MVP)** | Seeded static rates + standardized zone IDs behind the current API, with quote lifecycle, booking, tracking, and manual event updates. | In active development |
-| **2 — Open adapter contribution** | Grow coverage provider by provider: live courier rates, manual-rider bridges, new town stage maps — all through the published adapter interface. | Planned |
-| **3 — Optimization & scale** | Broaden routes across Kenya and sharpen reliability and ranking from observed real-world delivery performance. | Planned |
+| **1 — Basic API** | Prices and locations for common routes. Booking and tracking are also ready. | Working now |
+| **2 — More connections** | Adding live prices from more couriers and new towns. | Planned |
+| **3 — Better results** | Improving prices and reliability scores based on real deliveries. | Planned |
 
 ---
 
-## Quickstart (reference implementation)
+## Quickstart (Try it yourself)
 
-> Requires Node.js >= 20, pnpm, and Wrangler.
+> You need Node.js >= 20, pnpm, and Wrangler installed.
 
 ```bash
 pnpm install
 pnpm --filter @itafika/worker db:migrate:local
 pnpm --filter @itafika/worker db:seed:local
-pnpm --filter @itafika/worker dev      # starts the Worker locally
+pnpm --filter @itafika/worker dev      # starts the API locally
 curl http://localhost:8787/v1/zones
 ```
 
-For remote deployment, use [`docs/deploy-worker.md`](docs/deploy-worker.md).
+To deploy this to your own Cloudflare account, see [`docs/deploy-worker.md`](docs/deploy-worker.md).
 
 ---
 
 ## Contributing
 
-The whole strategy depends on people contributing adapters and data. If you can describe how parcels move in your town — the stages, the providers, the rates — you can contribute, even without writing an adapter.
+This project depends on people sharing their knowledge about delivery in Kenya. If you know the routes, prices, or stages in your town, you can help even if you don't write code.
 
-Start with [`CONTRIBUTING.md`](CONTRIBUTING.md). To write a provider adapter, read [`spec/adapter-contract.md`](spec/adapter-contract.md).
-
-Maintainers should also use [`docs/release-checklist.md`](docs/release-checklist.md) before calling a release or milestone ready.
+Start with [`CONTRIBUTING.md`](CONTRIBUTING.md). If you want to connect a new delivery provider, read [`spec/adapter-contract.md`](spec/adapter-contract.md).
 
 ## License
 
-[MIT](LICENSE) — use it in anything, including commercially. The code is meant to be copied; the lasting asset is the open, community-maintained representation of how delivery actually works in Kenya.
+[MIT](LICENSE) — you can use this for anything, including for-profit businesses. The code is free for everyone to copy and use. The real value is the community-maintained list of how delivery actually works in Kenya.
 
 ---
 

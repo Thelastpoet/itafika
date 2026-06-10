@@ -1,36 +1,15 @@
-# ADR 0014: Route Booking Through the Adapter Runtime
+# ADR 0014 — Use adapters for bookings
 
-- Status: Accepted
-- Date: 2026-06-09
+**Status:** Accepted
+**Date:** 2026-06-09
 
 ## Context
 
-[ADR 0013](0013-wire-worker-to-adapter-runtime.md) wired the quote flow through
-`LogisticsProviderInterface` but explicitly left booking out of scope. As a result
-booking still bypassed the adapter seam: `createDelivery` recorded a row and
-hard-coded the initial status to `package_picked`, never consulting the provider
-that produced the quote.
-
-This is the second half of proving the architecture in runtime code. The contract
-already defines `book()`; only the reference runtime had not adopted it.
-
-The blocker was identity: a booked quote did not know which provider produced it.
-The `quotes` table stored `provider_type` and `provider_name` but not a stable
-`provider_id`, so booking could not rebuild the right adapter.
+After connecting quotes to adapters, we need to do the same for bookings. Previously, the Worker would record a booking but wouldn't tell the provider about it.
 
 ## Decision
 
-Make the adapter the booking execution path in the reference Worker.
-
-- Persist an internal `provider_id` with each quote (migration 0005). The quote
-  response is unchanged; `provider_id` is never serialized to API clients.
-- The aggregator returns `provider_id` alongside each option so the Worker can
-  persist it; the public `Quote` shape is unaffected.
-- On booking, validate the quote is still bookable, rebuild that provider's adapter
-  from the stored quote row, and call `book()`. The returned `provider_ref` and
-  `status` are recorded instead of the previously hard-coded values.
-- `provider_ref` is stored internally on `deliveries` (migration 0005), giving a
-  future `track(provider_ref)` something to call.
+The Worker will now use adapters to process bookings. This means when a delivery is created, the code will call the specific provider's adapter. We've also updated our database to keep track of which provider is responsible for each quote and delivery.
 
 The quote-validity check runs before `book()` so the runtime never dispatches a
 booking for an expired or already-booked quote. The unique index on

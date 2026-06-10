@@ -1,120 +1,77 @@
-# Deploying the Reference Worker
+# How to Deploy the Worker
 
-This guide explains how to deploy the current `@itafika/worker` package to Cloudflare.
+This guide is for maintainers who need to deploy the `@itafika/worker` package to Cloudflare. 
 
-It is written for maintainers. It assumes the code is already checked out and dependencies are installed.
+## Preparation
 
-## What this guide covers
+Before you start, make sure:
+- You have a Cloudflare account.
+- You have installed `wrangler` and logged in (`wrangler login`).
+- You have run `pnpm install` in the project root.
 
-- create the D1 database
-- connect the Worker to the real database
-- apply migrations remotely
-- seed remote data
-- deploy the Worker
-
-## Before you start
-
-You need:
-
-- a Cloudflare account
-- Wrangler authenticated to that account
-- `pnpm install` already run in the repo
-
-Check Wrangler auth:
-
+To check if you are logged in to Cloudflare, run:
 ```bash
 pnpm --filter @itafika/worker exec wrangler whoami
 ```
 
-## 1. Create the D1 database
+## Step 1: Create the Database
 
-Create the production database:
+If you haven't created a D1 database yet, run this command to create the production one:
 
 ```bash
 pnpm --filter @itafika/worker exec wrangler d1 create itafika
 ```
 
-Wrangler will print a database ID.
+Wrangler will give you a `database_id` (a long string of letters and numbers). Copy it.
 
-It will look something like:
-
-```txt
-database_id = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-```
-
-## 2. Update `wrangler.jsonc`
+## Step 2: Set the Database ID
 
 Open [packages/worker/wrangler.jsonc](/home/manu/development/itafika/packages/worker/wrangler.jsonc).
 
-Replace the placeholder `database_id` with the real value from the previous step.
+Find `database_id` and paste the ID you just copied.
 
-If you want to use `wrangler dev --remote`, also set `preview_database_id` to the same value or to a separate preview database ID if you have one.
+## Step 3: Run Migrations
 
-## 3. Apply remote migrations
-
-Run:
+To set up the tables in your remote database, run:
 
 ```bash
 pnpm --filter @itafika/worker db:migrate:remote
 ```
 
-This applies the SQL migrations in `packages/worker/migrations/` to the remote D1 database.
+## Step 4: Add the Data (Seed)
 
-## 4. Seed the remote database
-
-Run:
+To fill your database with our current list of zones and prices, run:
 
 ```bash
 pnpm --filter @itafika/worker db:seed:remote
 ```
 
-This builds `seed.sql` from the canonical dataset and executes it against the remote D1 database.
+## Step 5: Deploy the API
 
-## 5. Deploy the Worker
-
-Run:
+Now you are ready to put the Worker online:
 
 ```bash
 pnpm --filter @itafika/worker run deploy
 ```
 
-## 6. Smoke test the deployment
+## Step 6: Test It
 
-After deploy, call the Worker URL and confirm the API responds:
+Once the deploy finishes, Cloudflare will give you a URL. Test it using `curl` or your browser:
 
 ```bash
 curl https://<your-worker-url>/v1/zones
 ```
 
-You should get a JSON response with `zones`.
+If you see a list of zones (locations), your deployment was successful!
 
-## Local vs remote commands
+## Summary of Commands
 
-Local commands:
+| Task | Local Development | Cloudflare (Production) |
+|---|---|---|
+| Setup Tables | `pnpm --filter @itafika/worker db:migrate:local` | `pnpm --filter @itafika/worker db:migrate:remote` |
+| Add Data | `pnpm --filter @itafika/worker db:seed:local` | `pnpm --filter @itafika/worker db:seed:remote` |
+| Start Server | `pnpm --filter @itafika/worker dev` | `pnpm --filter @itafika/worker run deploy` |
 
-```bash
-pnpm --filter @itafika/worker db:migrate:local
-pnpm --filter @itafika/worker db:seed:local
-pnpm --filter @itafika/worker dev
-```
-
-Remote commands:
-
-```bash
-pnpm --filter @itafika/worker db:migrate:remote
-pnpm --filter @itafika/worker db:seed:remote
-pnpm --filter @itafika/worker run deploy
-```
-
-## Important notes
-
-- Local D1 and remote D1 are different databases.
-- `wrangler d1 execute` runs locally unless you pass `--remote`.
-- `wrangler.jsonc` must contain a real `database_id` before remote migration, remote seeding, or deploy can work.
-- The current seed data is still partly illustrative. Deployment makes the API available; it does not make the data production-grade by itself.
-
-## Related docs
-
-- [docs/status.md](/home/manu/development/itafika/docs/status.md)
-- [docs/next-phase.md](/home/manu/development/itafika/docs/next-phase.md)
-- [packages/worker/wrangler.jsonc](/home/manu/development/itafika/packages/worker/wrangler.jsonc)
+## Quick Tips
+- Local and remote databases are separate. Changes you make while testing locally won't show up on the live site until you run the "remote" commands.
+- Make sure your `wrangler.jsonc` has the correct `database_id` or your commands will fail.

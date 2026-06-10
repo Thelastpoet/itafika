@@ -1,25 +1,15 @@
-# ADR 0011: Require Freshness Coverage for Every Dataset Town
+# ADR 0011 — Ensure all towns have freshness data
 
-- Status: Accepted
-- Date: 2026-06-08
+**Status:** Accepted
+**Date:** 2026-06-08
 
 ## Context
 
-The dataset already includes `freshness.csv` so consumers can reason about staleness by town.
-
-The validator checked that each freshness row referred to a real town in `zones.csv`, but it did not enforce the reverse. That meant a town could appear in the canonical zone dataset without any freshness record at all.
-
-That is a contract gap:
-
-- API consumers may assume freshness exists for the loaded dataset
-- maintainers may think a town is covered when its staleness metadata is missing
-- contributors have no hard rule telling them that adding a town also requires a freshness row
+We want to make sure every town in our dataset has information about how recently its data was updated. Currently, some towns are missing this data.
 
 ## Decision
 
-Every town that appears in `zones.csv` must have exactly one row in `freshness.csv`.
-
-The validator will enforce this, and the dataset schema/docs will state it directly.
+Every town listed in `zones.csv` must have a corresponding entry in `freshness.csv`. Our data validator will enforce this.
 
 ## Rejected options
 

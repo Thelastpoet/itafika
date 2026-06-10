@@ -1,46 +1,37 @@
 # Integration Guide — Using Itafika in Your Checkout
 
-This guide is for developers building an online shop who want to offer delivery at
-checkout without modelling Kenya's logistics themselves. You make a few HTTP calls;
-Itafika returns the delivery options, books the chosen one, and tracks it.
+This guide is for developers who want to add delivery to their online shop without having to figure out how Kenyan delivery works on their own. You make a few simple API calls, and Itafika handles the rest: showing delivery options, booking the chosen one, and tracking the parcel.
 
-A complete, runnable version of everything below is in
-[`examples/simple-shop`](../examples/simple-shop) — this guide walks through the same
-flow step by step.
+You can find a working example in [`examples/simple-shop`](../examples/simple-shop). This guide walks you through the flow step by step.
 
-- **What Itafika gives you:** the delivery options between two locations for a package,
-  each with a cost and an estimated time; a way to book one; and unified tracking.
-- **What you still own:** your checkout UI and your order. Itafika is the delivery
-  layer you plug in — it returns numbers and references for you to use.
+- **What Itafika gives you:** Delivery options between two locations, prices, estimated times, booking, and tracking.
+- **What you still own:** Your shop's checkout page and your orders. Itafika is just the delivery layer you plug in.
 
-## Base URL and auth
+## Base URL and Auth
 
-The hosted reference Worker is:
+You can use the live API here:
 
 ```
 https://itafika-api.emcie4.workers.dev
 ```
 
-There is no authentication yet — calls are open. (API keys for shops are planned; this
-guide will be updated when they land.) The API is versioned by path (`/v1`); within a
-major version, changes are additive and backwards-compatible.
+Right now, there is no password or API key needed — anyone can use it. We are using version 1 of the API (`/v1`).
 
-All errors share one shape:
+If something goes wrong, the API will return an error like this:
 
 ```json
-{ "error": { "code": "invalid_request", "message": "human-readable detail" } }
+{ "error": { "code": "invalid_request", "message": "details about what went wrong" } }
 ```
 
-## The flow
+## How it works
 
-Four steps: resolve the location to a zone, get quotes, book the chosen quote, track it.
+There are four simple steps:
 
-### 1. Resolve the customer's location to a zone
+### 1. Find the customer's location
 
-Kenyan delivery is described by **stages and hubs, not street addresses** — "the stage
-behind the chemist" is a real drop-off. So origin and destination are *zone IDs*, not
-addresses. Your shop knows its own pickup zone; resolve the customer's destination from
-what they type with `GET /v1/zones/search?q=`:
+Delivery in Kenya often uses **stages and hubs rather than street addresses**. For example, a customer might want their parcel dropped at "the stage behind the chemist."
+
+Itafika uses *zone IDs* to identify these locations. You can search for a location using `GET /v1/zones/search?q=`:
 
 ```bash
 curl "https://itafika-api.emcie4.workers.dev/v1/zones/search?q=Nakuru"
@@ -54,12 +45,11 @@ curl "https://itafika-api.emcie4.workers.dev/v1/zones/search?q=Nakuru"
 }
 ```
 
-Show the matches as a dropdown and let the customer pick; keep the chosen `id`. Use
-`GET /v1/zones` to list everything (optionally filtered by `type`).
+Show these matches to the customer in a dropdown and save the `id` of the one they pick.
 
-### 2. Get delivery options
+### 2. Show delivery options and prices
 
-Send the origin zone, destination zone, and package weight to `POST /v1/quotes`:
+Send the origin, destination, and package weight to `POST /v1/quotes`:
 
 ```bash
 curl -X POST https://itafika-api.emcie4.workers.dev/v1/quotes \
@@ -92,27 +82,22 @@ curl -X POST https://itafika-api.emcie4.workers.dev/v1/quotes \
 }
 ```
 
-Quotes come back cheapest-first. Each option:
+Quotes are shown with the cheapest options first. Each option includes:
 
 | Field | Meaning |
 |---|---|
-| `quote_id` | Opaque ID you pass to booking. Single-use; expires after 24 hours. |
-| `provider_type` | `boda_rider` \| `matatu_sacco` \| `bus` \| `national_courier` |
-| `provider_name` | Display name for the customer |
-| `estimated_cost_kes` | Delivery cost, an integer in KES |
-| `estimated_time` | Human-readable estimate, e.g. `"45 mins"`, `"3 hours"`, `"next day"` |
-| `reliability_score` | 0–1 confidence in on-time, intact delivery |
+| `quote_id` | Use this ID to book the delivery. It expires after 24 hours. |
+| `provider_type` | The type of delivery (e.g., boda, matatu, courier). |
+| `provider_name` | The name of the company to show the customer. |
+| `estimated_cost_kes` | The price in Kenya Shillings. |
+| `estimated_time` | How long it will take (e.g., "3 hours", "next day"). |
+| `reliability_score` | A score from 0 to 1 showing how reliable this provider is. |
 
-`package_type` (e.g. `"apparel"`) is an optional request field reserved for future
-ranking; you can send it, but it does not change results today.
+If the `quotes` list is empty, it means we don't have a provider for that route yet. You should show a "no delivery options" message to the customer.
 
-An **empty `quotes` array is a valid answer** — it means no provider serves that route
-yet. Show "no options for this route" rather than treating it as an error.
+### 3. Book the delivery
 
-### 3. Book the chosen quote
-
-When the customer commits, book the `quote_id` with sender and recipient contacts via
-`POST /v1/deliveries`:
+When the customer confirms their order, book the delivery using the `quote_id` and the contact details for the sender and recipient via `POST /v1/deliveries`:
 
 ```bash
 curl -X POST https://itafika-api.emcie4.workers.dev/v1/deliveries \
@@ -121,7 +106,7 @@ curl -X POST https://itafika-api.emcie4.workers.dev/v1/deliveries \
     "quote_id": "qt_3eb593ca03cd42dcaa570780",
     "sender":    { "name": "Asha Mwangi", "phone": "+254712345678" },
     "recipient": { "name": "John Otieno", "phone": "+254723456789" },
-    "package_description": "Sealed apparel box, 2.5kg"
+    "package_description": "Sealed box of clothes, 2.5kg"
   }'
 ```
 
@@ -129,26 +114,20 @@ curl -X POST https://itafika-api.emcie4.workers.dev/v1/deliveries \
 {
   "tracking_id": "trk_85ddbd2f2a6b492b9db48f8eb2515ce4",
   "status": "package_picked",
-  "quote": { "quote_id": "qt_3eb593ca03cd42dcaa570780", "provider_name": "Mololine Sacco", "...": "..." },
-  "sender": { "name": "Asha Mwangi", "phone": "+254712345678" },
-  "recipient": { "name": "John Otieno", "phone": "+254723456789" },
-  "created_at": "2026-06-09T07:52:36.261Z"
+  ...
 }
 ```
 
-Two rules to design around:
+Two important rules:
 
-- **A quote is single-use** — booking the same `quote_id` twice returns `404`. Re-quote
-  if you need a fresh one.
-- **A quote expires after 24 hours** — booking an expired quote returns `404`. Quote
-  near the moment of purchase, not hours ahead.
+- **A quote can only be used once.** If you try to book the same `quote_id` again, you will get an error.
+- **A quote expires after 24 hours.** You should get the quote and book it close to the time of purchase.
 
-`phone` must be E.164 (`+254…`); `name` is 1–120 chars; `package_description` is
-optional (≤500 chars). Keep the returned `tracking_id`.
+The phone numbers must be in the format `+254…`. Save the `tracking_id` returned by the API.
 
-### 4. Track the delivery
+### 4. Track the parcel
 
-Poll `GET /v1/deliveries/{tracking_id}/track` to show the customer where the parcel is:
+Use `GET /v1/deliveries/{tracking_id}/track` to show the customer where their parcel is:
 
 ```bash
 curl https://itafika-api.emcie4.workers.dev/v1/deliveries/trk_85ddbd2f2a6b492b9db48f8eb2515ce4/track
@@ -164,18 +143,15 @@ curl https://itafika-api.emcie4.workers.dev/v1/deliveries/trk_85ddbd2f2a6b492b9d
 }
 ```
 
-`status` is the current state; `history` is the ordered event log. Every provider's own
-states are normalized into the same **five universal statuses**:
+Every delivery provider uses the same **five universal statuses**:
 
 | Status | Meaning |
 |---|---|
-| `package_picked` | Collected from the sender |
-| `in_transit` | On the way |
-| `at_sorting_hub` | At a sorting / transfer hub |
-| `ready_for_pickup` | Arrived; awaiting recipient collection |
-| `delivered` | Handed to the recipient |
-
-Status only ever moves forward. You read tracking; you do not write it.
+| `package_picked` | The parcel has been collected from the sender. |
+| `in_transit` | The parcel is on its way. |
+| `at_sorting_hub` | The parcel is at a sorting or transfer point. |
+| `ready_for_pickup` | The parcel has arrived and is ready for the recipient to collect. |
+| `delivered` | The parcel has been handed to the recipient. |
 
 ## Handling errors
 
@@ -183,16 +159,14 @@ Check the HTTP status and the `error.code`:
 
 | Situation | Status | Notes |
 |---|---|---|
-| Malformed body / bad field (e.g. invalid phone) | `400` | `error.code: invalid_request` |
-| Unknown zone in a quote request | `404` | Resolve zones via search first |
-| Booking an unknown / expired / already-booked quote | `404` | Re-quote and book again |
-| No provider serves the route | `200` | Empty `quotes` array — not an error |
+| Bad request (e.g. wrong phone number) | `400` | `error.code: invalid_request` |
+| Unknown location ID | `404` | Use the search API to find the correct ID first. |
+| Expired or already used quote | `404` | Get a new quote and book again. |
+| No delivery options found | `200` | This is not an error. The `quotes` list will just be empty. |
 
 ## Customizing
 
-Itafika is open source, so the defaults are a starting point, not a cage. A shop with
-its own negotiated rate can override it; you can hide a mode or change how options are
-ranked on your end — without rebuilding the foundation.
+Itafika is open source, so you can change how it works for your shop. You can use your own negotiated prices with couriers, hide certain delivery methods, or change how options are ranked. You get a strong foundation for free, and you can build exactly what you need on top of it.
 
 ## Reference
 

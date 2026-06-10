@@ -1,33 +1,20 @@
-# ADR 0012: Add Manual Tracking Event Updates for Phase 1
+# ADR 0012 — Allow manual tracking updates
 
-- Status: Accepted
-- Date: 2026-06-08
+**Status:** Accepted
+**Date:** 2026-06-08
 
 ## Context
 
-The Phase 1 API already supports booking a delivery and reading unified tracking history.
-
-What it does not yet support is any controlled way to grow that history after booking. The current implementation records the initial `package_picked` event and stops there.
-
-The documented next phase calls for better delivery lifecycle behavior before full live adapter integration or background job infrastructure.
+Right now, once a delivery is booked, its status stays as "package_picked" and doesn't change. We need a way to update the status as the parcel moves through the delivery process.
 
 ## Decision
 
-Add a manual status update path to the canonical API:
-
-- `POST /v1/deliveries/{tracking_id}/events`
-
-This endpoint is the Phase 1 way to append tracking history in a controlled, reviewable manner.
+Add a `POST /v1/deliveries/{tracking_id}/events` endpoint. This allows someone to manually add new tracking events (like "in_transit" or "delivered") to a delivery.
 
 Rules:
-
-- the request carries the next universal `TrackingStatus`
-- the Worker sets the event timestamp server-side
-- an optional note may be included
-- status progression may stay the same or move forward
-- status regression is rejected
-
-This keeps the lifecycle honest without pretending live adapters, webhooks, or queue-based workflows are already in place.
+- The request includes the next universal status.
+- The Worker sets the timestamp automatically.
+- Statuses can only move forward (e.g., you can't go from "delivered" back to "in_transit").
 
 ## Rejected options
 

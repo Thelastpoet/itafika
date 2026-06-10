@@ -1,21 +1,15 @@
-# Itafika open dataset
+# Itafika Open Dataset
 
-The source of truth for zones, providers, and rates. See [`SCHEMA.md`](SCHEMA.md) for the format and conventions.
+This is where we store all information about zones, providers, and prices. See [`SCHEMA.md`](SCHEMA.md) for details on the format.
 
-| File | What |
+| File | What's in it |
 |------|------|
-| `zones.csv` | Locations — CBD hubs, stages, residential areas |
-| `providers.csv` | Carriers and their baseline reliability |
-| `rates.csv` | The cost matrix: provider × origin × destination |
-| `freshness.csv` | Per-town last-updated dates |
+| `zones.csv` | Locations — like CBD hubs, stages, and estates |
+| `providers.csv` | List of carriers and their reliability |
+| `rates.csv` | Price list: provider × origin × destination |
+| `freshness.csv` | When data for each town was last updated |
 
-> ⚠️ **The current rates are `seed-illustrative` placeholders**, not verified field
-> data. They exist so the API returns plausible numbers on day one and to show the
-> format. **Replacing them with real, sourced rates is the single most valuable
-> early contribution** — see [CONTRIBUTING.md](../../CONTRIBUTING.md). When you add a
-> verified rate, set its `source` to something traceable (e.g. `field-2026-06`,
-> `sacco-desk-call`) and update `freshness.csv`. Every town in `zones.csv` must
-> have exactly one freshness row.
+> ⚠️ **The current prices are just examples**, they are not verified yet. They are here to show how the format works. **The most helpful thing you can do is replace these with real prices.** When you add a real price, say how you found it (e.g. `called-sacco-desk`) and update `freshness.csv`. Every town listed in `zones.csv` must have a row in `freshness.csv`.
 
 Before opening a PR, run:
 
@@ -23,4 +17,4 @@ Before opening a PR, run:
 pnpm data:validate
 ```
 
-For a step-by-step example, see [docs/contribute-data.md](../../docs/contribute-data.md).
+For a step-by-step guide, see [docs/contribute-data.md](../../docs/contribute-data.md).

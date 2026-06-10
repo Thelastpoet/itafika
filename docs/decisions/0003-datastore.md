@@ -1,29 +1,23 @@
-# ADR 0003 — D1 as the reference datastore
+# ADR 0003 — Use Cloudflare D1 for data storage
 
 **Status:** Accepted
 **Date:** 2026-06-08
 
 ## Context
 
-Phase 1 is a read-heavy lookup API over a small, mostly-static dataset: zones, providers, rates, and freshness metadata. The API also needs to record shipments and tracking events once booking is introduced.
-
-The datastore should be relational, easy to seed from `spec/data/`, simple to run locally, and native to the hosted platform.
+The API needs a way to store and query zones, rates, and providers. It also needs to record deliveries and tracking events. The database should be easy to use and work well with our hosting platform.
 
 ## Decision
 
-The reference implementation uses **Cloudflare D1** as its datastore.
+The reference implementation uses **Cloudflare D1** as its database.
 
 D1 stores:
+- Zones, providers, and rates
+- Dataset freshness info
+- Deliveries and tracking events
+- Quote selections
 
-- zones
-- providers
-- rates
-- dataset freshness metadata
-- quotes or quote selections when persistence is needed
-- shipments
-- tracking events
-
-The canonical, human-editable source of seed data remains [`spec/data/`](../../spec/data/). D1 is the queryable projection used by the Worker.
+The source of truth for seed data remains the CSV files in [`spec/data/`](../../spec/data/). D1 is used to query this data efficiently.
 
 ## Rationale
 
