@@ -1,28 +1,22 @@
-# ADR 0006 — Rename the booking resource from "shipment" to "delivery"
+# ADR 0006 — Rename "shipment" to "delivery"
 
 **Status:** Accepted
 **Date:** 2026-06-08
 
 ## Context
 
-The Phase 1 contract modelled the booked job — a selected quote, locked in, with a tracking ID and a status lifecycle — as a **shipment**: `POST /v1/shipments`, `GET /v1/shipments/{tracking_id}/track`, and the `Shipment` / `ShipmentRequest` schemas.
-
-"Shipment" reads as generic, American/mainstream logistics vocabulary. It sits oddly next to the rest of Itafika's language, which is deliberately Kenyan and grounded in how parcels actually move — stages, SACCOs, matatu and bus parcel desks. The project's name itself is *Itafika* ("it will arrive"), and the product framing is **delivery as something you consume**. The resource noun should match that framing.
-
-This is a change to endpoint paths, schema names, and types, so per GOVERNANCE.md it is a **spec change**: it starts in `spec/`, carries an ADR, and the implementation follows.
+The initial API used "shipment" for booked jobs. This felt too generic and didn't fit the Kenyan context of the project. "Delivery" is a better fit for how people talk about sending parcels.
 
 ## Decision
 
-Rename the booking resource from **shipment** to **delivery** throughout the standard and the reference implementation.
+Rename "shipment" to **"delivery"** everywhere in the spec and code.
 
-- Paths: `/v1/shipments` → `/v1/deliveries`; `/v1/shipments/{tracking_id}/track` → `/v1/deliveries/{tracking_id}/track`.
-- Schemas: `Shipment` → `Delivery`; `ShipmentRequest` → `DeliveryRequest`.
-- OpenAPI tag `Shipments` → `Deliveries`; operationIds `createShipment` → `createDelivery`, `trackShipment` → `trackDelivery`.
-- Prose in `spec/openapi.yaml`, `spec/adapter-contract.md`, the concept doc, README, and CONTRIBUTING updated to match.
+- Paths: `/v1/shipments` → `/v1/deliveries`
+- Schemas: `Shipment` → `Delivery`
+- Operation IDs: `createShipment` → `createDelivery`
+- All documentation and implementation code updated.
 
-`tracking_id` and the tracking vocabulary are unchanged — tracking is universal and reads naturally regardless of the resource name. The five universal `TrackingStatus` values are unchanged.
-
-The reference implementation uses `deliveries` for its D1 table and the corresponding handlers and types.
+The term "tracking" remains unchanged.
 
 ## Rationale
 

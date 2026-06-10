@@ -1,36 +1,19 @@
-# ADR 0018 — Capture delivery instructions and collection identity
+# ADR 0018 — Collect delivery notes and ID info
 
 **Status:** Accepted (2026-06-10)
 **Date:** 2026-06-09
 
-> One of four related ADRs (0016–0019) evolving Itafika into a checkout-delivery
-> layer. Direction and expectations only — implementation and maintainer sign-off
-> per [GOVERNANCE.md](../../GOVERNANCE.md) are follow-on.
-
 ## Context
 
-Office-pickup delivery has human realities the booking must carry, or the parcel
-gets stuck at the desk:
-
-- **Instructions** — "call before handing over", "give to my sister Achieng".
-- **Who collects** — at a SACCO/bus desk the recipient is asked for a name and often
-  an **ID number**; sometimes a different person collects on their behalf.
-
-Today `DeliveryRequest` has `sender`, `recipient` (`Contact` = name + phone only),
-and `package_description` (about the box, not about delivery). There is **nowhere**
-to put a collection instruction, an ID, or an alternate collector. The "give to
-so-and-so" requirement — a normal, common Kenyan instruction — has no home.
+For office pickups, the provider often needs to know who is allowed to collect the parcel and may require an ID number. We also need a way to include simple instructions like "call before handover."
 
 ## Decision
 
-Capture the collection reality on the booking, additively:
+We will add optional fields to the booking request:
 
-- **`instructions`** on `DeliveryRequest` (and echoed on `Delivery`) — free text,
-  e.g. "Call before handover; give to Achieng (sister)." Max 500 chars.
-- **`id_number`** — optional, added to `Contact` — the ID a parcel desk asks for at
-  collection.
-- **`alternate_collector`** — optional `Contact` on `DeliveryRequest` — someone other
-  than the recipient authorised to collect.
+- **`instructions`**: Simple notes for the delivery person (e.g., "Give to my sister").
+- **`id_number`**: The ID of the person collecting the parcel.
+- **`alternate_collector`**: Details of another person authorized to pick up the parcel.
 
 All optional; the existing required fields (`quote_id`, `sender`, `recipient`) are
 unchanged. `package_description` keeps its meaning (what's in the box);

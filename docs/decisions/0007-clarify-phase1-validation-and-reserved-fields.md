@@ -1,36 +1,21 @@
-# ADR 0007 — Clarify Phase 1 validation rules and reserved quote fields
+# ADR 0007 — Simplify validation and quote fields
 
 **Status:** Accepted
 **Date:** 2026-06-08
 
 ## Context
 
-Phase 1 is now far enough along that contributors can compare three things directly:
-
-- the canonical contract in `spec/openapi.yaml`
-- the Cloudflare Worker reference implementation
-- the repository status documentation
-
-That comparison exposed a few places where the contract was still underspecified or misleading:
-
-- examples still used short placeholder IDs that no longer match the Worker
-- the tracking endpoint did not document the `400` returned for malformed tracking IDs
-- the search response schema included a `query` field that the Worker does not return
-- contact, package description, and opaque identifier validation rules were enforced in code but not stated in the contract
-- `package_type` existed in the quote request shape, but its role in Phase 1 was easy to overread as active quote logic rather than a forward-compatible field
-
-This is not a product redesign. It is a spec clarification so contributors do not mistake reserved fields for implemented logic, and do not mistake implementation validation for undocumented behavior.
+As we built Phase 1, we found some parts of the API spec that were unclear or didn't match the actual code. For example, some examples used old ID formats, and some validation rules were in the code but not the spec.
 
 ## Decision
 
-Clarify the Phase 1 contract to match the current reference behavior and current project status.
+We will update the API spec to match how the code actually works. This includes:
 
-- Document `quote_id` and `tracking_id` as opaque identifiers with concrete format patterns.
-- Document current validation constraints for contacts and package descriptions.
-- Add the missing `400` response for malformed tracking IDs.
-- Remove the undocumented `query` field from the `/v1/zones/search` success response schema.
-- Keep `package_type` in `QuoteRequest`, but describe it as an optional field reserved for current or future ranking/filtering logic. Phase 1 implementations may ignore it.
-- Update examples so they use current opaque ID shapes.
+- Clearly documenting ID formats (like `quote_id`).
+- Adding missing error codes (like `400` for bad tracking IDs).
+- Removing unused fields from the spec (like the `query` field in zone search).
+- Clarifying that some fields (like `package_type`) are reserved for future use.
+- Updating all examples to use current ID formats.
 
 ## Rationale
 

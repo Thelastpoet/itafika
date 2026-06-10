@@ -1,30 +1,15 @@
-# ADR 0013: Wire the Worker to the Adapter Runtime for Quotes
+# ADR 0013 — Connect the Worker to adapters for quotes
 
-- Status: Accepted
-- Date: 2026-06-09
+**Status:** Accepted
+**Date:** 2026-06-09
 
 ## Context
 
-The repository already contains three relevant pieces:
-
-- a shared quote engine in `@itafika/core`
-- a reference adapter package in `@itafika/adapters`
-- a Worker quote path that reads D1 directly and never calls the adapter interface
-
-That leaves the most important architectural seam unproven in runtime code. The Worker, core, and adapters are meant to align through `LogisticsProviderInterface`, but the quote flow still bypasses it completely.
+We have code for "adapters" that connect to different delivery providers, but our Worker was still calculating quotes directly from the database. We need to use the adapter interface so the code matches our planned architecture.
 
 ## Decision
 
-Use the adapter runtime as the quote execution path in the reference Worker.
-
-For Stage 1:
-
-- keep cost calculation helpers in `@itafika/core`
-- build one static adapter per provider from the D1-loaded dataset
-- aggregate provider quotes through `LogisticsProviderInterface`
-- keep the output ordering identical to the current cheapest-first, reliability-tiebreak behavior
-
-This change is limited to the quote flow. It does not yet wire booking or tracking updates through adapters.
+The Worker will now use the adapter system to get quotes. We will create "static adapters" that read data from the database. This ensures every quote goes through the same standard interface, even if the data behind it is static for now.
 
 ## Rejected options
 

@@ -1,42 +1,15 @@
-# ADR 0017 — Add a delivery-options discovery surface
+# ADR 0017 — Add an endpoint to discover delivery options
 
 **Status:** Accepted (2026-06-10)
 **Date:** 2026-06-09
 
-> One of four related ADRs (0016–0019) evolving Itafika into a checkout-delivery
-> layer. Direction and expectations only — implementation and maintainer sign-off
-> per [GOVERNANCE.md](../../GOVERNANCE.md) are follow-on.
-
 ## Context
 
-A real checkout lets the customer *explore* before committing: pick their area, see
-which transport modes reach it, see which providers run those modes and where they
-collect, then choose. Kenyan shoppers think brand- and place-first — "I'm going to
-Nyeri, I'll use 2NK, to their town office."
-
-But today the only way to learn *anything* from Itafika is `POST /v1/quotes`, which
-**requires both exact zone IDs and a weight up front**. You cannot ask "what are my
-options to Nyeri?" — you must already know the precise destination zone. There is no
-way to browse by town/county or filter by mode. `GET /v1/zones/search` is name-only.
-
-So the discovery half of a checkout — county → mode → provider → collection point —
-cannot be built on Itafika data. The data exists in the rate matrix; the *navigation
-surface* over it does not.
+Currently, users have to provide an exact location and package weight just to see any options. This makes it hard for someone to "browse" which providers or transport modes (like "bus" or "shuttle") serve their town.
 
 ## Decision
 
-Add a **read-only discovery endpoint** that exposes the navigable option tree
-without requiring a weight or an exact destination zone:
-
-```
-GET /v1/options?origin_zone_id=...&destination_town=...&mode=...   (mode optional)
-```
-
-It returns, for the shop's origin into the customer's town, the providers that serve
-that route grouped as **delivery options**, each carrying: `provider_name`,
-`provider_type` (the mode), `reliability_score`, `collection_type`
-([0016](0016-surface-collection-point-and-type-on-quotes.md)), the **collection points** (the zones in that town the provider serves),
-and an indicative `from_cost_kes`.
+Add a `GET /v1/options` endpoint. This allows users to see available providers and transport modes for a town without needing an exact address or weight. We've also added a **"county"** field to zones to make searching easier.
 
 Clear separation of concerns:
 

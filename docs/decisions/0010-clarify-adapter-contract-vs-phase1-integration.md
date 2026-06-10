@@ -1,37 +1,15 @@
-# ADR 0010: Clarify Adapter Contract Versus Phase 1 Runtime Integration
+# ADR 0010 — Define how adapters and the Worker interact
 
-- Status: Accepted
-- Date: 2026-06-08
+**Status:** Accepted
+**Date:** 2026-06-08
 
 ## Context
 
-The repository now contains a real `@itafika/adapters` package and a canonical adapter contract in `spec/adapter-contract.md`.
-
-At the same time, the Phase 1 reference Worker still computes quotes directly from the seeded dataset and records bookings without dispatching them through adapter instances.
-
-That created a documentation problem:
-
-- the adapter contract is real
-- the extension direction is real
-- but some prose described the runtime as if full adapter fan-out was already in place
-
-For an open-source project, that ambiguity is costly. Contributors need to know whether something is:
-
-- implemented now
-- contractually defined
-- or planned integration work
+We have a plan for "adapters" that connect to different delivery providers, but the current Worker still uses static data for quotes and bookings. This can be confusing for contributors who see the adapter code but don't see it used in the API.
 
 ## Decision
 
-We will keep the adapter contract as part of the canonical standard, but we will explicitly distinguish it from the current Phase 1 runtime wiring.
-
-Documentation should say:
-
-- the adapter interface is stable enough to contribute against
-- the reference adapter package exists
-- full Worker fan-out through adapters is still follow-on integration work
-
-The OpenAPI and adapter-contract prose should avoid implying that the current reference Worker already dispatches every quote and booking through live adapter instances.
+We will clearly state that while the adapter contract is ready, the Worker doesn't yet use them for every request. We will distinguish between what is "contractually defined" (the standard) and what is "actually implemented" (the Worker).
 
 ## Rejected options
 

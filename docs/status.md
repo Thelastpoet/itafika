@@ -1,142 +1,84 @@
-# Current Status
+# Project Status
 
-This project is in active development.
+This project is currently being built.
 
-This document is the plain-language source of truth for what exists in the repository today.
+This page shows what is currently working and what is still being built. Use it together with these other docs:
 
-Use it alongside the other docs:
+- `README.md` — High-level overview.
+- `docs/Itafika-Concept-Doc.md` — Long-term vision.
+- `docs/next-phase.md` — What we are working on next.
+- `spec/` — The technical rules and data format.
 
-- `README.md` explains the project at a high level.
-- `docs/Itafika-Concept-Doc.md` explains the long-term vision.
-- `docs/next-phase.md` lists the most useful next implementation tasks.
-- `docs/release-checklist.md` is the maintainer check before a release or milestone.
-- `spec/` defines the contract and data format.
+## What works now
 
-If there is ever a difference between the vision and the code, this file should tell contributors what is real right now.
+We have a solid foundation for Phase 1:
 
-## What is implemented now
+- **Project structure:** A organized code repository.
+- **Core engine:** The code that calculates delivery options and prices.
+- **API:** A working version of the API on Cloudflare.
+- **Adapters:** Examples of how to connect to delivery providers.
+- **Database:** Tools to manage and search our data.
+- **Validation:** Automated checks to make sure our data is correct.
+- **Testing:** Automated tests to ensure everything works as expected.
+- **Live API:** A version of the API you can try right now.
+- **Shop example:** A simple example of an online shop using Itafika.
 
-The current branch has a working Phase 1 foundation:
+## What the API can do today
 
-- a `pnpm` monorepo
-- `@itafika/core` with generated API types and a quote engine
-- `@itafika/worker` as the Cloudflare Worker reference API
-- `@itafika/adapters` with a reference static adapter and a reusable adapter conformance kit (`@itafika/adapters/conformance`)
-- D1 migrations and a seed flow
-- dataset validation for `spec/data/`
-- CI for validation, tests, and typecheck
-- the Phase 1 HTTP endpoints, including dataset freshness
-- a small checkout example in `examples/simple-shop`
-- automated tests for the core package and the Worker package
-- a live hosted reference Worker deployment
+The API supports these actions:
 
-## What the Worker does today
+- List all locations (`zones`) and search for them by name.
+- See when each town's data was last updated.
+- Browse different delivery modes and options for each town.
+- Get delivery quotes (prices and times).
+- Book a delivery and get a tracking ID.
+- Track a parcel and see its history.
+- Add manual updates to a delivery.
 
-The Worker currently supports:
+Current behavior is simple:
 
-- `GET /v1/zones` (with `type`, `town`, `county` filters)
-- `GET /v1/zones/search`
-- `GET /v1/freshness`
-- `GET /v1/modes`
-- `GET /v1/options`
-- `POST /v1/quotes`
-- `POST /v1/deliveries`
-- `GET /v1/deliveries/{tracking_id}/track`
-- `POST /v1/deliveries/{tracking_id}/events`
+- Quotes come from the data we've already added to the system.
+- Quotes are valid for 24 hours.
+- You can only book a quote once.
+- Tracking uses one simple list of statuses for every provider.
 
-Current behavior is intentionally simple:
+## What is still being improved
 
-- quotes are computed from the seeded dataset in D1, through one static adapter per provider
-- quotes expire after 24 hours
-- a quote can only be booked once
-- booking runs through the originating provider's adapter (`book()`) and records the delivery in D1
-- quotes carry collection facts (`collection_type`, and for office pickup a `collection_point`); bookings capture `instructions`, `id_number`, and an optional `alternate_collector`
-- `GET /v1/options` browses the providers/modes/collection points serving a town (navigation, not pricing) via the adapter `coverage()` seam; `GET /v1/modes` serves the transport-mode registry
-- tracking returns the recorded delivery status and history
-- tracking history can be advanced through a manual/internal event path; every event records its source (booking/manual/adapter) on one log
+Some parts of the project are just starting out:
 
-## What is partial or intentionally simple
+- **Live prices:** Right now, most prices come from a stored list. Connecting directly to couriers for live prices comes later.
+- **Automatic tracking:** We have a system for tracking, but we are still adding ways to get updates automatically from providers.
+- **Data coverage:** We are still adding more towns and delivery companies. Some data is just for testing right now.
 
-Some parts of the contract are in place before the full implementation behind them exists.
+## What is planned for the future
 
-- `package_type` is still part of the quote request shape, but it is not yet used in quote logic
-- booking dispatches through the adapter runtime, but the only adapter is the static one, so it records the booking rather than calling a live provider system
-- tracking is unified on one event log with a recorded source per event; adapter-driven (`track()`) and webhook-driven updates still come later
-- rates in `spec/data/` are still marked `seed-illustrative` unless replaced by sourced field data
+These are big features we want to add as the project grows:
 
-This is normal for the current phase. The important thing is to describe it clearly.
+- Real-time connections to many more delivery providers.
+- Automatic background tasks (like checking for tracking updates).
+- Better tools for handling complicated delivery steps and retries.
 
-## Checkout-delivery direction (ADRs 0016–0019) — implemented
+## Live API
 
-ADRs 0016–0019 extended the contract so a shop can build the full Kenyan checkout
-delivery step (county → mode → provider → collection point → instructions), not just
-fetch A→B prices. All four are `Accepted` and served by the reference Worker:
+The live API is running here:
 
-- **collection point + `collection_type` on quotes** (ADR 0016) — where/how the
-  recipient collects (office pickup vs. door delivery)
-- **`GET /v1/options` discovery surface** + `county` on zones and `town`/`county`
-  zone filters (ADR 0017) — browse options into a town before pricing
-- **`instructions`, `id_number`, `alternate_collector` on bookings** (ADR 0018) —
-  capture "give to so-and-so" and who collects
-- **transport modes as a governed registry** — `GET /v1/modes` + `modes.csv`, with
-  `ProviderType` as an open identifier (ADR 0019) — so new modes (`shuttle`, `taxi`,
-  `cargo_truck`, …) are added as data, never by changing code or the contract
+`https://itafika-api.emcie4.workers.dev`
 
-Each is additive within `/v1`. The seed dataset now carries the new columns
-(`collection_type`, `county`, the `modes` registry) with illustrative values;
-replacing them with sourced field data remains open data work.
+If you want to run it on your own computer or deploy it yourself, see [`docs/deploy-worker.md`](deploy-worker.md).
 
-## What is planned but not built yet
+## What we are working on right now
 
-These are part of the project direction, but they are not implemented in this repository yet:
+The main Phase 1 features are ready. Now we are focused on:
 
-- live provider integrations
-- background jobs with Queues
-- long-running booking flows with Workflows
-- Durable Objects for coordination where needed
+- **Adding more data:** Replacing test prices with real ones and adding more towns.
+- **Easier contribution:** Making it easier for non-developers to share data using a simple form.
+- **First live connection:** Connecting the system to its first live delivery provider.
 
-## Deployment notes
+## How to contribute
 
-Local development works now.
+If you are helping out, use these labels so everyone knows what to expect:
 
-The hosted reference Worker is live at:
-
-- `https://itafika-api.emcie4.workers.dev`
-
-Repository-level deployment still needs project-specific setup for any new environment:
-
-- create a real Cloudflare D1 database in that account
-- replace the placeholder `database_id` in `packages/worker/wrangler.jsonc`
-- apply remote migrations
-- seed the remote database
-
-Use [`docs/deploy-worker.md`](deploy-worker.md) for the exact deployment steps.
-
-Even with a live deployment, the project should still be treated as active development software, not a finished production platform.
-
-## Current implementation priority
-
-The Phase 1 reference code path is complete: quotes and booking run through the adapter
-runtime (ADRs 0013–0014), tracking follows the one-log model (ADR 0015), and the adapter
-conformance kit backs the open-contribution promise. The checkout-delivery contract
-(ADRs 0016–0019) is now implemented too. What remains:
-
-- **dataset** — replace illustrative rates and the new illustrative columns
-  (`collection_type`, `county`) with sourced field data and broaden coverage (data work, not code)
-- **non-developer data contribution path (ADR 0020)** — a form that opens a PR against the CSVs (still `Proposed`)
-- **first live adapter (Phase 2)** — unblocked by the runtime seam and the conformance kit; adapter-driven `track()` / webhook updates and live `coverage()` land with it
-
-## What contributors should assume
-
-When contributing, use these labels consistently:
-
-- `Implemented`
-- `Partial`
-- `Specified, not yet implemented`
+- `Working now`
+- `Partly ready`
+- `Rules set, but not yet built`
 - `Planned`
-
-That keeps expectations clear for:
-
-- non-code contributors improving data
-- developers working on the reference implementation
-- future implementers building from the spec

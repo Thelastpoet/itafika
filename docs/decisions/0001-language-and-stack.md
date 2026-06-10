@@ -1,26 +1,26 @@
-# ADR 0001 — TypeScript and Cloudflare Workers for the reference implementation
+# ADR 0001 — Use TypeScript and Cloudflare Workers
 
 **Status:** Accepted
 **Date:** 2026-06-08
 
 ## Context
 
-Itafika is both an open standard and a working API. The standard must stay easy to read and reimplement, while the hosted reference implementation should be simple to deploy, cheap to operate, and friendly to contributors.
+Itafika is an open standard and a working API. The standard should be easy to understand, while the reference implementation should be simple to deploy and cheap to run.
 
-Most Itafika work is I/O-bound: reading zone and rate data, returning quotes, calling provider systems, receiving webhooks, and coordinating shipment state. The platform should handle that without forcing the project to operate servers.
+Most work involves I/O tasks: reading data, returning quotes, and tracking packages. We want a platform that handles this without needing us to manage servers.
 
 ## Decision
 
-The reference implementation is **TypeScript on Cloudflare Workers**.
+The reference implementation uses **TypeScript and Cloudflare Workers**.
 
-The main platform pieces are:
+Key components:
 
-- **Workers** for the public HTTP API.
-- **D1** for zones, providers, rates, shipments, and tracking events.
-- **Queues** for background jobs such as webhook processing, rate refreshes, and adapter work that should not block a checkout request.
-- **Workflows** for durable multi-step processes such as booking, provider retries, and human-in-the-loop confirmation.
-- **Durable Objects** for stateful coordination when one shipment, provider, or stream needs a single authority.
-- **Wrangler** for local development, D1 migrations, seed data, and deployment.
+- **Workers** for the HTTP API.
+- **D1** for storing zones, providers, rates, and tracking events.
+- **Queues** for background tasks like processing webhooks.
+- **Workflows** for multi-step processes like booking and retries.
+- **Durable Objects** for managing state when a single authority is needed.
+- **Wrangler** for development and deployment.
 
 The API contract remains in [`spec/openapi.yaml`](../../spec/openapi.yaml). The Worker, core engine, and adapters compile against types generated from that spec.
 

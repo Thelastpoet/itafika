@@ -1,48 +1,37 @@
 # Release Checklist
 
-Use this checklist before cutting a release, tagging a milestone, or declaring a branch ready for wider use.
+Use this checklist before you finish a major update, tag a version, or merge a branch into the main project.
 
-The goal is simple:
+Our goal is to make sure the repository always tells the truth about what it can do.
 
-- the repo should describe itself truthfully
-- the spec and implementation should agree
-- contributors should not need maintainer memory to understand the current state
+## 1. Check the Documentation
+- [ ] Does `README.md` still match how the project is organized?
+- [ ] Does `docs/status.md` correctly show what is finished and what is still being worked on?
+- [ ] Does `docs/next-phase.md` still reflect the most important next steps?
 
-## 1. Reality check
+## 2. Check the API Contract
+- [ ] If you changed `spec/openapi.yaml`, did you run the command to regenerate the types?
+- [ ] If you changed the core rules in `spec/`, is there a matching decision file (ADR) in `docs/decisions/`?
+- [ ] Do the examples still work with the new rules?
 
-- confirm `README.md` still matches the repository layout and current maturity
-- confirm [`docs/status.md`](status.md) still matches the implementation
-- confirm [`docs/next-phase.md`](next-phase.md) still reflects the actual remaining work
+## 3. Check the Data
+- [ ] Run `pnpm data:validate`. Did it pass?
+- [ ] If you changed files in `spec/data/`, did you include where the data came from (source)?
+- [ ] Did you update the "freshness" date for any towns you changed?
 
-## 2. Contract check
+## 4. Check the Code
+- [ ] Run `pnpm test`. Do all tests pass?
+- [ ] Run `pnpm typecheck`. Are there any TypeScript errors?
+- [ ] Does the project still build correctly in CI (GitHub Actions)?
 
-- if `spec/openapi.yaml` changed, regenerate types
-- if canonical docs in `spec/` changed, confirm the required ADR exists
-- if the public contract changed, confirm examples still match runtime behavior
+## 5. Check the Deployment
+- [ ] If the Worker setup changed, did you update `docs/deploy-worker.md`?
+- [ ] If there are new database tables or seed data, are they clearly documented?
+- [ ] If there are any known bugs in the deployment, did you list them in your pull request?
 
-## 3. Data check
+## 6. Check for Contributors
+- [ ] If a feature moved from "Planned" to "Finished," did you update the status?
+- [ ] If you added a new coding rule, did you add it to `docs/engineering-principles.md`?
 
-- run `pnpm data:validate`
-- if `spec/data/` changed, confirm provenance and freshness updates are present
-- if dataset changes affect examples or docs, update them
-
-## 4. Implementation check
-
-- run `pnpm test`
-- run `pnpm typecheck`
-- confirm CI passes for the same scope
-
-## 5. Deployment check
-
-- confirm deployment docs still match the current Worker setup
-- confirm any new migration or seed steps are documented
-- call out any known deploy gaps plainly in the PR or release notes
-
-## 6. Contributor check
-
-- if behavior moved between `Implemented`, `Partial`, `Specified, not yet implemented`, or `Planned`, update docs to say so directly
-- if a new engineering rule was introduced, document it instead of relying on convention
-
-## Rule of thumb
-
-If a contributor or consumer would be surprised after pulling the repo, the release is not ready yet.
+### The Rule of Thumb
+If a new developer pulls this code and is surprised by how something works, the release isn't ready yet.

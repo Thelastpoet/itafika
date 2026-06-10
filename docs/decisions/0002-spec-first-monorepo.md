@@ -1,27 +1,25 @@
-# ADR 0002 — Spec-first, clearly separated monorepo
+# ADR 0002 — Use a spec-first monorepo structure
 
 **Status:** Accepted
 **Date:** 2026-06-08
 
 ## Context
 
-Itafika is an open standard for representing and quoting Kenyan delivery, not only one hosted service. Someone should be able to build a conformant implementation from the published contract and dataset alone.
-
-At the same time, a standard is easier to adopt when there is a working reference implementation people can run, inspect, and contribute to.
+Itafika is an open standard, not just a service. Anyone should be able to build their own version using only the spec and data. A monorepo helps keep the spec and the reference implementation in sync.
 
 ## Decision
 
-The repository is a **single spec-first monorepo** with two clear layers:
+The project is a **spec-first monorepo** with two main parts:
 
 ```
-spec/        canonical, language-agnostic standard
+spec/        Authoritative standard (language-agnostic)
   openapi.yaml         API contract
-  adapter-contract.md  provider adapter contract
-  data/                open zones + rates dataset
+  adapter-contract.md  Rules for provider adapters
+  data/                Open zones and rates dataset
 
 packages/    TypeScript reference implementation
-  core/      quote engine + shared domain logic
-  adapters/  provider adapters
+  core/      Quote engine and shared logic
+  adapters/  Provider adapters
   worker/    Cloudflare Worker exposing the API
 ```
 

@@ -1,39 +1,15 @@
-# ADR 0015: Tracking Update Model — One Event Log, Many Producers
+# ADR 0015 — Simplify tracking as a single event log
 
-- Status: Accepted
-- Date: 2026-06-09
+**Status:** Accepted
+**Date:** 2026-06-09
 
 ## Context
 
-Tracking is event-sourced: `tracking_events` is an append-only log and the current
-status is the latest event. [ADR 0012](0012-add-manual-tracking-event-updates.md)
-added a guarded manual update path (forward-only via `canAdvanceTrackingStatus`).
-
-As adapters move into the runtime ([ADR 0013](0013-wire-worker-to-adapter-runtime.md),
-[ADR 0014](0014-route-booking-through-adapter-runtime.md)), a question follows: how
-do adapter-reported statuses relate to manual updates? Without a decision we risk two
-competing sources of truth — an adapter status and a manual status — that must be
-reconciled at read time.
+As we add more ways to update a delivery's status (manually or via providers), we need a clear way to keep track of it all without having competing versions of the "truth."
 
 ## Decision
 
-There is **one tracking log, with multiple producers**.
-
-- The `tracking_events` log is canonical. Status is always the latest event. There
-  is no separate adapter-reported status field.
-- Producers all append through the same forward-only, `canAdvanceTrackingStatus`-
-  guarded pipeline:
-  - **booking** — the initial event written by `book()`'s result.
-  - **manual** — internal/operator updates (ADR 0012).
-  - **adapter** — pull-based `track()` or push-based webhooks, when implemented.
-- In Phase 1, manual/internal updates are the source of truth. The static adapter
-  has no `track()`, so no polling happens now — we do not pretend Phase 2 exists.
-- Each event records its `source` (internal column, migration 0005) so the log is
-  reviewable: it is possible to see whether a status came from booking, an operator,
-  or a provider.
-- `provider_ref` is stored at booking (ADR 0014) precisely so a future
-  `track(provider_ref)` or webhook handler can map a provider's own state and append
-  to this same log.
+We will use a **single, append-only event log** for tracking. Every update—whether it's from a manual entry, a provider, or a webhook—gets added as a new event in this log. The current status is always the latest event. We also record the source of each update (e.g., "manual" or "provider") for auditing.
 
 ## Rejected options
 

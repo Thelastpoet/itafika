@@ -1,90 +1,79 @@
-# The Open Dataset — schema & conventions
+# Open Dataset — Schema & Rules
 
-The files in this directory are the **open, community-maintained representation of
-how parcels move in Kenya**. They are part of the canonical standard, not an
-implementation detail — the reference Worker loads them into D1, but the
-files here are the source of truth and the thing pull requests review.
+These files show how parcels move across Kenya. They are maintained by the community and are the official source of truth for the Itafika project.
 
-Datasets mirroring the data model: **zones**, **providers**, **rates**, and the
-**modes** registry. Each is provided as CSV (easy to edit and review in a PR) with the
-schema below.
+The data is organized into four files: **zones**, **providers**, **rates**, and **modes**. They are CSV files, so they are easy to edit and review in a Pull Request.
 
 ---
 
 ## `zones.csv` — locations
 
-Every place a package can be picked up or dropped off.
+Every place where a package can be picked up or dropped off.
 
 | Column | Type | Notes |
 |--------|------|-------|
-| `id` | string | Stable, human-readable. Format: `ZONE_<TOWN>_<KIND>_<NN>`, e.g. `ZONE_NBI_CBD_01`. Never reused once assigned. |
-| `name` | string | Human-readable, e.g. `RNG Plaza`, `Nyeri Main Stage`. |
-| `type` | enum | `cbd_hub` \| `stage` \| `residential_area`. |
-| `town` | string | Town/city, e.g. `Nairobi`, `Nyeri`. |
-| `county` | string | County the zone belongs to (ADR 0017); the top level of the checkout funnel. |
-| `lat` | number | Approximate latitude. Blank allowed for stages with no precise pin. |
-| `lng` | number | Approximate longitude. |
+| `id` | string | A unique ID. Format: `ZONE_<TOWN>_<KIND>_<NN>`, e.g. `ZONE_NBI_CBD_01`. Once assigned, it is never changed. |
+| `name` | string | Name of the place, e.g. `RNG Plaza`, `Nyeri Main Stage`. |
+| `type` | enum | `cbd_hub`, `stage`, or `residential_area`. |
+| `town` | string | Town or city, e.g. `Nairobi`, `Nyeri`. |
+| `county` | string | The county the zone is in. |
+| `lat` | number | Latitude (optional for stages). |
+| `lng` | number | Longitude (optional for stages). |
 
-**ID convention:** town codes are short and stable — `NBI` Nairobi, `NKR` Nakuru, `NYR` Nyeri, `ELD` Eldoret, `MSA` Mombasa, `KSM` Kisumu. Kind is `CBD`, `STG` (stage), or `RES` (residential).
+**ID rules:** use short town codes — `NBI` (Nairobi), `NKR` (Nakuru), `NYR` (Nyeri), `ELD` (Eldoret), `MSA` (Mombasa), `KSM` (Kisumu). For KIND, use `CBD`, `STG` (stage), or `RES` (residential).
 
 ---
 
-## `providers.csv` — who carries packages
+## `providers.csv` — carriers
 
 | Column | Type | Notes |
 |--------|------|-------|
-| `id` | string | Stable slug, e.g. `mololine`, `cbd_rider_pool`, `g4s`. |
-| `name` | string | Display name shown to customers, e.g. `Mololine Sacco`. |
-| `type` | string | A mode id — **FK → `modes.id`** (ADR 0019), e.g. `matatu_sacco`. Open set: add a new mode in `modes.csv`, not by editing code. |
-| `reliability_score` | number | 0–1 baseline. Be conservative. |
+| `id` | string | Unique ID, e.g. `mololine`, `g4s`. |
+| `name` | string | Name shown to customers, e.g. `Mololine Sacco`. |
+| `type` | string | Transport mode ID (from `modes.csv`), e.g. `matatu_sacco`. |
+| `reliability_score` | number | 0–1 score based on performance. Start conservative. |
 
 ---
 
-## `modes.csv` — transport modes (the registry)
+## `modes.csv` — transport modes
 
-The set of transport modes a customer chooses between (ADR 0019). This
-is **governed reference data, not a hardcoded list**: add a mode here (with provenance)
-and it flows through the API — no code or contract change. The engine never branches on
-a specific mode; it only carries it through for grouping, filtering, and display.
+The different ways parcels can be moved (e.g. by boda, matatu, or bus). This list is managed in this file, not in the code. If you add a mode here, it will automatically show up in the API.
 
 | Column | Type | Notes |
 |--------|------|-------|
-| `id` | string | Stable identifier, used in `providers.type` and API mode fields, e.g. `shuttle`. Never reused once assigned. |
-| `label` | string | Display name shown to customers, e.g. `Shuttle`. |
-| `description` | string | One line on what the mode is. |
-| `source` | string | **Provenance**, as with rates. |
+| `id` | string | Unique ID, e.g. `shuttle`. Used in `providers.csv`. |
+| `label` | string | Name shown to customers, e.g. `Shuttle`. |
+| `description` | string | A short description of the mode. |
+| `source` | string | **Where this info came from.** |
 
-The seed registry ships with `boda_rider`, `matatu_sacco`, `bus`, `national_courier`,
-and (checkout-delivery direction) `shuttle`, `taxi`, `cargo_truck` — as rows, not as a
-code enum. Additions go through the same data review as rates, so the registry doesn't
-accumulate synonyms (`lorry` / `truck` / `cargo_truck`) for one thing.
+The default modes are `boda_rider`, `matatu_sacco`, `bus`, `national_courier`, `shuttle`, `taxi`, and `cargo_truck`.
 
 ---
 
-## `rates.csv` — the matrix (the asset)
+## `rates.csv` — the price list
 
-One row per (provider, origin, destination). This is where Itafika's value concentrates.
+One row for every route a provider serves. This is the most important part of the dataset.
 
 | Column | Type | Notes |
 |--------|------|-------|
-| `provider_id` | string | FK → `providers.id`. |
-| `origin_zone_id` | string | FK → `zones.id`. |
-| `destination_zone_id` | string | FK → `zones.id`. |
-| `base_cost_kes` | integer | Flat base cost in KES. |
-| `cost_per_kg_kes` | integer | Added per kg of package weight. `0` for flat-rate providers. |
-| `est_time` | string | Human-readable, e.g. `45 mins`, `3 hours`, `next day`. |
-| `max_weight_kg` | number | Provider's cap for this service. Blank = no stated cap. |
-| `collection_type` | enum | `office_pickup` \| `door_delivery` (ADR 0016) — how the recipient receives this route's parcel. For `office_pickup` the collection point is the destination zone. |
-| `source` | string | **Provenance.** How this rate is known — `field-2026-06`, `sacco-desk-call`, `agent`, etc. |
+| `provider_id` | string | The ID of the provider. |
+| `origin_zone_id` | string | Where the parcel starts. |
+| `destination_zone_id` | string | Where the parcel ends. |
+| `base_cost_kes` | integer | Starting price in KES. |
+| `cost_per_kg_kes` | integer | Extra cost for every kg. Use `0` for flat-rate. |
+| `est_time` | string | How long it takes, e.g. `45 mins`, `3 hours`, `next day`. |
+| `max_weight_kg` | number | Maximum weight allowed. Leave blank if there's no limit. |
+| `collection_type` | enum | `office_pickup` or `door_delivery`. |
+| `source` | string | **Where you got this price.** e.g. `called-sacco-desk`, `field-trip-2024`. |
 
-**Quote math (Phase 1):** `estimated_cost_kes = base_cost_kes + ceil(package_weight_kg) * cost_per_kg_kes`, rounded to the nearest 10 KES. A rate only applies if `package_weight_kg <= max_weight_kg` (when set).
+**How prices are calculated:** `Total Cost = base_cost + (weight * cost_per_kg)`. Results are rounded to the nearest 10 KES.
 
 ---
 
-## Conventions
+## Rules to follow
 
-- **Provenance is mandatory.** Every rate row carries a `source`. A roughly-right rate with a clear source beats a confident guess.
-- **Correcting beats adding.** Rates drift; updating a stale one is a first-class contribution.
-- **Freshness is complete by town.** Every town that appears in `zones.csv` must have exactly one row in `freshness.csv` (`town,last_updated`) so consumers can reason about staleness.
-- **IDs are forever.** Once a `zone.id` or `provider.id` is published, it isn't reused or repurposed; retire instead.
-- **Symmetry isn't assumed.** A→B and B→A are separate rows; return rates often differ.
+- **Always include the source.** Every price must have a `source`. A roughly-correct price with a clear source is better than a guess.
+- **Update old prices.** Prices change often. Updating an old price is just as important as adding a new one.
+- **Freshness is required for every town.** Every town in `zones.csv` must be listed in `freshness.csv` so we know when it was last checked.
+- **IDs are forever.** Once an ID (like a `zone.id`) is used, it shouldn't be reused for something else.
+- **Don't assume prices are the same both ways.** A route from A to B might cost more than B to A. Each direction needs its own row.

@@ -1,47 +1,21 @@
-# ADR 0009: Define Worker Policy, Validation, and Service Boundaries
+# ADR 0009 — Organize Worker code by service boundaries
 
-- Status: Accepted
-- Date: 2026-06-08
+**Status:** Accepted
+**Date:** 2026-06-08
 
 ## Context
 
-The reference Worker had started to collect several concerns in the same files:
-
-- HTTP route matching
-- request validation
-- quote and delivery orchestration
-- quote expiry policy
-- identifier generation
-- persistence queries
-
-That shape worked for the first implementation pass, but it created drift risk:
-
-- policy choices were harder to find
-- responsibilities were mixed
-- tests covered behavior without making ownership clear
-- future contributors would have to infer boundaries from code structure instead of reading a decision
-
-This was already showing up in review feedback about scale, separation of concerns, and hidden implementation rules.
+The Cloudflare Worker code was becoming messy, with too many responsibilities (routing, validation, and database queries) mixed together in the same files.
 
 ## Decision
 
-The reference Worker will keep the following boundaries:
+We will organize the Worker code into clear modules:
 
-- `packages/worker/src/index.ts`
-  - owns HTTP route matching and HTTP response shaping only
-- `packages/worker/src/validation.ts`
-  - owns request parsing and validation helpers for the Worker interface
-- `packages/worker/src/policy.ts`
-  - owns explicit implementation-local policy such as identifier format helpers and quote expiry timing
-- `packages/worker/src/*-service.ts`
-  - owns orchestration across validation, persistence, and domain logic
-- `packages/worker/src/db.ts`
-  - owns persistence queries and row-to-type mapping
-  - does not generate business identifiers or current timestamps on its own
-
-Implementation-local policy may live in the Worker when it is not part of the public contract, but it must be explicit and isolated in a clearly named module.
-
-If a rule becomes contractual, data-driven, or adapter-specific later, it should move to the correct layer instead of expanding the Worker boundary.
+- `index.ts`: HTTP routing and response shaping.
+- `validation.ts`: Parsing and validating requests.
+- `policy.ts`: Local settings like ID formats and quote expiry times.
+- `*-service.ts`: Business logic and coordination.
+- `db.ts`: Database queries and data mapping.
 
 ## Rejected options
 
