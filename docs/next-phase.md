@@ -79,6 +79,57 @@ Done when:
 
 - the dataset is meaningfully more trustworthy, not just more structured
 
+### P2 — Checkout-delivery direction (ADRs 0016–0019)
+
+Why this matters:
+
+- today the contract returns A→B prices, but a real Kenyan checkout needs the full
+  delivery step: county → mode → provider → collection point → handover instructions
+- the spec now states these expectations (ADRs 0016–0019, all `Proposed`); the
+  implementation is open work
+
+Tasks (each additive within `/v1`, after the relevant ADR is signed off):
+
+- establish the modes registry (ADR 0019): add `modes.csv` + `GET /v1/modes`, type
+  `provider.type` as an FK into it, and validate it in `data:validate` — after which
+  new modes are pure data work
+- add `collection_type` to `rates.csv` and `county` to `zones.csv`, then backfill
+- regenerate types (`pnpm gen:types`) and implement the new fields/endpoint in core,
+  adapters, and the Worker: collection facts on quotes (0016), `GET /v1/options`
+  discovery (0017), booking instructions/identity (0018)
+- extend the static adapter's `coverage()` and the conformance kit accordingly
+
+Done when:
+
+- a shop can render the full checkout delivery step from Itafika data alone
+
+### P3 — Non-developer data contribution path (ADR 0020)
+
+Why this matters:
+
+- the project promises data contribution with "no code required" (`CONTRIBUTING.md`),
+  but the real path is CSV + `data:validate` + a GitHub PR — unusable for the riders,
+  SACCO desk staff, and agents whose knowledge is the point
+- closing this gap is what makes "the dataset is the asset" actually crowdsourceable
+
+Tasks (contribution tooling — no API contract change):
+
+- a separate contribution Worker (or Pages + Functions) hosting a schema-aware,
+  plain-language form (mirrors `SCHEMA.md`, requires `source`/provenance)
+- on submit, open a PR against `spec/data/*.csv` via the GitHub API (token as a
+  Worker secret); **never write to D1** — the canonical pipeline (validate → review →
+  merge → reseed) is unchanged
+- Cloudflare Turnstile + rate limiting on the public write endpoint
+- once live, point `CONTRIBUTING.md` / `contribute-data.md` at the form first
+
+Done when:
+
+- someone who has never used Git can submit a sourced rate and it arrives as a
+  reviewable PR
+
+Later, if PR-per-submission gets noisy: a staging/moderation queue (ADR 0020's
+deferred option).
+
 ## What should wait
 
 These are important, but not the best next use of effort:
@@ -93,6 +144,29 @@ Those become much easier once the current code path is more complete.
 
 ## Suggested implementation order
 
-1. improve the actual dataset (sourced rates, broader coverage, provenance)
-2. build the first live adapter, exercising the runtime seam and the conformance kit
-3. wire adapter-driven `track()` / webhook updates into the one event log (with that adapter)
+Three tracks. **P1 (dataset)** and **P3 (non-developer contribution path)** are both
+independent and run in parallel with the contract work below. **P2 (checkout-delivery)**
+has a strict internal order because the modes registry gates the rest. Each P2 step is
+blocked until its ADR moves from `Proposed` to `Accepted` (a non-author maintainer
+sign-off, per `GOVERNANCE.md`).
+
+1. **Sign off ADRs 0016–0019.** They are `Proposed`; confirm the direction (especially
+   the seed modes in 0019) before any implementation lands.
+2. **Modes registry (0019).** `modes.csv` + `GET /v1/modes`, `provider.type` as an FK
+   into it, a `data:validate` rule. Gates the rest and makes new modes pure data work.
+3. **Collection facts on quotes (0016).** `collection_type` on `rates.csv` plus the
+   quote fields. Highest-value field, and discovery (0017) builds on it.
+4. **Discovery surface (0017).** `GET /v1/options`, `county` on zones, zone filters,
+   and the static adapter's `coverage()`.
+5. **Booking instructions/identity (0018).** Additive delivery fields; can land any
+   time after sign-off.
+6. **(Parallel, ongoing) Improve the dataset (P1).** Sourced rates, broader coverage,
+   provenance.
+7. **(Parallel, independent) Non-developer contribution path (P3, ADR 0020).** A form
+   that opens a PR against the CSVs — no API contract change, so unblocked now.
+8. **First live adapter (Phase 2)**, then adapter-driven `track()` / webhook updates
+   into the one event log.
+
+Note: the "Recommended next phase" section above still frames the dataset as the single
+highest-value effort. Whether checkout-delivery now outranks dataset polish is a steward
+call — both are captured here so the choice is explicit, not accidental.

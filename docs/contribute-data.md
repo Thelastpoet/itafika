@@ -30,6 +30,12 @@ Schema and rules:
 
 - `spec/data/SCHEMA.md`
 
+**Coming soon (checkout-delivery direction, ADRs 0016–0019, not yet live):** a new
+`modes.csv` registry (so transport modes are added as data, not code), a
+`collection_type` column on `rates.csv` (office pickup vs. door delivery), and a
+`county` column on `zones.csv`. They are flagged *(planned)* in `SCHEMA.md`; once
+implemented, contributing a new mode or collection point becomes ordinary data work.
+
 ## One worked example
 
 Example: adding a new route rate for Mololine from Nairobi CBD to Nyeri.

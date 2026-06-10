@@ -62,6 +62,26 @@ Some parts of the contract are in place before the full implementation behind th
 
 This is normal for the current phase. The important thing is to describe it clearly.
 
+## Specified, not yet implemented (checkout-delivery direction)
+
+ADRs 0016–0019 extend the contract so a shop can build the full Kenyan checkout
+delivery step (county → mode → provider → collection point → instructions), not just
+fetch A→B prices. The spec states these as **expectations**; they are `Proposed` and
+not yet served by the reference Worker or present in the dataset:
+
+- **collection point + `collection_type` on quotes** (ADR 0016) — where/how the
+  recipient collects (office pickup vs. door delivery)
+- **`GET /v1/options` discovery surface** + `county` on zones and `town`/`county`
+  zone filters (ADR 0017) — browse options into a town before pricing
+- **`instructions`, `id_number`, `alternate_collector` on bookings** (ADR 0018) —
+  capture "give to so-and-so" and who collects
+- **transport modes as a governed registry** — `GET /v1/modes` + `modes.csv`, with
+  `ProviderType` as an open identifier (ADR 0019) — so new modes (`shuttle`, `taxi`,
+  `cargo_truck`, …) are added as data, never by changing code or the contract
+
+Each is additive within `/v1`. Implementation (data backfill, `gen:types`, Worker)
+is open to contribution.
+
 ## What is planned but not built yet
 
 These are part of the project direction, but they are not implemented in this repository yet:

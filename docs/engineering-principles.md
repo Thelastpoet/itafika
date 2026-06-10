@@ -70,6 +70,21 @@ Avoid:
 - magic constants with domain meaning
 - rules that only exist in implementation code
 
+**Closed vocabulary vs. open registry.** A value set may be a *closed enum* in the
+contract **only if the engine semantically reasons about each member**. Otherwise it is
+an *open registry* and belongs in data. Test: does the core branch on the value?
+
+- The five tracking statuses are closed — the engine enforces forward-only transitions
+  and normalises every provider onto exactly them (ADR 0015). "Never invent a sixth" is
+  load-bearing.
+- Transport modes are an open registry (`modes.csv`, ADR 0019) — the core never
+  branches on a specific mode, so adding one is governed data, not a code or contract
+  change. Display metadata travels with each mode so consumers can render values they
+  have never seen.
+
+If you find yourself writing `if value == "some_literal"` in the core for a set that
+keeps growing, it should have been a registry.
+
 ## 5. Keep boundaries clear
 
 Current intended boundaries:

@@ -6,3 +6,5 @@ dist/
 .DS_Store
 coverage/
 seed.sql
+.claude/
+CLAUDE.md
