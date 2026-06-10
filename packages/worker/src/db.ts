@@ -142,7 +142,15 @@ export async function persistQuotes(
 }
 
 export async function pruneExpiredQuotes(db: D1Database, now: string): Promise<void> {
-  await db.prepare("DELETE FROM quotes WHERE expires_at IS NOT NULL AND expires_at <= ?").bind(now).run();
+  // Never prune a quote that backs a delivery: the delivery references it for its
+  // tracking snapshot, and deleting it both orphans that record and (under D1's
+  // foreign-key enforcement) fails the deliveries -> quotes constraint.
+  await db
+    .prepare(
+      "DELETE FROM quotes WHERE expires_at IS NOT NULL AND expires_at <= ? AND NOT EXISTS (SELECT 1 FROM deliveries WHERE deliveries.quote_id = quotes.quote_id)",
+    )
+    .bind(now)
+    .run();
 }
 
 /**
