@@ -1,6 +1,6 @@
 # ADR 0018 — Capture delivery instructions and collection identity
 
-**Status:** Proposed
+**Status:** Accepted (2026-06-10)
 **Date:** 2026-06-09
 
 > One of four related ADRs (0016–0019) evolving Itafika into a checkout-delivery

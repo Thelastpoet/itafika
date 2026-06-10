@@ -21,7 +21,7 @@ Every place a package can be picked up or dropped off.
 | `name` | string | Human-readable, e.g. `RNG Plaza`, `Nyeri Main Stage`. |
 | `type` | enum | `cbd_hub` \| `stage` \| `residential_area`. |
 | `town` | string | Town/city, e.g. `Nairobi`, `Nyeri`. |
-| `county` | string | **(planned — ADR 0017)** County the zone belongs to; the top level of the checkout funnel. Not yet in the CSV. |
+| `county` | string | County the zone belongs to (ADR 0017); the top level of the checkout funnel. |
 | `lat` | number | Approximate latitude. Blank allowed for stages with no precise pin. |
 | `lng` | number | Approximate longitude. |
 
@@ -42,7 +42,7 @@ Every place a package can be picked up or dropped off.
 
 ## `modes.csv` — transport modes (the registry)
 
-**(planned — ADR 0019)** The set of transport modes a customer chooses between. This
+The set of transport modes a customer chooses between (ADR 0019). This
 is **governed reference data, not a hardcoded list**: add a mode here (with provenance)
 and it flows through the API — no code or contract change. The engine never branches on
 a specific mode; it only carries it through for grouping, filtering, and display.
@@ -74,7 +74,7 @@ One row per (provider, origin, destination). This is where Itafika's value conce
 | `cost_per_kg_kes` | integer | Added per kg of package weight. `0` for flat-rate providers. |
 | `est_time` | string | Human-readable, e.g. `45 mins`, `3 hours`, `next day`. |
 | `max_weight_kg` | number | Provider's cap for this service. Blank = no stated cap. |
-| `collection_type` | enum | **(planned — ADR 0016)** `office_pickup` \| `door_delivery` — how the recipient receives this route's parcel. For `office_pickup` the collection point is the destination zone. Not yet in the CSV. |
+| `collection_type` | enum | `office_pickup` \| `door_delivery` (ADR 0016) — how the recipient receives this route's parcel. For `office_pickup` the collection point is the destination zone. |
 | `source` | string | **Provenance.** How this rate is known — `field-2026-06`, `sacco-desk-call`, `agent`, etc. |
 
 **Quote math (Phase 1):** `estimated_cost_kes = base_cost_kes + ceil(package_weight_kg) * cost_per_kg_kes`, rounded to the nearest 10 KES. A rate only applies if `package_weight_kg <= max_weight_kg` (when set).

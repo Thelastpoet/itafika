@@ -1,11 +1,11 @@
-id,name,type,town,lat,lng
-ZONE_NBI_CBD_01,RNG Plaza,cbd_hub,Nairobi,-1.2841,36.8255
-ZONE_NBI_CBD_02,Veteran House,cbd_hub,Nairobi,-1.2855,36.8240
-ZONE_NBI_CBD_03,Peris Box (Tom Mboya St),cbd_hub,Nairobi,-1.2837,36.8270
-ZONE_NBI_RES_01,Kasarani,residential_area,Nairobi,-1.2210,36.8980
-ZONE_NKR_MAIN,Nakuru Main Stage,stage,Nakuru,-0.3031,36.0800
-ZONE_NYR_MAIN,Nyeri Main Stage,stage,Nyeri,-0.4169,36.9510
-ZONE_ELD_MAIN,Eldoret Main Stage,stage,Eldoret,0.5143,35.2698
-ZONE_MSA_MAIN,Mombasa Stage (Mwembe Tayari),stage,Mombasa,-4.0510,39.6670
-ZONE_KSM_MAIN,Kisumu Main Stage,stage,Kisumu,-0.0917,34.7680
-ZONE_THK_MAIN,Thika Stage,stage,Thika,-1.0333,37.0693
+id,name,type,town,county,lat,lng
+ZONE_NBI_CBD_01,RNG Plaza,cbd_hub,Nairobi,Nairobi,-1.2841,36.8255
+ZONE_NBI_CBD_02,Veteran House,cbd_hub,Nairobi,Nairobi,-1.2855,36.8240
+ZONE_NBI_CBD_03,Peris Box (Tom Mboya St),cbd_hub,Nairobi,Nairobi,-1.2837,36.8270
+ZONE_NBI_RES_01,Kasarani,residential_area,Nairobi,Nairobi,-1.2210,36.8980
+ZONE_NKR_MAIN,Nakuru Main Stage,stage,Nakuru,Nakuru,-0.3031,36.0800
+ZONE_NYR_MAIN,Nyeri Main Stage,stage,Nyeri,Nyeri,-0.4169,36.9510
+ZONE_ELD_MAIN,Eldoret Main Stage,stage,Eldoret,Uasin Gishu,0.5143,35.2698
+ZONE_MSA_MAIN,Mombasa Stage (Mwembe Tayari),stage,Mombasa,Mombasa,-4.0510,39.6670
+ZONE_KSM_MAIN,Kisumu Main Stage,stage,Kisumu,Kisumu,-0.0917,34.7680
+ZONE_THK_MAIN,Thika Stage,stage,Thika,Kiambu,-1.0333,37.0693

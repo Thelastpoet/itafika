@@ -17,6 +17,7 @@ const rates = [
     cost_per_kg_kes: 20,
     est_time: "3 hours",
     max_weight_kg: 20,
+    collection_type: "office_pickup" as const,
     source: "test",
   },
 ];

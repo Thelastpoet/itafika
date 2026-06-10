@@ -1,14 +1,16 @@
-import type { DeliveryRequest, QuoteRequest, TrackingEventCreateRequest, ZoneType } from "@itafika/core";
+import type { DeliveryRequest, ProviderType, QuoteRequest, TrackingEventCreateRequest, ZoneType } from "@itafika/core";
 import {
   appendTrackingEvent,
   listFreshness,
+  listModes,
   listZones,
   searchZones,
   trackDelivery,
 } from "./db.js";
 import { bookDelivery } from "./delivery-service.js";
-import { clampLimit, isQuoteId, isTrackingId, parseContact, parsePackageDescription, parseTrackingNote } from "./validation.js";
+import { clampLimit, isQuoteId, isTrackingId, parseContact, parseInstructions, parsePackageDescription, parseTrackingNote } from "./validation.js";
 import { createQuotes } from "./quote-service.js";
+import { listOptions } from "./options-service.js";
 
 const json = (data: unknown, status = 200): Response =>
   new Response(JSON.stringify(data), { status, headers: { "content-type": "application/json" } });
@@ -124,6 +126,22 @@ async function handleCreateDelivery(request: Request, env: Env): Promise<Respons
     req.package_description = packageDescription;
   }
 
+  if (body.instructions !== undefined) {
+    const instructions = parseInstructions(body.instructions);
+    if (instructions === null) {
+      return fail("invalid_request", "instructions must be a non-empty string up to 500 characters", 400);
+    }
+    req.instructions = instructions;
+  }
+
+  if (body.alternate_collector !== undefined) {
+    const alternateCollector = parseContact(body.alternate_collector);
+    if (alternateCollector === null) {
+      return fail("invalid_request", "alternate_collector.name and alternate_collector.phone must be valid", 400);
+    }
+    req.alternate_collector = alternateCollector;
+  }
+
   const delivery = await bookDelivery(env.itafika, req);
   if (!delivery) return fail("not_found", "The quote_id is unknown or has expired", 404);
   return json(delivery, 201);
@@ -168,7 +186,13 @@ export default {
       if (pathname === "/v1/zones") {
         return await handleReadRoute(method, async () => {
           const type = url.searchParams.get("type") as ZoneType | null;
-          const zones = await listZones(env.itafika, type ?? undefined, clampLimit(url.searchParams.get("limit")));
+          const town = url.searchParams.get("town");
+          const county = url.searchParams.get("county");
+          const zones = await listZones(
+            env.itafika,
+            { type: type ?? undefined, town: town ?? undefined, county: county ?? undefined },
+            clampLimit(url.searchParams.get("limit")),
+          );
           return json({ zones });
         });
       }
@@ -186,6 +210,26 @@ export default {
         return await handleReadRoute(method, async () => {
           const freshness = await listFreshness(env.itafika);
           return json({ freshness });
+        });
+      }
+
+      if (pathname === "/v1/modes") {
+        return await handleReadRoute(method, async () => {
+          const modes = await listModes(env.itafika);
+          return json({ modes });
+        });
+      }
+
+      if (pathname === "/v1/options") {
+        return await handleReadRoute(method, async () => {
+          const originZoneId = url.searchParams.get("origin_zone_id");
+          const destinationTown = url.searchParams.get("destination_town");
+          if (!originZoneId || !destinationTown) {
+            return fail("invalid_request", "origin_zone_id and destination_town are required", 400);
+          }
+          const mode = url.searchParams.get("mode") as ProviderType | null;
+          const result = await listOptions(env.itafika, originZoneId, destinationTown, mode ?? undefined);
+          return json(result);
         });
       }
 

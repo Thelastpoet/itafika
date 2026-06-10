@@ -7,8 +7,9 @@ const here = dirname(fileURLToPath(import.meta.url));
 const dataDir = join(here, "../../../spec/data");
 
 const zoneTypes = new Set(["cbd_hub", "stage", "residential_area"]);
-const providerTypes = new Set(["boda_rider", "matatu_sacco", "bus", "national_courier"]);
+const collectionTypes = new Set(["office_pickup", "door_delivery"]);
 const zoneIdRe = /^ZONE_[A-Z]{3}_[A-Z]{3,4}(?:_\d{2})?$/;
+const modeIdRe = /^[a-z][a-z0-9_]*$/;
 const dateRe = /^\d{4}-\d{2}-\d{2}$/;
 
 function readCsv(file) {
@@ -52,10 +53,27 @@ function parseNumber(value, context, errors, options = {}) {
 }
 
 const zones = readCsv("zones.csv");
+const modes = readCsv("modes.csv");
 const providers = readCsv("providers.csv");
 const rates = readCsv("rates.csv");
 const freshness = readCsv("freshness.csv");
 const errors = [];
+
+// Transport modes are a governed registry (ADR 0019), not a closed enum: the set of
+// valid provider types is whatever modes.csv declares, validated as an FK below.
+const modeIds = new Set();
+for (const [index, row] of modes.entries()) {
+  const context = `modes.csv row ${index + 2}`;
+  requireNonEmpty(row, "id", context, errors);
+  requireNonEmpty(row, "label", context, errors);
+  requireNonEmpty(row, "source", context, errors);
+
+  if (row.id) {
+    if (!modeIdRe.test(row.id)) errors.push(`${context}: invalid mode id "${row.id}" (use lowercase snake_case)`);
+    if (modeIds.has(row.id)) errors.push(`${context}: duplicate mode id "${row.id}"`);
+    modeIds.add(row.id);
+  }
+}
 
 const zoneIds = new Set();
 for (const [index, row] of zones.entries()) {
@@ -64,6 +82,7 @@ for (const [index, row] of zones.entries()) {
   requireNonEmpty(row, "name", context, errors);
   requireNonEmpty(row, "type", context, errors);
   requireNonEmpty(row, "town", context, errors);
+  requireNonEmpty(row, "county", context, errors);
 
   if (row.id) {
     if (!zoneIdRe.test(row.id)) errors.push(`${context}: invalid zone id "${row.id}"`);
@@ -91,7 +110,7 @@ for (const [index, row] of providers.entries()) {
     providerIds.add(row.id);
   }
 
-  if (row.type && !providerTypes.has(row.type)) errors.push(`${context}: invalid provider type "${row.type}"`);
+  if (row.type && !modeIds.has(row.type)) errors.push(`${context}: unknown mode "${row.type}" (add it to modes.csv)`);
   parseNumber(row.reliability_score, `${context} reliability_score`, errors, { min: 0, max: 1 });
 }
 
@@ -104,7 +123,12 @@ for (const [index, row] of rates.entries()) {
   requireNonEmpty(row, "base_cost_kes", context, errors);
   requireNonEmpty(row, "cost_per_kg_kes", context, errors);
   requireNonEmpty(row, "est_time", context, errors);
+  requireNonEmpty(row, "collection_type", context, errors);
   requireNonEmpty(row, "source", context, errors);
+
+  if (row.collection_type && !collectionTypes.has(row.collection_type)) {
+    errors.push(`${context}: invalid collection_type "${row.collection_type}"`);
+  }
 
   if (row.provider_id && !providerIds.has(row.provider_id)) errors.push(`${context}: unknown provider_id "${row.provider_id}"`);
   if (row.origin_zone_id && !zoneIds.has(row.origin_zone_id)) errors.push(`${context}: unknown origin_zone_id "${row.origin_zone_id}"`);

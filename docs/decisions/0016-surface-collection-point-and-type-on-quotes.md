@@ -1,6 +1,6 @@
 # ADR 0016 — Surface collection point and collection type on quotes
 
-**Status:** Proposed
+**Status:** Accepted (2026-06-10)
 **Date:** 2026-06-09
 
 > One of four related ADRs (0016–0019) that set the direction for evolving Itafika
