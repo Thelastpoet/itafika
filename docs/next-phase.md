@@ -79,29 +79,22 @@ Done when:
 
 - the dataset is meaningfully more trustworthy, not just more structured
 
-### P2 — Checkout-delivery direction (ADRs 0016–0019)
+### Done — Checkout-delivery direction (ADRs 0016–0019)
 
-Why this matters:
+ADRs 0016–0019 are `Accepted` and implemented in the reference Worker:
 
-- today the contract returns A→B prices, but a real Kenyan checkout needs the full
-  delivery step: county → mode → provider → collection point → handover instructions
-- the spec now states these expectations (ADRs 0016–0019, all `Proposed`); the
-  implementation is open work
+- modes registry (ADR 0019): `modes.csv` + `GET /v1/modes`, `provider.type` validated
+  as an open FK into it in `data:validate`, the closed `CHECK` dropped from the schema
+- collection facts on quotes (ADR 0016): `collection_type` on `rates.csv`/quotes, with
+  the office-pickup collection point composed from the destination zone
+- discovery (ADR 0017): `GET /v1/options` via an adapter `coverage()` seam, `county` on
+  zones, and `town`/`county` filters on `GET /v1/zones`
+- booking instructions/identity (ADR 0018): `instructions`, `id_number`,
+  `alternate_collector` on bookings
 
-Tasks (each additive within `/v1`, after the relevant ADR is signed off):
-
-- establish the modes registry (ADR 0019): add `modes.csv` + `GET /v1/modes`, type
-  `provider.type` as an FK into it, and validate it in `data:validate` — after which
-  new modes are pure data work
-- add `collection_type` to `rates.csv` and `county` to `zones.csv`, then backfill
-- regenerate types (`pnpm gen:types`) and implement the new fields/endpoint in core,
-  adapters, and the Worker: collection facts on quotes (0016), `GET /v1/options`
-  discovery (0017), booking instructions/identity (0018)
-- extend the static adapter's `coverage()` and the conformance kit accordingly
-
-Done when:
-
-- a shop can render the full checkout delivery step from Itafika data alone
+A shop can now render the full checkout delivery step from Itafika data. Remaining work
+on this front is **data**: replace the illustrative `collection_type`/`county` values
+and seed modes provenance with sourced field data.
 
 ### P3 — Non-developer data contribution path (ADR 0020)
 
@@ -144,29 +137,14 @@ Those become much easier once the current code path is more complete.
 
 ## Suggested implementation order
 
-Three tracks. **P1 (dataset)** and **P3 (non-developer contribution path)** are both
-independent and run in parallel with the contract work below. **P2 (checkout-delivery)**
-has a strict internal order because the modes registry gates the rest. Each P2 step is
-blocked until its ADR moves from `Proposed` to `Accepted` (a non-author maintainer
-sign-off, per `GOVERNANCE.md`).
+The checkout-delivery contract (P2, ADRs 0016–0019) is **done** — see the section
+above. The remaining tracks are independent:
 
-1. **Sign off ADRs 0016–0019.** They are `Proposed`; confirm the direction (especially
-   the seed modes in 0019) before any implementation lands.
-2. **Modes registry (0019).** `modes.csv` + `GET /v1/modes`, `provider.type` as an FK
-   into it, a `data:validate` rule. Gates the rest and makes new modes pure data work.
-3. **Collection facts on quotes (0016).** `collection_type` on `rates.csv` plus the
-   quote fields. Highest-value field, and discovery (0017) builds on it.
-4. **Discovery surface (0017).** `GET /v1/options`, `county` on zones, zone filters,
-   and the static adapter's `coverage()`.
-5. **Booking instructions/identity (0018).** Additive delivery fields; can land any
-   time after sign-off.
-6. **(Parallel, ongoing) Improve the dataset (P1).** Sourced rates, broader coverage,
-   provenance.
-7. **(Parallel, independent) Non-developer contribution path (P3, ADR 0020).** A form
-   that opens a PR against the CSVs — no API contract change, so unblocked now.
-8. **First live adapter (Phase 2)**, then adapter-driven `track()` / webhook updates
-   into the one event log.
-
-Note: the "Recommended next phase" section above still frames the dataset as the single
-highest-value effort. Whether checkout-delivery now outranks dataset polish is a steward
-call — both are captured here so the choice is explicit, not accidental.
+1. **(Ongoing) Improve the dataset (P1).** Sourced rates and broader coverage, plus
+   replacing the now-illustrative `collection_type`/`county` values and seed modes
+   provenance with real data.
+2. **(Independent) Non-developer contribution path (P3, ADR 0020).** A form that opens
+   a PR against the CSVs — no API contract change. ADR 0020 is still `Proposed`; sign it
+   off before building.
+3. **First live adapter (Phase 2)**, then adapter-driven `track()` / webhook updates
+   into the one event log, and live `coverage()` for discovery.

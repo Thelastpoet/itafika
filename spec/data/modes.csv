@@ -1,0 +1,8 @@
+id,label,description,source
+boda_rider,Boda Rider,Motorcycle courier for short urban hops; door-to-door.,seed-illustrative
+matatu_sacco,Matatu SACCO,Shared-taxi SACCO parcel desk service between towns.,seed-illustrative
+bus,Bus,Scheduled long-distance bus parcel service via the bus office.,seed-illustrative
+national_courier,National Courier,Branch-network courier with nationwide office coverage.,seed-illustrative
+shuttle,Shuttle,"Scheduled long-distance shuttle SACCOs, e.g. 2NK or North Rift.",seed-illustrative
+taxi,Taxi,Ride-hailing or local taxi used to send a parcel point-to-point.,seed-illustrative
+cargo_truck,Cargo Truck,Lorry or pickup freight for bulky or heavy consignments.,seed-illustrative

@@ -34,9 +34,11 @@ The current branch has a working Phase 1 foundation:
 
 The Worker currently supports:
 
-- `GET /v1/zones`
+- `GET /v1/zones` (with `type`, `town`, `county` filters)
 - `GET /v1/zones/search`
 - `GET /v1/freshness`
+- `GET /v1/modes`
+- `GET /v1/options`
 - `POST /v1/quotes`
 - `POST /v1/deliveries`
 - `GET /v1/deliveries/{tracking_id}/track`
@@ -48,6 +50,8 @@ Current behavior is intentionally simple:
 - quotes expire after 24 hours
 - a quote can only be booked once
 - booking runs through the originating provider's adapter (`book()`) and records the delivery in D1
+- quotes carry collection facts (`collection_type`, and for office pickup a `collection_point`); bookings capture `instructions`, `id_number`, and an optional `alternate_collector`
+- `GET /v1/options` browses the providers/modes/collection points serving a town (navigation, not pricing) via the adapter `coverage()` seam; `GET /v1/modes` serves the transport-mode registry
 - tracking returns the recorded delivery status and history
 - tracking history can be advanced through a manual/internal event path; every event records its source (booking/manual/adapter) on one log
 
@@ -62,12 +66,11 @@ Some parts of the contract are in place before the full implementation behind th
 
 This is normal for the current phase. The important thing is to describe it clearly.
 
-## Specified, not yet implemented (checkout-delivery direction)
+## Checkout-delivery direction (ADRs 0016–0019) — implemented
 
-ADRs 0016–0019 extend the contract so a shop can build the full Kenyan checkout
+ADRs 0016–0019 extended the contract so a shop can build the full Kenyan checkout
 delivery step (county → mode → provider → collection point → instructions), not just
-fetch A→B prices. The spec states these as **expectations**; they are `Proposed` and
-not yet served by the reference Worker or present in the dataset:
+fetch A→B prices. All four are `Accepted` and served by the reference Worker:
 
 - **collection point + `collection_type` on quotes** (ADR 0016) — where/how the
   recipient collects (office pickup vs. door delivery)
@@ -79,8 +82,9 @@ not yet served by the reference Worker or present in the dataset:
   `ProviderType` as an open identifier (ADR 0019) — so new modes (`shuttle`, `taxi`,
   `cargo_truck`, …) are added as data, never by changing code or the contract
 
-Each is additive within `/v1`. Implementation (data backfill, `gen:types`, Worker)
-is open to contribution.
+Each is additive within `/v1`. The seed dataset now carries the new columns
+(`collection_type`, `county`, the `modes` registry) with illustrative values;
+replacing them with sourced field data remains open data work.
 
 ## What is planned but not built yet
 
@@ -112,13 +116,15 @@ Even with a live deployment, the project should still be treated as active devel
 
 ## Current implementation priority
 
-The Phase 1 reference code path is essentially complete: quotes and booking run through
-the adapter runtime (ADRs 0013–0014), tracking follows the one-log model (ADR 0015),
-and the adapter conformance kit backs the open-contribution promise. What remains is no
-longer standalone Phase 1 code:
+The Phase 1 reference code path is complete: quotes and booking run through the adapter
+runtime (ADRs 0013–0014), tracking follows the one-log model (ADR 0015), and the adapter
+conformance kit backs the open-contribution promise. The checkout-delivery contract
+(ADRs 0016–0019) is now implemented too. What remains:
 
-- **dataset** — replace illustrative rates with sourced field data and broaden coverage (the next major effort; data work, not code)
-- **first live adapter (Phase 2)** — now unblocked by the runtime seam and the conformance kit; adapter-driven `track()` / webhook updates land with it
+- **dataset** — replace illustrative rates and the new illustrative columns
+  (`collection_type`, `county`) with sourced field data and broaden coverage (data work, not code)
+- **non-developer data contribution path (ADR 0020)** — a form that opens a PR against the CSVs (still `Proposed`)
+- **first live adapter (Phase 2)** — unblocked by the runtime seam and the conformance kit; adapter-driven `track()` / webhook updates and live `coverage()` land with it
 
 ## What contributors should assume
 

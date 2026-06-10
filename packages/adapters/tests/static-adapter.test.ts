@@ -17,6 +17,7 @@ const rates = [
     cost_per_kg_kes: 0,
     est_time: "2 hours",
     max_weight_kg: 20,
+    collection_type: "office_pickup" as const,
     source: "test",
   },
   {
@@ -27,6 +28,7 @@ const rates = [
     cost_per_kg_kes: 0,
     est_time: "3 hours",
     max_weight_kg: 20,
+    collection_type: "office_pickup" as const,
     source: "test",
   },
   {
@@ -37,12 +39,18 @@ const rates = [
     cost_per_kg_kes: 20,
     est_time: "5 hours",
     max_weight_kg: 20,
+    collection_type: "door_delivery" as const,
     source: "test",
   },
 ];
 
+const zones = [
+  { id: "ZONE_NKR_MAIN", name: "Nakuru Main Stage", type: "stage" as const, town: "Nakuru" },
+  { id: "ZONE_ELD_MAIN", name: "Eldoret Main Stage", type: "stage" as const, town: "Eldoret" },
+];
+
 describe("StaticRateAdapter", () => {
-  const adapter = new StaticRateAdapter({ provider, rates });
+  const adapter = new StaticRateAdapter({ provider, rates, zones });
 
   it("returns a quote for a served route", async () => {
     await expect(
@@ -55,6 +63,7 @@ describe("StaticRateAdapter", () => {
       estimated_cost_kes: 560,
       estimated_time: "5 hours",
       reliability_score: 0.98,
+      collection_type: "door_delivery",
     });
   });
 
@@ -69,6 +78,8 @@ describe("StaticRateAdapter", () => {
       estimated_cost_kes: 400,
       estimated_time: "3 hours",
       reliability_score: 0.98,
+      collection_type: "office_pickup",
+      collection_point: { zone_id: "ZONE_NKR_MAIN", name: "Nakuru Main Stage", town: "Nakuru" },
     });
   });
 
@@ -103,5 +114,24 @@ describe("StaticRateAdapter", () => {
 
     expect(result.status).toBe("package_picked");
     expect(result.provider_ref).toMatch(/^mololine_[a-f0-9]{32}$/);
+  });
+
+  it("reports coverage into a town with named collection points and a from-cost", async () => {
+    // Nakuru has two office_pickup rates (cheapest 400).
+    await expect(
+      adapter.coverage({ origin_zone_id: "ZONE_NBI_CBD_01", destination_town: "Nakuru" }),
+    ).resolves.toEqual([
+      {
+        collection_type: "office_pickup",
+        collection_points: [{ zone_id: "ZONE_NKR_MAIN", name: "Nakuru Main Stage", town: "Nakuru" }],
+        from_cost_kes: 400,
+      },
+    ]);
+  });
+
+  it("returns no coverage for a town it does not serve", async () => {
+    await expect(
+      adapter.coverage({ origin_zone_id: "ZONE_NBI_CBD_01", destination_town: "Atlantis" }),
+    ).resolves.toEqual([]);
   });
 });

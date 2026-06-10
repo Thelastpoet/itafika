@@ -30,6 +30,8 @@ export async function bookDelivery(db: D1Database, request: DeliveryRequest): Pr
     sender: request.sender,
     recipient: request.recipient,
     package_description: request.package_description,
+    instructions: request.instructions,
+    alternate_collector: request.alternate_collector,
   });
 
   return recordDelivery(db, {

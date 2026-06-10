@@ -1,14 +1,14 @@
-provider_id,origin_zone_id,destination_zone_id,base_cost_kes,cost_per_kg_kes,est_time,max_weight_kg,source
-cbd_rider_pool,ZONE_NBI_CBD_01,ZONE_NBI_CBD_02,200,0,30 mins,15,seed-illustrative
-cbd_rider_pool,ZONE_NBI_CBD_01,ZONE_NBI_CBD_03,200,0,25 mins,15,seed-illustrative
-cbd_rider_pool,ZONE_NBI_CBD_01,ZONE_NBI_RES_01,300,0,45 mins,15,seed-illustrative
-mololine,ZONE_NBI_CBD_01,ZONE_NKR_MAIN,400,0,3 hours,20,seed-illustrative
-mololine,ZONE_NBI_CBD_01,ZONE_ELD_MAIN,500,20,5 hours,20,seed-illustrative
-2nk,ZONE_NBI_CBD_01,ZONE_NYR_MAIN,300,0,3 hours,20,seed-illustrative
-2nk,ZONE_NBI_CBD_01,ZONE_THK_MAIN,200,0,90 mins,20,seed-illustrative
-easycoach,ZONE_NBI_CBD_01,ZONE_KSM_MAIN,350,0,within 24 hours,7,https://easycoachkenya.com/parcel (0-7kg band; reviewed 2026-06-08)
-easycoach,ZONE_NBI_CBD_01,ZONE_MSA_MAIN,600,30,9 hours,30,seed-illustrative
-g4s,ZONE_NBI_CBD_01,ZONE_NKR_MAIN,650,40,next day,50,seed-illustrative
-g4s,ZONE_NBI_CBD_01,ZONE_MSA_MAIN,750,50,next day,50,seed-illustrative
-fargo,ZONE_NBI_CBD_01,ZONE_NYR_MAIN,600,40,next day,50,seed-illustrative
-fargo,ZONE_NBI_CBD_01,ZONE_KSM_MAIN,700,45,next day,50,seed-illustrative
+provider_id,origin_zone_id,destination_zone_id,base_cost_kes,cost_per_kg_kes,est_time,max_weight_kg,collection_type,source
+cbd_rider_pool,ZONE_NBI_CBD_01,ZONE_NBI_CBD_02,200,0,30 mins,15,door_delivery,seed-illustrative
+cbd_rider_pool,ZONE_NBI_CBD_01,ZONE_NBI_CBD_03,200,0,25 mins,15,door_delivery,seed-illustrative
+cbd_rider_pool,ZONE_NBI_CBD_01,ZONE_NBI_RES_01,300,0,45 mins,15,door_delivery,seed-illustrative
+mololine,ZONE_NBI_CBD_01,ZONE_NKR_MAIN,400,0,3 hours,20,office_pickup,seed-illustrative
+mololine,ZONE_NBI_CBD_01,ZONE_ELD_MAIN,500,20,5 hours,20,office_pickup,seed-illustrative
+2nk,ZONE_NBI_CBD_01,ZONE_NYR_MAIN,300,0,3 hours,20,office_pickup,seed-illustrative
+2nk,ZONE_NBI_CBD_01,ZONE_THK_MAIN,200,0,90 mins,20,office_pickup,seed-illustrative
+easycoach,ZONE_NBI_CBD_01,ZONE_KSM_MAIN,350,0,within 24 hours,7,office_pickup,https://easycoachkenya.com/parcel (0-7kg band; reviewed 2026-06-08)
+easycoach,ZONE_NBI_CBD_01,ZONE_MSA_MAIN,600,30,9 hours,30,office_pickup,seed-illustrative
+g4s,ZONE_NBI_CBD_01,ZONE_NKR_MAIN,650,40,next day,50,office_pickup,seed-illustrative
+g4s,ZONE_NBI_CBD_01,ZONE_MSA_MAIN,750,50,next day,50,office_pickup,seed-illustrative
+fargo,ZONE_NBI_CBD_01,ZONE_NYR_MAIN,600,40,next day,50,office_pickup,seed-illustrative
+fargo,ZONE_NBI_CBD_01,ZONE_KSM_MAIN,700,45,next day,50,office_pickup,seed-illustrative

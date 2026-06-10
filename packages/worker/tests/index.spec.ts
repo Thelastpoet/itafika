@@ -3,8 +3,10 @@ import { beforeAll, describe, expect, it } from "vitest";
 
 beforeAll(async () => {
 	await env.itafika.batch([
-		env.itafika.prepare("INSERT OR REPLACE INTO zones (id, name, type, town, lat, lng) VALUES (?,?,?,?,?,?)").bind("ZONE_NBI_CBD_01", "RNG Plaza", "cbd_hub", "Nairobi", -1.2841, 36.8255),
-		env.itafika.prepare("INSERT OR REPLACE INTO zones (id, name, type, town, lat, lng) VALUES (?,?,?,?,?,?)").bind("ZONE_ELD_MAIN", "Eldoret Main Stage", "stage", "Eldoret", 0.5143, 35.2698),
+		env.itafika.prepare("INSERT OR REPLACE INTO zones (id, name, type, town, county, lat, lng) VALUES (?,?,?,?,?,?,?)").bind("ZONE_NBI_CBD_01", "RNG Plaza", "cbd_hub", "Nairobi", "Nairobi", -1.2841, 36.8255),
+		env.itafika.prepare("INSERT OR REPLACE INTO zones (id, name, type, town, county, lat, lng) VALUES (?,?,?,?,?,?,?)").bind("ZONE_ELD_MAIN", "Eldoret Main Stage", "stage", "Eldoret", "Uasin Gishu", 0.5143, 35.2698),
+		env.itafika.prepare("INSERT OR REPLACE INTO modes (id, label, description, source) VALUES (?,?,?,?)").bind("matatu_sacco", "Matatu SACCO", "Shared-taxi SACCO parcel desk.", "seed-illustrative"),
+		env.itafika.prepare("INSERT OR REPLACE INTO modes (id, label, description, source) VALUES (?,?,?,?)").bind("national_courier", "National Courier", "Branch-network courier.", "seed-illustrative"),
 		env.itafika.prepare("INSERT OR REPLACE INTO providers (id, name, type, reliability_score) VALUES (?,?,?,?)").bind("mololine", "Mololine Sacco", "matatu_sacco", 0.98),
 		env.itafika.prepare("INSERT OR REPLACE INTO providers (id, name, type, reliability_score) VALUES (?,?,?,?)").bind("g4s", "G4S Courier", "national_courier", 0.99),
 		env.itafika.prepare("INSERT OR REPLACE INTO rates (provider_id, origin_zone_id, destination_zone_id, base_cost_kes, cost_per_kg_kes, est_time, max_weight_kg, source) VALUES (?,?,?,?,?,?,?,?)").bind("mololine", "ZONE_NBI_CBD_01", "ZONE_ELD_MAIN", 500, 20, "5 hours", 20, "test"),
@@ -62,6 +64,66 @@ describe("GET /v1/freshness", () => {
 				{ town: "Nairobi", last_updated: "2026-06-08" },
 			]),
 		);
+	});
+});
+
+describe("GET /v1/zones filters", () => {
+	it("filters by town", async () => {
+		const res = await SELF.fetch("https://api.itafika.dev/v1/zones?town=Eldoret");
+		const body = (await res.json()) as { zones: { id: string }[] };
+		expect(body.zones.map((z) => z.id)).toEqual(["ZONE_ELD_MAIN"]);
+	});
+
+	it("filters by county", async () => {
+		const res = await SELF.fetch("https://api.itafika.dev/v1/zones?county=Uasin%20Gishu");
+		const body = (await res.json()) as { zones: { id: string; county?: string }[] };
+		expect(body.zones.map((z) => z.id)).toEqual(["ZONE_ELD_MAIN"]);
+		expect(body.zones[0]?.county).toBe("Uasin Gishu");
+	});
+});
+
+describe("GET /v1/modes", () => {
+	it("lists the transport-mode registry", async () => {
+		const res = await SELF.fetch("https://api.itafika.dev/v1/modes");
+		expect(res.status).toBe(200);
+		const body = (await res.json()) as { modes: { id: string; label: string }[] };
+		expect(body.modes.map((m) => m.id)).toEqual(expect.arrayContaining(["matatu_sacco", "national_courier"]));
+		expect(body.modes.find((m) => m.id === "matatu_sacco")?.label).toBe("Matatu SACCO");
+	});
+});
+
+describe("GET /v1/options", () => {
+	it("lists providers serving a town, with collection points and from-cost", async () => {
+		const res = await SELF.fetch("https://api.itafika.dev/v1/options?origin_zone_id=ZONE_NBI_CBD_01&destination_town=Eldoret");
+		expect(res.status).toBe(200);
+		const body = (await res.json()) as {
+			origin_zone_id: string;
+			destination_town: string;
+			options: { provider_name: string; provider_type: string; from_cost_kes: number; collection_points: { zone_id: string; name: string }[] }[];
+		};
+		expect(body.destination_town).toBe("Eldoret");
+		// both providers serve NBI -> Eldoret; cheapest (mololine, 500) ranks first
+		expect(body.options.map((o) => o.provider_name)).toEqual(["Mololine Sacco", "G4S Courier"]);
+		expect(body.options[0]?.from_cost_kes).toBe(500);
+		expect(body.options[0]?.collection_points).toEqual([{ zone_id: "ZONE_ELD_MAIN", name: "Eldoret Main Stage", town: "Eldoret" }]);
+	});
+
+	it("filters by mode", async () => {
+		const res = await SELF.fetch("https://api.itafika.dev/v1/options?origin_zone_id=ZONE_NBI_CBD_01&destination_town=Eldoret&mode=national_courier");
+		const body = (await res.json()) as { options: { provider_name: string }[] };
+		expect(body.options.map((o) => o.provider_name)).toEqual(["G4S Courier"]);
+	});
+
+	it("returns an empty list for an unknown town", async () => {
+		const res = await SELF.fetch("https://api.itafika.dev/v1/options?origin_zone_id=ZONE_NBI_CBD_01&destination_town=Atlantis");
+		expect(res.status).toBe(200);
+		const body = (await res.json()) as { options: unknown[] };
+		expect(body.options).toEqual([]);
+	});
+
+	it("requires origin_zone_id and destination_town", async () => {
+		const res = await SELF.fetch("https://api.itafika.dev/v1/options?origin_zone_id=ZONE_NBI_CBD_01");
+		expect(res.status).toBe(400);
 	});
 });
 
@@ -162,6 +224,45 @@ describe("deliveries", () => {
 		expect(body.tracking_id).toBe(delivery.tracking_id);
 		expect(body.status).toBe("package_picked");
 		expect(body.history.map((e) => e.status)).toEqual(["package_picked"]);
+	});
+
+	it("captures and echoes handover instructions and collection identity", async () => {
+		const quote_id = await bookableQuoteId();
+		const created = await json({
+			quote_id,
+			sender: { name: "Asha Mwangi", phone: "+254712345678" },
+			recipient: { name: "John Otieno", phone: "+254723456789", id_number: "12345678" },
+			instructions: "Call before handover; give to Achieng (sister).",
+			alternate_collector: { name: "Achieng Otieno", phone: "+254700111222", id_number: "87654321" },
+		});
+		expect(created.status).toBe(201);
+		const delivery = (await created.json()) as {
+			tracking_id: string;
+			instructions?: string;
+			recipient: { id_number?: string };
+		};
+		expect(delivery.instructions).toBe("Call before handover; give to Achieng (sister).");
+		expect(delivery.recipient.id_number).toBe("12345678");
+
+		// alternate collector / instructions are persisted (internal columns), assert via D1
+		const row = await env.itafika
+			.prepare("SELECT instructions, recipient_id_number, alternate_collector_name, alternate_collector_id_number FROM deliveries WHERE tracking_id = ?")
+			.bind(delivery.tracking_id)
+			.first<{ instructions: string; recipient_id_number: string; alternate_collector_name: string; alternate_collector_id_number: string }>();
+		expect(row?.recipient_id_number).toBe("12345678");
+		expect(row?.alternate_collector_name).toBe("Achieng Otieno");
+		expect(row?.alternate_collector_id_number).toBe("87654321");
+	});
+
+	it("rejects a malformed alternate_collector", async () => {
+		const quote_id = await bookableQuoteId();
+		const res = await json({
+			quote_id,
+			sender: { name: "Asha Mwangi", phone: "+254712345678" },
+			recipient: { name: "John Otieno", phone: "+254723456789" },
+			alternate_collector: { name: "No Phone" },
+		});
+		expect(res.status).toBe(400);
 	});
 
 	it("books through the provider adapter and records its ref and event source", async () => {

@@ -30,8 +30,7 @@ tags:
   - name: Discovery
     description: |
       Browse delivery options for a destination area before committing to an exact
-      route and weight. Specified by ADR 0017 (checkout-delivery direction); not yet
-      implemented by the reference Worker.
+      route and weight (ADR 0017, checkout-delivery direction).
   - name: Quotes
     description: Delivery options and prices between two zones.
   - name: Deliveries
@@ -53,12 +52,12 @@ paths:
         - name: town
           in: query
           required: false
-          description: Filter by town. Specified by ADR 0017; not yet implemented by the reference Worker.
+          description: Filter by town (ADR 0017).
           schema: { type: string }
         - name: county
           in: query
           required: false
-          description: Filter by county (the checkout funnel's top level). Specified by ADR 0017; not yet implemented by the reference Worker.
+          description: Filter by county (the checkout funnel's top level; ADR 0017).
           schema: { type: string }
         - name: limit
           in: query
@@ -154,8 +153,7 @@ paths:
         collection point (which becomes the `destination_zone_id`) and the weight is
         known, the shop calls `POST /v1/quotes` for the exact, bookable price.
 
-        Specified by ADR 0017 (checkout-delivery direction); not yet implemented by
-        the reference Worker.
+        Specified by ADR 0017 (checkout-delivery direction).
       operationId: listOptions
       parameters:
         - name: origin_zone_id
@@ -209,8 +207,7 @@ paths:
         Returns the transport modes a customer can choose between, each with display
         metadata. The registry is governed reference data (ADR 0019), not a hardcoded
         list — a shop can render any mode, including ones added after it was built,
-        without a code change. Specified for the checkout-delivery direction; not yet
-        implemented by the reference Worker.
+        without a code change.
       operationId: listModes
       responses:
         '200':
@@ -424,9 +421,8 @@ components:
         an unknown mode from the registry's display metadata rather than treating the
         examples below as exhaustive.
 
-        The seed registry ships with these; `shuttle`, `taxi`, and `cargo_truck` are
-        specified for the checkout-delivery direction and not yet served by the
-        reference Worker.
+        The seed registry ships with all of these as data rows; `GET /v1/modes` is the
+        source of truth for what currently exists.
       examples: [boda_rider, matatu_sacco, bus, national_courier, shuttle, taxi, cargo_truck]
 
     Mode:
@@ -434,8 +430,7 @@ components:
       description: |
         A transport mode in the registry, with display metadata so a shop can render
         any mode — including ones added after it was built — without a code change
-        (ADR 0019). Specified for the checkout-delivery direction; not yet served by
-        the reference Worker.
+        (ADR 0019).
       properties:
         id: { $ref: '#/components/schemas/ProviderType' }
         label:
@@ -450,7 +445,7 @@ components:
       type: string
       description: |
         How the recipient receives the parcel. Specified by ADR 0016
-        (checkout-delivery direction); not yet emitted by the reference Worker.
+        (checkout-delivery direction).
       enum: [office_pickup, door_delivery]
 
     TrackingStatus:
@@ -482,8 +477,7 @@ components:
           type: string
           description: |
             The county the zone belongs to, the top level of the checkout funnel
-            (ADR 0017). Specified for the checkout-delivery direction; not yet
-            populated by the reference Worker.
+            (ADR 0017).
         coordinates: { $ref: '#/components/schemas/Coordinates' }
       required: [id, name, type, town]
 
@@ -542,7 +536,7 @@ components:
           description: |
             How the recipient receives this option's parcel — collect at the
             provider's office/stage, or door delivery. Specified by ADR 0016
-            (checkout-delivery direction); not yet emitted by the reference Worker.
+            (checkout-delivery direction).
         collection_point:
           $ref: '#/components/schemas/CollectionPoint'
       required: [quote_id, provider_type, provider_name, estimated_cost_kes, estimated_time]
@@ -600,8 +594,7 @@ components:
           maxLength: 40
           description: |
             Optional national ID asked for at an office/stage parcel desk on
-            collection. Specified by ADR 0018 (checkout-delivery direction); not yet
-            stored by the reference Worker.
+            collection. Specified by ADR 0018 (checkout-delivery direction).
       required: [name, phone]
 
     DeliveryRequest:
@@ -623,14 +616,12 @@ components:
           maxLength: 500
           description: |
             Handover instructions, e.g. "Call before handover; give to Achieng
-            (sister)." Specified by ADR 0018 (checkout-delivery direction); not yet
-            stored by the reference Worker.
+            (sister)." Specified by ADR 0018 (checkout-delivery direction).
         alternate_collector:
           allOf: [{ $ref: '#/components/schemas/Contact' }]
           description: |
             Someone other than the recipient authorised to collect. Specified by
-            ADR 0018 (checkout-delivery direction); not yet stored by the reference
-            Worker.
+            ADR 0018 (checkout-delivery direction).
       required: [quote_id, sender, recipient]
 
     Delivery:
@@ -648,7 +639,7 @@ components:
           type: string
           description: |
             Handover instructions recorded at booking. Specified by ADR 0018
-            (checkout-delivery direction); not yet stored by the reference Worker.
+            (checkout-delivery direction).
         created_at: { type: string, format: date-time }
       required: [tracking_id, status, quote, sender, recipient, created_at]
 

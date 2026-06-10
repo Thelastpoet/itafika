@@ -1,7 +1,7 @@
 import type { Quote, QuoteRequest } from "@itafika/core";
 import { StaticRateAdapter, aggregateQuotes } from "@itafika/adapters";
 
-import { loadQuoteData, persistQuotes, pruneExpiredQuotes, zonesExist } from "./db.js";
+import { getZone, loadQuoteData, persistQuotes, pruneExpiredQuotes, zonesExist } from "./db.js";
 import { createQuoteId, quoteExpiresAt } from "./policy.js";
 
 /**
@@ -29,8 +29,13 @@ export async function createQuotes(
   const now = new Date().toISOString();
   await pruneExpiredQuotes(db, now);
 
+  // The adapter names an office-pickup collection point from the destination zone, so
+  // hand it that zone (ADR 0016).
+  const destinationZone = await getZone(db, destination_zone_id);
+  const zones = destinationZone ? [destinationZone] : [];
+
   const data = await loadQuoteData(db, origin_zone_id, destination_zone_id);
-  const providers = data.providers.map((provider) => new StaticRateAdapter({ provider, rates: data.rates }));
+  const providers = data.providers.map((provider) => new StaticRateAdapter({ provider, rates: data.rates, zones }));
 
   const persistable: PersistableQuote[] = (await aggregateQuotes(providers, request)).map((option) => {
     const { provider_id, ...quoteOption } = option;

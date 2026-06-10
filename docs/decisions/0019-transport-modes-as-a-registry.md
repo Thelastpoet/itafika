@@ -1,6 +1,6 @@
 # ADR 0019 — Model transport modes as a governed registry
 
-**Status:** Proposed
+**Status:** Accepted (2026-06-10)
 **Date:** 2026-06-09
 
 > One of four related ADRs (0016–0019) evolving Itafika into a checkout-delivery

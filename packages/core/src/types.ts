@@ -2,6 +2,10 @@ import type { components } from "./types.gen.js";
 
 export type ZoneType = components["schemas"]["ZoneType"];
 export type ProviderType = components["schemas"]["ProviderType"];
+export type Mode = components["schemas"]["Mode"];
+export type CollectionType = components["schemas"]["CollectionType"];
+export type CollectionPoint = components["schemas"]["CollectionPoint"];
+export type DeliveryOption = components["schemas"]["DeliveryOption"];
 export type Coordinates = components["schemas"]["Coordinates"];
 export type Zone = components["schemas"]["Zone"];
 export type FreshnessEntry = components["schemas"]["FreshnessEntry"];
@@ -30,6 +34,7 @@ export interface Rate {
   cost_per_kg_kes: number;
   est_time: string;
   max_weight_kg?: number;
+  collection_type: CollectionType;
   source: string;
 }
 

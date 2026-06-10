@@ -66,14 +66,12 @@ interface LogisticsProviderInterface {
   /**
    * Declare the destination areas this provider serves and where it collects, so
    * it can appear in the checkout discovery surface. Optional — an adapter that
-   * does not implement it simply does not appear in GET /v1/options.
-   *
-   * Specified by ADR 0017 (checkout-delivery direction); not yet wired in the
-   * reference runtime.
+   * does not implement it simply does not appear in GET /v1/options. Returns one
+   * entry per handover type the provider offers into the town (ADR 0017).
    *
    * Drives: GET /v1/options
    */
-  coverage?(query: CoverageQuery): Promise<ProviderCoverage | null>;
+  coverage?(query: CoverageQuery): Promise<ProviderCoverage[]>;
 }
 ```
 
@@ -92,10 +90,9 @@ interface ProviderQuote {
   estimated_time: string;     // "45 mins", "3 hours", "next day"
   // reliability_score is taken from ProviderInfo unless the adapter overrides it
 
-  // Specified by ADR 0016 (checkout-delivery direction); not yet emitted by the
-  // static reference adapter.
-  collection_type?: CollectionType;      // office_pickup | door_delivery
-  collection_point?: CollectionPoint;    // for office_pickup: where to collect
+  collection_type: CollectionType;       // office_pickup | door_delivery — required (ADR 0016)
+  collection_point?: CollectionPoint;    // for office_pickup; if omitted, the consumer
+                                         // falls back to the route's destination zone
 }
 
 interface BookingOrder {
@@ -106,13 +103,11 @@ interface BookingOrder {
   recipient: Contact;                     // Contact may carry an optional id_number
   package_description?: string;
 
-  // Specified by ADR 0018 (checkout-delivery direction); not yet relayed by the
-  // static reference adapter.
-  instructions?: string;                  // handover instructions
-  alternate_collector?: Contact;          // someone else authorised to collect
+  instructions?: string;                  // handover instructions (ADR 0018)
+  alternate_collector?: Contact;          // someone else authorised to collect (ADR 0018)
 }
 
-// Specified by ADR 0017 (checkout-delivery direction).
+// ADR 0017 (checkout-delivery direction).
 interface CoverageQuery {
   origin_zone_id: string;
   destination_town: string;

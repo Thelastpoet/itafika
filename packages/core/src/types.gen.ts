@@ -55,6 +55,56 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/options": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Browse delivery options into a destination area
+         * @description Returns the navigable option tree for the shop's origin into the customer's
+         *     town: which providers serve the route, in which mode, where they collect, and
+         *     an indicative starting cost. This is **navigation, not pricing** — it takes no
+         *     package weight and returns no bookable price. Once the customer picks a
+         *     collection point (which becomes the `destination_zone_id`) and the weight is
+         *     known, the shop calls `POST /v1/quotes` for the exact, bookable price.
+         *
+         *     Specified by ADR 0017 (checkout-delivery direction).
+         */
+        get: operations["listOptions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/modes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the transport-mode registry
+         * @description Returns the transport modes a customer can choose between, each with display
+         *     metadata. The registry is governed reference data (ADR 0019), not a hardcoded
+         *     list — a shop can render any mode, including ones added after it was built,
+         *     without a code change.
+         */
+        get: operations["listModes"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/quotes": {
         parameters: {
             query?: never;
@@ -153,10 +203,43 @@ export interface components {
          */
         ZoneType: "cbd_hub" | "stage" | "residential_area";
         /**
-         * @description The class of transport. Adapters are organised by these classes.
+         * @description A transport-mode identifier — the "mode" a customer chooses, and how adapters
+         *     are grouped. This is an **open identifier drawn from the modes registry**
+         *     (`GET /v1/modes`), **not a closed set** (ADR 0019). New modes are added as
+         *     governed reference data (`modes.csv`), never by changing this contract or the
+         *     engine. The core never branches on a specific value; consumers should render
+         *     an unknown mode from the registry's display metadata rather than treating the
+         *     examples below as exhaustive.
+         *
+         *     The seed registry ships with all of these as data rows; `GET /v1/modes` is the
+         *     source of truth for what currently exists.
+         * @example boda_rider
+         * @example matatu_sacco
+         * @example bus
+         * @example national_courier
+         * @example shuttle
+         * @example taxi
+         * @example cargo_truck
+         */
+        ProviderType: string;
+        /**
+         * @description A transport mode in the registry, with display metadata so a shop can render
+         *     any mode — including ones added after it was built — without a code change
+         *     (ADR 0019).
+         */
+        Mode: {
+            id: components["schemas"]["ProviderType"];
+            /** @description Display name shown to customers, e.g. "Shuttle". */
+            label: string;
+            /** @description One line on what the mode is. */
+            description?: string;
+        };
+        /**
+         * @description How the recipient receives the parcel. Specified by ADR 0016
+         *     (checkout-delivery direction).
          * @enum {string}
          */
-        ProviderType: "boda_rider" | "matatu_sacco" | "bus" | "national_courier";
+        CollectionType: "office_pickup" | "door_delivery";
         /**
          * @description The five universal delivery statuses.
          * @enum {string}
@@ -176,6 +259,11 @@ export interface components {
             type: components["schemas"]["ZoneType"];
             /** @description The town or city the zone belongs to. */
             town: string;
+            /**
+             * @description The county the zone belongs to, the top level of the checkout funnel
+             *     (ADR 0017).
+             */
+            county?: string;
             coordinates?: components["schemas"]["Coordinates"];
         };
         FreshnessEntry: {
@@ -210,17 +298,66 @@ export interface components {
              * @description 0–1 confidence in on-time, intact delivery.
              */
             reliability_score?: number;
+            /**
+             * @description How the recipient receives this option's parcel — collect at the
+             *     provider's office/stage, or door delivery. Specified by ADR 0016
+             *     (checkout-delivery direction).
+             */
+            collection_type?: components["schemas"]["CollectionType"];
+            collection_point?: components["schemas"]["CollectionPoint"];
+        };
+        /**
+         * @description For `office_pickup`, the zone where the recipient collects the parcel. Absent
+         *     for `door_delivery`. Specified by ADR 0016 (checkout-delivery direction).
+         */
+        CollectionPoint: {
+            zone_id: string;
+            name: string;
+            town?: string;
+        };
+        /**
+         * @description A provider+mode the customer can choose for a destination town, with where it
+         *     collects and an indicative starting cost. Navigation only — the exact bookable
+         *     price comes from POST /v1/quotes. Specified by ADR 0017 (checkout-delivery
+         *     direction). `provider_id` is deliberately not exposed (internal column).
+         */
+        DeliveryOption: {
+            provider_name: string;
+            provider_type: components["schemas"]["ProviderType"];
+            /** Format: double */
+            reliability_score?: number;
+            collection_type: components["schemas"]["CollectionType"];
+            /** @description The zones in the destination town where this provider collects. */
+            collection_points?: components["schemas"]["CollectionPoint"][];
+            /** @description Indicative starting cost (the route's base cost). Not bookable; get the exact price from POST /v1/quotes. */
+            from_cost_kes?: number;
         };
         Contact: {
             name: string;
             /** @description E.164 format, e.g. +254712345678. */
             phone: string;
+            /**
+             * @description Optional national ID asked for at an office/stage parcel desk on
+             *     collection. Specified by ADR 0018 (checkout-delivery direction).
+             */
+            id_number?: string;
         };
         DeliveryRequest: {
             quote_id: string;
             sender: components["schemas"]["Contact"];
             recipient: components["schemas"]["Contact"];
+            /** @description What is in the box (distinct from handover instructions). */
             package_description?: string;
+            /**
+             * @description Handover instructions, e.g. "Call before handover; give to Achieng
+             *     (sister)." Specified by ADR 0018 (checkout-delivery direction).
+             */
+            instructions?: string;
+            /**
+             * @description Someone other than the recipient authorised to collect. Specified by
+             *     ADR 0018 (checkout-delivery direction).
+             */
+            alternate_collector?: components["schemas"]["Contact"];
         };
         Delivery: {
             /** @description Use with GET /v1/deliveries/{tracking_id}/track. */
@@ -229,6 +366,11 @@ export interface components {
             quote: components["schemas"]["Quote"];
             sender: components["schemas"]["Contact"];
             recipient: components["schemas"]["Contact"];
+            /**
+             * @description Handover instructions recorded at booking. Specified by ADR 0018
+             *     (checkout-delivery direction).
+             */
+            instructions?: string;
             /** Format: date-time */
             created_at: string;
         };
@@ -285,6 +427,10 @@ export interface operations {
             query?: {
                 /** @description Filter by zone type. */
                 type?: components["schemas"]["ZoneType"];
+                /** @description Filter by town (ADR 0017). */
+                town?: string;
+                /** @description Filter by county (the checkout funnel's top level; ADR 0017). */
+                county?: string;
                 limit?: number;
             };
             header?: never;
@@ -401,6 +547,97 @@ export interface operations {
                      */
                     "application/json": {
                         freshness?: components["schemas"]["FreshnessEntry"][];
+                    };
+                };
+            };
+        };
+    };
+    listOptions: {
+        parameters: {
+            query: {
+                /** @description The shop's pickup zone. */
+                origin_zone_id: string;
+                /** @description The customer's town. */
+                destination_town: string;
+                /** @description Filter to a single transport mode. */
+                mode?: components["schemas"]["ProviderType"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Available delivery options into the town. May be an empty list. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "origin_zone_id": "ZONE_NBI_CBD_01",
+                     *       "destination_town": "Nyeri",
+                     *       "options": [
+                     *         {
+                     *           "provider_name": "2NK Sacco",
+                     *           "provider_type": "shuttle",
+                     *           "reliability_score": 0.95,
+                     *           "collection_type": "office_pickup",
+                     *           "from_cost_kes": 300,
+                     *           "collection_points": [
+                     *             {
+                     *               "zone_id": "ZONE_NYR_STG_01",
+                     *               "name": "2NK Nyeri Town Office"
+                     *             }
+                     *           ]
+                     *         }
+                     *       ]
+                     *     }
+                     */
+                    "application/json": {
+                        origin_zone_id?: string;
+                        destination_town?: string;
+                        options?: components["schemas"]["DeliveryOption"][];
+                    };
+                };
+            };
+            400: components["responses"]["BadRequest"];
+        };
+    };
+    listModes: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The transport modes currently in the dataset. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "modes": [
+                     *         {
+                     *           "id": "matatu_sacco",
+                     *           "label": "Matatu SACCO",
+                     *           "description": "Shared-taxi SACCO parcel desk service."
+                     *         },
+                     *         {
+                     *           "id": "shuttle",
+                     *           "label": "Shuttle",
+                     *           "description": "Scheduled long-distance shuttle SACCOs, e.g. 2NK, North Rift."
+                     *         }
+                     *       ]
+                     *     }
+                     */
+                    "application/json": {
+                        modes?: components["schemas"]["Mode"][];
                     };
                 };
             };

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { BookingOrder, LogisticsProviderInterface } from "./types.js";
-import type { ProviderType, QuoteRequest, TrackingStatus } from "@itafika/core";
+import type { QuoteRequest, TrackingStatus } from "@itafika/core";
 
 /**
  * Reusable conformance suite for any `LogisticsProviderInterface` implementation.
@@ -28,13 +28,6 @@ export const UNIVERSAL_TRACKING_STATUSES: readonly TrackingStatus[] = [
   "delivered",
 ];
 
-const PROVIDER_TYPES: readonly ProviderType[] = [
-  "boda_rider",
-  "matatu_sacco",
-  "bus",
-  "national_courier",
-];
-
 export interface AdapterConformanceOptions {
   /** Builds a fresh adapter instance for each assertion, so tests never share state. */
   makeAdapter: () => LogisticsProviderInterface;
@@ -56,7 +49,9 @@ export function describeAdapterConformance(label: string, options: AdapterConfor
       expect(info.id.length).toBeGreaterThan(0);
       expect(typeof info.name).toBe("string");
       expect(info.name.length).toBeGreaterThan(0);
-      expect(PROVIDER_TYPES).toContain(info.type);
+      // type is an open mode id from the registry (ADR 0019), not a closed enum.
+      expect(typeof info.type).toBe("string");
+      expect(info.type.length).toBeGreaterThan(0);
       expect(info.reliability_score).toBeGreaterThanOrEqual(0);
       expect(info.reliability_score).toBeLessThanOrEqual(1);
     });
@@ -70,6 +65,8 @@ export function describeAdapterConformance(label: string, options: AdapterConfor
       expect(quote.estimated_cost_kes).toBeGreaterThanOrEqual(0);
       expect(typeof quote.estimated_time).toBe("string");
       expect(quote.estimated_time.length).toBeGreaterThan(0);
+      // A conformant adapter declares how the parcel is handed over (ADR 0016).
+      expect(["office_pickup", "door_delivery"]).toContain(quote.collection_type);
       if (quote.reliability_score !== undefined) {
         expect(quote.reliability_score).toBeGreaterThanOrEqual(0);
         expect(quote.reliability_score).toBeLessThanOrEqual(1);
