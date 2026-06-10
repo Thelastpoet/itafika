@@ -14,7 +14,7 @@ import type { QuoteRequest, TrackingStatus } from "@itafika/core";
  * - a served `quote()` has an integer KES cost and a non-empty human-readable time
  * - `book()` returns a non-empty provider ref and one of the five universal statuses
  * - `track()`, when implemented, also maps only to a universal status
- * - `ProviderInfo` is well-formed with a `reliability_score` in [0, 1]
+ * - `ProviderInfo` is well-formed; `reliability_score`, when asserted, is in [0, 1] (ADR 0021)
  *
  * Imported from `@itafika/adapters/conformance` (kept off the main barrel so the
  * vitest dependency never reaches production code).
@@ -43,7 +43,7 @@ export function describeAdapterConformance(label: string, options: AdapterConfor
   const { makeAdapter, servedRequest, unservedRequest, bookingOrder } = options;
 
   describe(`adapter conformance: ${label}`, () => {
-    it("declares a well-formed ProviderInfo with reliability_score in [0, 1]", () => {
+    it("declares a well-formed ProviderInfo", () => {
       const { info } = makeAdapter();
       expect(typeof info.id).toBe("string");
       expect(info.id.length).toBeGreaterThan(0);
@@ -52,8 +52,11 @@ export function describeAdapterConformance(label: string, options: AdapterConfor
       // type is an open mode id from the registry (ADR 0019), not a closed enum.
       expect(typeof info.type).toBe("string");
       expect(info.type.length).toBeGreaterThan(0);
-      expect(info.reliability_score).toBeGreaterThanOrEqual(0);
-      expect(info.reliability_score).toBeLessThanOrEqual(1);
+      // reliability_score is asserted, not measured; omitting it is conformant (ADR 0021).
+      if (info.reliability_score !== undefined) {
+        expect(info.reliability_score).toBeGreaterThanOrEqual(0);
+        expect(info.reliability_score).toBeLessThanOrEqual(1);
+      }
     });
 
     it("quote() returns a well-formed quote for a served route", async () => {

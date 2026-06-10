@@ -103,7 +103,6 @@ for (const [index, row] of providers.entries()) {
   requireNonEmpty(row, "id", context, errors);
   requireNonEmpty(row, "name", context, errors);
   requireNonEmpty(row, "type", context, errors);
-  requireNonEmpty(row, "reliability_score", context, errors);
 
   if (row.id) {
     if (providerIds.has(row.id)) errors.push(`${context}: duplicate provider id "${row.id}"`);
@@ -111,7 +110,8 @@ for (const [index, row] of providers.entries()) {
   }
 
   if (row.type && !modeIds.has(row.type)) errors.push(`${context}: unknown mode "${row.type}" (add it to modes.csv)`);
-  parseNumber(row.reliability_score, `${context} reliability_score`, errors, { min: 0, max: 1 });
+  // Optional per ADR 0021: an asserted value, omitted rather than guessed.
+  parseNumber(row.reliability_score, `${context} reliability_score`, errors, { min: 0, max: 1, allowBlank: true });
 }
 
 const rateKeys = new Set();

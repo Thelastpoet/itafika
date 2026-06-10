@@ -31,7 +31,7 @@ Every place where a package can be picked up or dropped off.
 | `id` | string | Unique ID, e.g. `mololine`, `g4s`. |
 | `name` | string | Name shown to customers, e.g. `Mololine Sacco`. |
 | `type` | string | Transport mode ID (from `modes.csv`), e.g. `matatu_sacco`. |
-| `reliability_score` | number | 0–1 score based on performance. Start conservative. |
+| `reliability_score` | number | **Optional.** 0–1 score. This is asserted, not measured — leave it blank rather than guess (ADR 0021). |
 
 ---
 

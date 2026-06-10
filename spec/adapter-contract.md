@@ -17,7 +17,7 @@ Core Routing Engine
    └──► G4SAdapter              (national_courier)
 ```
 
-This is how we grow: to add a new provider, you just write one adapter. The contract is stable; the system already handles quotes and bookings through adapters. Next, we'll wire up tracking and webhooks.
+This is how we grow: to add a new provider, you just write one adapter. The contract is stable; the system already handles quotes and bookings through adapters. Tracking through adapters comes later (ADR 0015).
 
 ## The interface
 
@@ -72,7 +72,7 @@ interface ProviderInfo {
   id: string;                 // stable slug, e.g. "mololine"
   name: string;               // display name, e.g. "Mololine Sacco"
   type: ProviderType;         // transport mode (ADR 0019)
-  reliability_score: number;  // 0–1 score based on performance
+  reliability_score?: number; // 0–1; asserted, not measured — omit rather than guess (ADR 0021)
 }
 
 interface ProviderQuote {
@@ -122,9 +122,9 @@ Adapters only differ in *how* they get their answers.
 
 **Static adapter** — gets quotes from the files in [`data/`](data/). It doesn't need the internet to work. Most contributors start here. For example, a matatu adapter looks up the price in a rate table.
 
-**Live adapter** — gets quotes by calling the provider's real system (like an API). It should use static data as a backup if the provider's system is down.
+**Manual (Human-in-the-loop) adapter** — for providers who don't have software, which is most providers in Kenya. `book()` might send a message (like via WhatsApp) to a rider or parcel desk. A human reply ("Accept") then updates the system. This lets Itafika work with traditional providers without forcing them to have an API.
 
-**Manual (Human-in-the-loop) adapter** — for providers who don't have software. `book()` might send a message (like via WhatsApp) to a rider or parcel desk. A human reply ("Accept") then updates the system. This lets Itafika work with traditional providers without forcing them to have an API.
+**Live adapter** — for the few providers that have their own system. It gets quotes by calling that system (like an API), and should use static data as a backup if the provider's system is down. Most Kenyan providers don't have an API — that's what static and manual adapters are for.
 
 ## Rules for adapters
 
@@ -132,7 +132,7 @@ Adapters only differ in *how* they get their answers.
 2. **Use the five universal statuses.** Don't invent your own. If your provider doesn't have a match for a status, just skip it.
 3. **Prices are in KES (integers).** Times are readable strings. Follow the `Quote` schema exactly.
 4. **Be resilient.** If a live adapter can't reach its provider, it should use static data or return `null`. It must not crash the whole system.
-5. **Set a `reliability_score`.** Start conservative; the engine will adjust this based on real results over time.
+5. **Only assert a `reliability_score` you can stand behind.** It's optional — omit it rather than guess. There is no measurement loop yet, so any value is asserted, not computed from real deliveries (ADR 0021).
 6. **No secrets in the code.** Live adapters must read API keys from environment variables, never from files saved in the repo.
 
 ## How to add an adapter

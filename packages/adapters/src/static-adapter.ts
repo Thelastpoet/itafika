@@ -40,9 +40,9 @@ export class StaticRateAdapter implements LogisticsProviderInterface {
         const quote: ProviderQuote = {
           estimated_cost_kes: estimateCostKes(rate, request.package_weight_kg),
           estimated_time: rate.est_time,
-          reliability_score: this.info.reliability_score,
           collection_type: rate.collection_type,
         };
+        if (this.info.reliability_score !== undefined) quote.reliability_score = this.info.reliability_score;
         // For office pickup the collection point is the route's destination zone.
         if (rate.collection_type === "office_pickup") {
           quote.collection_point = this.#collectionPoint(rate.destination_zone_id);

@@ -31,9 +31,10 @@ export async function aggregateQuotes(
         provider_name: provider.info.name,
         estimated_cost_kes: quote.estimated_cost_kes,
         estimated_time: quote.estimated_time,
-        reliability_score: quote.reliability_score ?? provider.info.reliability_score,
         collection_type: quote.collection_type,
       };
+      const reliability = quote.reliability_score ?? provider.info.reliability_score;
+      if (reliability !== undefined) option.reliability_score = reliability;
       if (quote.collection_point !== undefined) option.collection_point = quote.collection_point;
       options.push(option);
     } catch {
@@ -58,7 +59,7 @@ export interface AggregatedCoverage {
   provider_id: string;
   provider_type: ProviderType;
   provider_name: string;
-  reliability_score: number;
+  reliability_score?: number;
   collection_type: CollectionType;
   collection_points: CollectionPoint[];
   from_cost_kes?: number;
@@ -91,10 +92,10 @@ export async function aggregateCoverage(
           provider_id: provider.info.id,
           provider_type: provider.info.type,
           provider_name: provider.info.name,
-          reliability_score: provider.info.reliability_score,
           collection_type: entry.collection_type,
           collection_points: entry.collection_points,
         };
+        if (provider.info.reliability_score !== undefined) option.reliability_score = provider.info.reliability_score;
         if (entry.from_cost_kes !== undefined) option.from_cost_kes = entry.from_cost_kes;
         options.push(option);
       }
@@ -104,7 +105,9 @@ export async function aggregateCoverage(
   }
 
   options.sort(
-    (a, b) => (a.from_cost_kes ?? Infinity) - (b.from_cost_kes ?? Infinity) || b.reliability_score - a.reliability_score,
+    (a, b) =>
+      (a.from_cost_kes ?? Infinity) - (b.from_cost_kes ?? Infinity) ||
+      (b.reliability_score ?? 0) - (a.reliability_score ?? 0),
   );
   return options;
 }

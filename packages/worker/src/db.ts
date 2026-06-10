@@ -44,6 +44,19 @@ interface FreshnessRow {
   last_updated: string;
 }
 
+interface ProviderRow {
+  id: string;
+  name: string;
+  type: Provider["type"];
+  reliability_score: number | null;
+}
+
+function toProvider(r: ProviderRow): Provider {
+  const provider: Provider = { id: r.id, name: r.name, type: r.type };
+  if (r.reliability_score !== null) provider.reliability_score = r.reliability_score;
+  return provider;
+}
+
 export interface QuoteRow {
   quote_id: string;
   provider_id: string | null;
@@ -158,7 +171,7 @@ export async function zonesExist(db: D1Database, ...ids: string[]): Promise<bool
 }
 
 export async function loadQuoteData(db: D1Database, originZoneId: string, destinationZoneId: string): Promise<QuoteData> {
-  const [ratesRes, providersRes] = await db.batch<RateRow | Provider>([
+  const [ratesRes, providersRes] = await db.batch<RateRow | ProviderRow>([
     db
       .prepare("SELECT * FROM rates WHERE origin_zone_id = ? AND destination_zone_id = ?")
       .bind(originZoneId, destinationZoneId),
@@ -166,7 +179,7 @@ export async function loadQuoteData(db: D1Database, originZoneId: string, destin
   ]);
   return {
     rates: (ratesRes.results as RateRow[]).map(toRate),
-    providers: providersRes.results as Provider[],
+    providers: (providersRes.results as ProviderRow[]).map(toProvider),
   };
 }
 
@@ -187,7 +200,7 @@ export async function loadCoverageData(db: D1Database, originZoneId: string, des
   if (destinationZones.length === 0) return { destinationZones: [], rates: [], providers: [] };
 
   const placeholders = destinationZones.map(() => "?").join(",");
-  const [ratesRes, providersRes] = await db.batch<RateRow | Provider>([
+  const [ratesRes, providersRes] = await db.batch<RateRow | ProviderRow>([
     db
       .prepare(`SELECT * FROM rates WHERE origin_zone_id = ? AND destination_zone_id IN (${placeholders})`)
       .bind(originZoneId, ...destinationZones.map((z) => z.id)),
@@ -196,7 +209,7 @@ export async function loadCoverageData(db: D1Database, originZoneId: string, des
   return {
     destinationZones,
     rates: (ratesRes.results as RateRow[]).map(toRate),
-    providers: providersRes.results as Provider[],
+    providers: (providersRes.results as ProviderRow[]).map(toProvider),
   };
 }
 

@@ -134,4 +134,21 @@ describe("StaticRateAdapter", () => {
       adapter.coverage({ origin_zone_id: "ZONE_NBI_CBD_01", destination_town: "Atlantis" }),
     ).resolves.toEqual([]);
   });
+
+  it("omits reliability_score when the provider asserts none (ADR 0021)", async () => {
+    const { reliability_score: _ignored, ...unscored } = provider;
+    const unscoredAdapter = new StaticRateAdapter({ provider: unscored, rates, zones });
+
+    await expect(
+      unscoredAdapter.quote({
+        origin_zone_id: "ZONE_NBI_CBD_01",
+        destination_zone_id: "ZONE_ELD_MAIN",
+        package_weight_kg: 2.5,
+      }),
+    ).resolves.toEqual({
+      estimated_cost_kes: 560,
+      estimated_time: "5 hours",
+      collection_type: "door_delivery",
+    });
+  });
 });

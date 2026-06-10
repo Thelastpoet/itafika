@@ -30,13 +30,20 @@ Right now, you have to know how to use GitHub to add data. We want to make it so
 
 ---
 
-## Phase 2 Goals (Real Connections)
+## Phase 2 Goals (Growing the System)
 
-### 1. Build "Live" Adapters
-Right now, our prices come from a CSV file (Static). In Phase 2, we will build "Adapters" that talk directly to the APIs of companies like G4S, Sendy, or others.
+Phase 2 is about growth, not middleware. Most Kenyan providers — SACCOs, bus parcel desks, boda riders — don't have APIs, and Itafika doesn't wait for them to get one. It meets them where they are.
 
-### 2. Real-Time Tracking
-Instead of manually updating a parcel's status, the API will get updates directly from the delivery company.
+### 1. Grow the Dataset
+More towns, more providers, more verified prices — through the contribution form (ADR 0020) and community pull requests. This is the OpenStreetMap loop, and it is the heart of Phase 2.
+
+### 2. Human-Handoff Booking ("Manual Adapters")
+Prove that a booking can reach a provider that has no software: a WhatsApp or SMS message to a SACCO parcel desk or a rider, and a human reply that confirms it. The adapter contract already defines this kind of adapter.
+
+### 3. One Live Adapter (Last, Not First)
+A small number of national couriers do have APIs. One thin live adapter for one of them would make booking end-to-end real for a single lane. Useful — but those couriers are the segment that needs Itafika least, so this is the tail of Phase 2, not the headline.
+
+Tracking improves the same way: manual events and handoff confirmations first; automatic feeds only where a provider can actually supply them.
 
 ---
 

@@ -104,7 +104,7 @@ The most important part is `POST /v1/quotes`:
       "provider_name": "Mololine Sacco",
       "estimated_cost_kes": 400,
       "estimated_time": "3 hours",
-      "reliability_score": 0.98
+      "reliability_score": 0.9
     }
   ]
 }
@@ -133,7 +133,7 @@ Check [`docs/status.md`](docs/status.md) to see exactly what is ready.
 | Phase | What | State |
 |-------|------|-------|
 | **1 — Basic API** | Prices and locations for common routes. Booking and tracking are also ready. | Working now |
-| **2 — More connections** | Adding live prices from more couriers and new towns. | Planned |
+| **2 — Growing the system** | More towns, providers, and verified prices through community contributions; booking handoff to providers without software. | Planned |
 | **3 — Better results** | Improving prices and reliability scores based on real deliveries. | Planned |
 
 ---

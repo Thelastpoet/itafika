@@ -1,4 +1,4 @@
-import type { Delivery, DeliveryRequest } from "@itafika/core";
+import type { Delivery, DeliveryRequest, Provider } from "@itafika/core";
 import { StaticRateAdapter } from "@itafika/adapters";
 
 import { getBookableQuote, pruneExpiredQuotes, recordDelivery } from "./db.js";
@@ -13,15 +13,13 @@ export async function bookDelivery(db: D1Database, request: DeliveryRequest): Pr
 
   // Rebuild the adapter for the provider that produced this quote and book through it.
   // The static adapter's book() needs only ProviderInfo; rates are irrelevant to booking.
-  const adapter = new StaticRateAdapter({
-    provider: {
-      id: quoteRow.provider_id,
-      name: quoteRow.provider_name,
-      type: quoteRow.provider_type,
-      reliability_score: quoteRow.reliability_score ?? 0,
-    },
-    rates: [],
-  });
+  const provider: Provider = {
+    id: quoteRow.provider_id,
+    name: quoteRow.provider_name,
+    type: quoteRow.provider_type,
+  };
+  if (quoteRow.reliability_score !== null) provider.reliability_score = quoteRow.reliability_score;
+  const adapter = new StaticRateAdapter({ provider, rates: [] });
 
   const booking = await adapter.book({
     quote_id: request.quote_id,

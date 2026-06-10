@@ -25,6 +25,7 @@ Per [GOVERNANCE.md](../../GOVERNANCE.md), any change to the spec is accompanied 
 | [0018](0018-capture-delivery-instructions-and-collection-identity.md) | Collect delivery notes and ID info | Accepted |
 | [0019](0019-transport-modes-as-a-registry.md) | Use a registry for transport modes | Accepted |
 | [0020](0020-non-developer-data-contribution-via-form-to-pr.md) | Allow data updates via a web form | Proposed |
+| [0021](0021-reliability-score-is-asserted-not-measured.md) | Treat `reliability_score` as asserted, not measured | Accepted |
 
 ADRs 0016–0019 are a related set that evolved Itafika from a quoting engine into a
 checkout-delivery layer. They are `Accepted` and implemented in the reference Worker
