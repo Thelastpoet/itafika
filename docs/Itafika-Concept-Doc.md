@@ -108,7 +108,7 @@ We use an **Adapter Pattern**. This means the main system doesn't need to know h
 │  Rider Adapter  │      │  Matatu Adapter │      │ Courier Adapter │
 └────────┬────────┘      └────────┬────────┘      └────────┬────────┘
          ▼                        ▼                        ▼
-  (Bolt / Gatika / …)      (2NK / Mololine / …)    (G4S / Wells Fargo / …)
+  (Bolt / Boda / …)      (2NK / Mololine / …)    (G4S / Wells Fargo / …)
 ```
 
 This way, the community can keep adding new providers over time without breaking the core system.
