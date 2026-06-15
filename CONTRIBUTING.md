@@ -44,9 +44,7 @@ Cloudflare primitives are used only where they match the job:
 
 - **Workers** serve the HTTP API.
 - **D1** stores the relational dataset and Phase 1 delivery records.
-- **Queues** handle background jobs such as provider webhook processing or rate refreshes.
-- **Workflows** handle durable multi-step work such as booking, retries, and human approval.
-- **Durable Objects** handle stateful coordination when one delivery, provider, or webhook stream needs a single authority.
+- **Workflows**, **Queues**, and **Durable Objects** are reserved for later phases — for example, a booking handoff that sends a message to a parcel desk and waits for a human confirmation. None of them are in use today; Phase 1 runs on Workers and D1 alone.
 
 Because the **spec is the source of truth**, changes that affect the API contract start with a change to [`spec/openapi.yaml`](spec/openapi.yaml) and a short ADR (see [`docs/decisions/`](docs/decisions/)) — never with code alone. This keeps the standard and the reference implementation from drifting apart.
 

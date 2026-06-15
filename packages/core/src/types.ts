@@ -23,7 +23,8 @@ export interface Provider {
   id: string;
   name: string;
   type: ProviderType;
-  reliability_score: number;
+  /** Asserted, not measured; omit when there is no basis for a value (ADR 0021). */
+  reliability_score?: number;
 }
 
 export interface Rate {

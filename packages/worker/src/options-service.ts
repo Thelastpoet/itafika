@@ -36,10 +36,10 @@ export async function listOptions(
     const option: DeliveryOption = {
       provider_name: entry.provider_name,
       provider_type: entry.provider_type,
-      reliability_score: entry.reliability_score,
       collection_type: entry.collection_type,
       collection_points: entry.collection_points,
     };
+    if (entry.reliability_score !== undefined) option.reliability_score = entry.reliability_score;
     if (entry.from_cost_kes !== undefined) option.from_cost_kes = entry.from_cost_kes;
     return option;
   });

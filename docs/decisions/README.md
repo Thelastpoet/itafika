@@ -8,7 +8,7 @@ Per [GOVERNANCE.md](../../GOVERNANCE.md), any change to the spec is accompanied 
 |---|-------|--------|
 | [0001](0001-language-and-stack.md) | Use TypeScript and Cloudflare Workers | Accepted |
 | [0002](0002-spec-first-monorepo.md) | Use a spec-first monorepo structure | Accepted |
-| [0003](0003-datastore.md) | Use Cloudflare D1 for data storage | Accepted |
+| [0003](0003-datastore.md) | Use Cloudflare D1 for data storage | Accepted (partially superseded by 0023) |
 | [0004](0004-license.md) | Use the MIT License | Accepted |
 | [0006](0006-rename-shipments-to-deliveries.md) | Rename "shipment" to "delivery" | Accepted |
 | [0007](0007-clarify-phase1-validation-and-reserved-fields.md) | Simplify validation and quote fields | Accepted |
@@ -24,7 +24,20 @@ Per [GOVERNANCE.md](../../GOVERNANCE.md), any change to the spec is accompanied 
 | [0017](0017-add-delivery-options-discovery-surface.md) | Add an endpoint to discover delivery options | Accepted |
 | [0018](0018-capture-delivery-instructions-and-collection-identity.md) | Collect delivery notes and ID info | Accepted |
 | [0019](0019-transport-modes-as-a-registry.md) | Use a registry for transport modes | Accepted |
-| [0020](0020-non-developer-data-contribution-via-form-to-pr.md) | Allow data updates via a web form | Proposed |
+| [0020](0020-non-developer-data-contribution-via-form-to-pr.md) | Allow data updates via a web form | Superseded by 0023 |
+| [0021](0021-reliability-score-is-asserted-not-measured.md) | Treat `reliability_score` as asserted, not measured | Accepted |
+| [0022](0022-itafika-builds-the-provider-supply-layer.md) | Itafika builds the provider-side digital layer where none exists | Accepted |
+| [0023](0023-data-lives-in-d1-not-git.md) | Data lives in D1; git holds code, not data (supersedes 0003, 0020) | Accepted |
+| [0024](0024-data-classification-and-protection.md) | Open reference data vs. regulated personal data (Kenya DPA) | Accepted |
+
+ADRs 0022–0024 are a related set that reframes Phase 2. 0022 establishes that Itafika
+builds the minimal provider supply layer itself (no provider APIs exist to connect to);
+0023 moves the source of truth to D1 with online moderation, a change-log for provenance,
+and an automated public export for openness (superseding the CSV-in-git source-of-truth
+from 0003 and the form→PR flow from 0020); 0024 sets the rule both must obey — open
+reference data vs. regulated personal data under the Kenya DPA. All three are `Accepted`;
+ADR 0024 additionally requires a legal/compliance review before launch (a launch gate, not
+an acceptance gate).
 
 ADRs 0016–0019 are a related set that evolved Itafika from a quoting engine into a
 checkout-delivery layer. They are `Accepted` and implemented in the reference Worker

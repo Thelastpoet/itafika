@@ -1,7 +1,11 @@
 # ADR 0020 — Allow data updates via a web form
 
-**Status:** Proposed
+**Status:** Superseded by [ADR 0023](0023-data-lives-in-d1-not-git.md)
 **Date:** 2026-06-09
+
+> Never implemented. The form → pull request model is replaced by an online moderation
+> queue writing to D1 (see [ADR 0023](0023-data-lives-in-d1-not-git.md)). The goal —
+> letting non-developers contribute — is retained; the mechanism changed.
 
 ## Context
 

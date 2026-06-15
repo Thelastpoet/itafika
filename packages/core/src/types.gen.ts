@@ -118,7 +118,8 @@ export interface paths {
          * Get delivery options and prices between two zones
          * @description The heart of Itafika. Given an origin, destination, weight, and package
          *     details, returns every available delivery option across all transport
-         *     classes, each with an estimated cost, time, and reliability score.
+         *     classes, each with an estimated cost, time, and (where asserted) a
+         *     reliability score.
          */
         post: operations["createQuote"];
         delete?: never;
@@ -295,7 +296,9 @@ export interface components {
             estimated_time: string;
             /**
              * Format: double
-             * @description 0–1 confidence in on-time, intact delivery.
+             * @description 0–1 confidence in on-time, intact delivery. Asserted by the community or
+             *     the provider's adapter — not yet measured from real deliveries. Omitted
+             *     when there is no basis for a value (ADR 0021).
              */
             reliability_score?: number;
             /**
@@ -324,7 +327,11 @@ export interface components {
         DeliveryOption: {
             provider_name: string;
             provider_type: components["schemas"]["ProviderType"];
-            /** Format: double */
+            /**
+             * Format: double
+             * @description 0–1 confidence; asserted, not measured. Omitted when there is no basis
+             *     for a value (ADR 0021).
+             */
             reliability_score?: number;
             collection_type: components["schemas"]["CollectionType"];
             /** @description The zones in the destination town where this provider collects. */
@@ -582,7 +589,7 @@ export interface operations {
                      *         {
                      *           "provider_name": "2NK Sacco",
                      *           "provider_type": "shuttle",
-                     *           "reliability_score": 0.95,
+                     *           "reliability_score": 0.9,
                      *           "collection_type": "office_pickup",
                      *           "from_cost_kes": 300,
                      *           "collection_points": [
@@ -680,7 +687,7 @@ export interface operations {
                      *           "provider_name": "Independent Rider (CBD Pool)",
                      *           "estimated_cost_kes": 250,
                      *           "estimated_time": "45 mins",
-                     *           "reliability_score": 0.92
+                     *           "reliability_score": 0.85
                      *         },
                      *         {
                      *           "quote_id": "qt_b1a56ce02d7345f398ee2c04",
@@ -688,7 +695,7 @@ export interface operations {
                      *           "provider_name": "Mololine Sacco",
                      *           "estimated_cost_kes": 400,
                      *           "estimated_time": "3 hours",
-                     *           "reliability_score": 0.98
+                     *           "reliability_score": 0.9
                      *         }
                      *       ]
                      *     }

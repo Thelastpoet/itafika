@@ -46,15 +46,15 @@ Current behavior is simple:
 
 Some parts of the project are just starting out:
 
-- **Live prices:** Right now, most prices come from a stored list. Connecting directly to couriers for live prices comes later.
-- **Automatic tracking:** We have a system for tracking, but we are still adding ways to get updates automatically from providers.
+- **Price freshness:** Prices come from the community-maintained dataset. Keeping them fresh is community work — checking prices, updating them, and recording a source for every one.
+- **Tracking updates:** Tracking works through booking events and manual updates. Updates confirmed by providers (for example, a parcel desk replying on WhatsApp) come next.
 - **Data coverage:** We are still adding more towns and delivery companies. Some data is just for testing right now.
 
 ## What is planned for the future
 
 These are big features we want to add as the project grows:
 
-- Real-time connections to many more delivery providers.
+- Connections to more providers — through human handoff (WhatsApp or SMS to a parcel desk) for most, and through APIs for the few couriers that have them.
 - Automatic background tasks (like checking for tracking updates).
 - Better tools for handling complicated delivery steps and retries.
 
@@ -72,7 +72,7 @@ The main Phase 1 features are ready. Now we are focused on:
 
 - **Adding more data:** Replacing test prices with real ones and adding more towns.
 - **Easier contribution:** Making it easier for non-developers to share data using a simple form.
-- **First live connection:** Connecting the system to its first live delivery provider.
+- **Human-handoff booking:** Designing how a booking reaches a provider that has no software (for example, a WhatsApp message to a SACCO parcel desk).
 
 ## How to contribute
 
