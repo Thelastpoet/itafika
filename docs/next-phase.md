@@ -21,26 +21,29 @@ Our dataset is the most important part of the project. Today, some of the data i
   - Decide how we will check and update old prices.
 
 ### 2. Add a Way for Anyone to Contribute Data (P3)
-Right now, you have to know how to use GitHub to add data. We want to make it so anyone—even someone at a stage desk—can contribute.
+Right now, you have to know how to use GitHub to add data. We want to make it so anyone—even someone at a stage desk, or a provider updating their own rates—can contribute. The mechanism is the provider on-ramp and online moderation described in Phase 2 below (ADRs 0023–0024), not a GitHub pull request.
 
 - **Tasks:**
-  - Build a simple online form where people can submit a price or a stage.
-  - When someone submits the form, it should automatically create a "Pull Request" on GitHub for us to review.
-  - This keeps the data safe but makes it easy for non-developers to help.
+  - Build an online app where people (and providers) submit a price, route, or stage.
+  - Route submissions into a moderation queue that trusted moderators approve online; approved data goes live in D1, with provenance kept in a change log.
+  - Keep the dataset open via an automated public export of reference data — and never export personal data (Kenya DPA).
 
 ---
 
 ## Phase 2 Goals (Growing the System)
 
-Phase 2 is about growth, not middleware. Most Kenyan providers — SACCOs, bus parcel desks, boda riders — don't have APIs, and Itafika doesn't wait for them to get one. It meets them where they are.
+Phase 2 is about growth, not middleware. Most Kenyan providers — SACCOs, bus parcel desks, boda riders — don't have APIs, and there is no credible path to most of them getting one. So Itafika doesn't wait to connect to provider APIs that don't exist: **it builds the minimal provider-side digital layer itself**, in service of the shops (ADR 0022). The core mission is unchanged — make ecommerce delivery work for online shops. The provider tool is the means to have real supply to aggregate, kept thin, never drifting into provider operations software.
 
-### 1. Grow the Dataset
-More towns, more providers, more verified prices — through the contribution form (ADR 0020) and community pull requests. This is the OpenStreetMap loop, and it is the heart of Phase 2.
+### 1. Provider On-Ramps (ADR 0022)
+Two doors, same destination. **Non-technical providers** use a hosted Itafika tool: upload their routes and rates, and receive and confirm bookings. **Technical providers** implement the open adapter contract or self-host. This is the human-in-the-loop ("manual") adapter from the adapter contract, made good: a booking reaches a provider, a human confirms it, and that confirmation becomes the tracking event.
 
-### 2. Human-Handoff Booking ("Manual Adapters")
-Prove that a booking can reach a provider that has no software: a WhatsApp or SMS message to a SACCO parcel desk or a rider, and a human reply that confirms it. The adapter contract already defines this kind of adapter.
+### 2. Move the Data Model to D1 with Online Moderation (ADR 0023)
+The CSV → pull request → reseed loop is the wrong tool for provider-owned, changing rates. Data becomes operationally owned by **D1**, contributed through an online app into a **moderation queue**, with provenance kept in an append-only change log. Openness is preserved by an automated public export of reference data (it stays forkable and auditable) — git holds code, not data. This supersedes the form→PR flow (ADR 0020) and the "CSV is source of truth" part of ADR 0003.
 
-### 3. One Live Adapter (Last, Not First)
+### 3. Respect the Data Protection Act (ADR 0024)
+Two buckets, opposite rules. **Reference data** (zones, routes, rates) is open and downloadable. **Personal data** (booking contacts) is regulated under the Kenya DPA and never exported — the public export is structurally allowlist-only over reference tables. Minimize what bookings collect, set retention/deletion, and verify data residency. Needs a compliance review before launch.
+
+### 4. One Live Adapter (Last, Not First)
 A small number of national couriers do have APIs. One thin live adapter for one of them would make booking end-to-end real for a single lane. Useful — but those couriers are the segment that needs Itafika least, so this is the tail of Phase 2, not the headline.
 
 Tracking improves the same way: manual events and handoff confirmations first; automatic feeds only where a provider can actually supply them.
