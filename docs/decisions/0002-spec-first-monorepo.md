@@ -1,7 +1,11 @@
 # ADR 0002 — Use a spec-first monorepo structure
 
-**Status:** Accepted
+**Status:** Accepted; data-source portions superseded by [ADR 0023](0023-data-lives-in-d1-not-git.md)
 **Date:** 2026-06-08
+
+**Current authority:** `spec/` remains the public contract boundary. ADR 0023 makes D1
+the operational source of truth for reference data; `spec/data/` is the seed and public
+snapshot schema.
 
 ## Context
 
@@ -15,7 +19,7 @@ The project is a **spec-first monorepo** with two main parts:
 spec/        Authoritative standard (language-agnostic)
   openapi.yaml         API contract
   adapter-contract.md  Rules for provider adapters
-  data/                Open zones and rates dataset
+  data/                Reference-data seed and public snapshot schema
 
 packages/    TypeScript reference implementation
   core/      Quote engine and shared logic
@@ -29,12 +33,15 @@ packages/    TypeScript reference implementation
 
 - **The standard stays portable.** Any team can reimplement Itafika in another language from `spec/`.
 - **The implementation stays honest.** Generated types from `spec/openapi.yaml` keep the Worker, core engine, and adapters aligned with the API contract.
-- **The data remains reviewable.** Zones, providers, rates, and freshness metadata live in `spec/data/` as human-editable CSV files.
+- **The reference data remains reviewable.** Zones, providers, rates, and freshness
+  metadata have a portable seed/export format in `spec/data/`; operational updates live
+  in D1 under ADR 0023.
 - **Contributors have one place to work.** API contracts, seed data, implementation, examples, and ADRs live together.
 
 ## Consequences
 
 - API changes start in `spec/openapi.yaml`, then flow to generated types and implementation code.
-- Data changes start in `spec/data/` and include provenance.
-- The Worker may project `spec/data/` into D1 for fast queries, but the CSV files remain the canonical source for reviewed seed data.
+- Reference-data contract changes start in `spec/data/` and include provenance rules.
+- The Worker reads D1 for operational reference data. `spec/data/` remains the seed and
+  generated public snapshot format, not the operational store.
 - Conformance tests should validate that any implementation behaves according to `spec/`.

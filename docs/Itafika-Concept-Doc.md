@@ -1,10 +1,10 @@
 # Itafika
 
-### A free, open-source tool to connect all delivery services in Kenya
+### A delivery orchestration API/control plane for ecommerce checkout in Kenya
 
 *"Itafika"* — Swahili, *it will arrive*.
 
-Itafika gives you one simple way to handle delivery and shipping. Locations, transport modes, and rates are already built in — so you don't have to figure out how Kenyan delivery works from scratch.
+Itafika gives online shops one API for delivery options, provider handoff, and tracking state. Locations, transport modes, providers, and rates are already built in so shop developers can focus on checkout.
 
 ---
 
@@ -12,7 +12,7 @@ Itafika gives you one simple way to handle delivery and shipping. Locations, tra
 
 Any online shop in Kenya can plug into Itafika to solve their delivery problems.
 
-At checkout, a customer picks their location and sees real options to get their goods — a boda rider, a matatu or bus parcel service, or a national courier. Each option shows a price and an estimated time. The shop owner doesn't have to build any of this. They don't have to map stages or integrate with every courier themselves. They make one API call and get all the options.
+At checkout, a customer picks their location and sees real options to get their goods — a boda rider, a matatu or bus parcel service, or a national courier. Each option shows a price and an estimated time. The shop owns the customer and order data; Itafika returns the delivery facts and orchestration state the checkout needs.
 
 **Delivery should be something you use, not something you have to build yourself.**
 
@@ -30,11 +30,11 @@ Itafika does that work **once, for everyone.**
 
 ---
 
-## 3. The goal: One simple system for everyone
+## 3. The goal: One delivery orchestration layer for checkout
 
-Itafika acts as a bridge. It hides the messy and fragmented world of Kenyan delivery behind one simple API. A shop owner using Itafika doesn't need to know which SACCO goes where or what a rider charges across town. They just ask one question — *how can this package get from here to there, and what are the options?* — and get one clear answer.
+Itafika acts as the control plane between shops and providers. A shop owner using Itafika can ask one question — *how can this package get from here to there, and what are the options?* — and get one clear answer.
 
-Our job is to take the disorder of real-world logistics and turn it into something organized and easy to use.
+Our job is to turn delivery routes, rates, provider availability, booking confirmation, and tracking state into a clean API for checkout.
 
 ---
 
@@ -66,7 +66,7 @@ POST /v1/quotes
 }
 ```
 
-The customer picks one, and the shop is done. No mapping or complicated courier connections needed — Itafika handles all that.
+The customer picks one, and the shop keeps the order moving with a shop-owned reference. Itafika coordinates the selected provider, booking state, and tracking state.
 
 Because Itafika is open source, you are never "locked in." You can use the default prices or add your own. You can hide certain delivery methods or change how options are ranked, all without rebuilding the whole system.
 
@@ -143,7 +143,7 @@ GET /v1/zones/search?q=cbd    Search for a location
 POST /v1/quotes
 ```
 
-**C. Booking.** Once your customer picks an option, this part locks it in and gives you a tracking ID.
+**C. Booking orchestration.** Once your customer picks an option, this part records the shop reference, selected provider, and tracking ID.
 
 ```
 POST /v1/deliveries
@@ -175,7 +175,7 @@ This information is kept in simple files that anyone can edit. The API uses this
 
 **Phase 1 — Basic API (MVP).** We start with the most common routes and rates for Nairobi and other major towns. We've built the API to give useful quotes from this data right now. Even without live tracking for every provider, having standard locations and reliable price estimates is very useful for developers.
 
-**Phase 2 — Growing the system.** We'll invite more people to add new delivery providers and towns. Some providers will have live prices, while others might just use WhatsApp to confirm they've delivered a parcel. The system will handle these different ways of working behind the scenes.
+**Phase 2 — Growing the system.** We'll invite more people and providers to add towns, routes, rates, and provider details. Providers can use a hosted universal adapter surface for rates, booking confirmation, and tracking updates.
 
 **Phase 3 — Getting better with time.** As more people use Itafika, we will have more data on which providers are the most reliable. We'll use this to improve our reliability scores and help customers pick the best options.
 
@@ -183,9 +183,11 @@ This information is kept in simple files that anyone can edit. The API uses this
 
 ## 10. Why Itafika is different
 
-Most delivery companies in Kenya are "closed." They own their own system and only show their own prices. There is no shared, open system that lets a developer see options from riders, matatus, buses, and couriers all in one place.
+Most providers in Kenya expose their rates and availability through their own phone,
+desk, WhatsApp, or API workflows. Itafika gives developers one shared way to see
+options from riders, matatus, buses, and couriers in one checkout flow.
 
-Itafika is not trying to be a delivery company. It's the open foundation that everyone can use. By sharing the work of mapping Kenyan delivery, we make it easier for every online shop to succeed.
+Itafika is the shared delivery orchestration API/control plane for Kenyan ecommerce. By sharing the work of mapping routes, rates, providers, and handoff states, we make it easier for every online shop to offer delivery at checkout.
 
 ---
 

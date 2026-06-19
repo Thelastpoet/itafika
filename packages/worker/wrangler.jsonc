@@ -11,6 +11,11 @@
 	"compatibility_flags": [
 		"nodejs_compat"
 	],
+	"secrets": {
+		"required": [
+			"MODERATOR_TOKENS"
+		]
+	},
 	"d1_databases": [
 		{
 			"binding": "itafika",

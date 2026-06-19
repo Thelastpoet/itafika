@@ -1,23 +1,38 @@
-# ADR 0018 — Collect delivery notes and ID info
+# ADR 0018 — Historical delivery-contact fields for Phase 1 compatibility
 
-**Status:** Accepted (2026-06-10)
+**Status:** Accepted (2026-06-10); active booking boundary superseded by [ADR 0025](0025-delivery-orchestration-boundary.md)
 **Date:** 2026-06-09
+
+**Current authority:** ADR 0025 defines the active delivery orchestration contract.
+New delivery booking uses `quote_id`, `shop_order_ref`, and optional
+`shop_handoff_url`. Shops own customer names, phone numbers, addresses, handover
+instructions, and customer-specific collection identity.
 
 ## Context
 
 For office pickups, the provider often needs to know who is allowed to collect the parcel and may require an ID number. We also need a way to include simple instructions like "call before handover."
 
-## Decision
+## Historical Decision
 
-We will add optional fields to the booking request:
+This ADR originally added optional fields to the Phase 1 booking request:
 
 - **`instructions`**: Simple notes for the delivery person (e.g., "Give to my sister").
 - **`id_number`**: The ID of the person collecting the parcel.
 - **`alternate_collector`**: Details of another person authorized to pick up the parcel.
 
-All optional; the existing required fields (`quote_id`, `sender`, `recipient`) are
-unchanged. `package_description` keeps its meaning (what's in the box);
-`instructions` is distinct (what to do at handover).
+Those fields are now legacy compatibility fields. They do not belong in the active
+Phase 2 delivery orchestration API.
+
+## Implementation Guidance
+
+- New public delivery booking follows ADR 0025: `quote_id`, `shop_order_ref`, and
+  optional `shop_handoff_url`.
+- The OpenAPI `DeliveryRequest`, `Delivery`, and adapter `BookingOrder` do not carry
+  shop customer/contact/handover fields in the active contract.
+- Existing Worker/database contact fields are legacy compatibility data until the
+  Phase 2 delivery-boundary cleanup removes them from active flows.
+- Provider portal screens use the shop reference and optional shop handoff URL for
+  handoff details chosen by the shop.
 
 ## Rationale
 
@@ -40,10 +55,7 @@ unchanged. `package_description` keeps its meaning (what's in the box);
 
 ## Consequences
 
-- The OpenAPI `DeliveryRequest`/`Delivery` gain `instructions`; `Contact` gains
-  optional `id_number`; `DeliveryRequest` gains optional `alternate_collector`.
-- The adapter contract's `BookingOrder` gains `instructions` and the enriched
-  recipient/`alternate_collector` so a human-in-the-loop adapter can relay them.
-- These fields are delivery details, not routing facts — they stay out of `Quote`
-  and out of the dataset.
-- Generated types and the reference Worker need updating (follow-on).
+- Active OpenAPI delivery booking follows ADR 0025's orchestration boundary.
+- The adapter contract uses shop-owned references for provider handoff.
+- Legacy contact fields are cleanup targets, not fields for new features.
+- Customer-specific handoff details stay in the shop-owned commerce/handoff flow.

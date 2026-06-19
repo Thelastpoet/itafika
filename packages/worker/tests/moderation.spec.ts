@@ -19,7 +19,7 @@ function ratesSubmission(overrides: Partial<Record<string, unknown>> = {}): Subm
     payload: {
       provider_id: "mololine",
       origin_zone_id: "ZONE_NBI_CBD_01",
-      destination_zone_id: "ZONE_KSM_MAIN",
+      destination_zone_id: "ZONE_MOD_NEW",
       base_cost_kes: 500,
       cost_per_kg_kes: 20,
       est_time: "5 hours",
@@ -36,14 +36,14 @@ function ratesSubmission(overrides: Partial<Record<string, unknown>> = {}): Subm
 async function rateRow() {
   return env.itafika
     .prepare("SELECT * FROM rates WHERE provider_id = ? AND origin_zone_id = ? AND destination_zone_id = ?")
-    .bind("mololine", "ZONE_NBI_CBD_01", "ZONE_KSM_MAIN")
+    .bind("mololine", "ZONE_NBI_CBD_01", "ZONE_MOD_NEW")
     .first<{ base_cost_kes: number; source: string }>();
 }
 
 beforeAll(async () => {
   await env.itafika.batch([
     env.itafika.prepare("INSERT OR IGNORE INTO zones (id, name, type, town, county) VALUES (?,?,?,?,?)").bind("ZONE_NBI_CBD_01", "RNG Plaza", "cbd_hub", "Nairobi", "Nairobi"),
-    env.itafika.prepare("INSERT OR IGNORE INTO zones (id, name, type, town, county) VALUES (?,?,?,?,?)").bind("ZONE_KSM_MAIN", "Kisumu Main Stage", "stage", "Kisumu", "Kisumu"),
+    env.itafika.prepare("INSERT OR IGNORE INTO zones (id, name, type, town, county) VALUES (?,?,?,?,?)").bind("ZONE_MOD_NEW", "Moderation Test Stage", "stage", "Moderation", "Test"),
     env.itafika.prepare("INSERT OR IGNORE INTO modes (id, label, description, source) VALUES (?,?,?,?)").bind("matatu_sacco", "Matatu SACCO", "Shared-taxi SACCO parcel desk.", "seed"),
     env.itafika.prepare("INSERT OR IGNORE INTO providers (id, name, type, reliability_score) VALUES (?,?,?,?)").bind("mololine", "Mololine Sacco", "matatu_sacco", 0.98),
   ]);
@@ -82,7 +82,7 @@ describe("approveSubmission", () => {
     expect(log).not.toBeNull();
     expect(log!.before).toBeNull();
     expect(log!.changed_by).toBe("moderator-1");
-    expect(log!.row_key).toBe("mololine|ZONE_NBI_CBD_01|ZONE_KSM_MAIN");
+    expect(log!.row_key).toBe("mololine|ZONE_NBI_CBD_01|ZONE_MOD_NEW");
     expect(JSON.parse(log!.after).base_cost_kes).toBe(550);
   });
 

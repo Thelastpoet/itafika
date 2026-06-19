@@ -38,9 +38,10 @@ To set up the tables in your remote database, run:
 pnpm --filter @itafika/worker db:migrate:remote
 ```
 
-## Step 4: Add the Data (Seed)
+## Step 4: Add Reference Data (Seed)
 
-To fill your database with our current list of zones and prices, run:
+To fill your database with the current seed reference data for zones, providers, modes,
+routes, rates, and freshness, run:
 
 ```bash
 pnpm --filter @itafika/worker db:seed:remote

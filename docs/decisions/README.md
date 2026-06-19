@@ -22,28 +22,26 @@ Per [GOVERNANCE.md](../../GOVERNANCE.md), any change to the spec is accompanied 
 | [0015](0015-tracking-update-model.md) | Simplify tracking as a single event log | Accepted |
 | [0016](0016-surface-collection-point-and-type-on-quotes.md) | Show collection details on quotes | Accepted |
 | [0017](0017-add-delivery-options-discovery-surface.md) | Add an endpoint to discover delivery options | Accepted |
-| [0018](0018-capture-delivery-instructions-and-collection-identity.md) | Collect delivery notes and ID info | Accepted |
+| [0018](0018-capture-delivery-instructions-and-collection-identity.md) | Historical delivery-contact fields for Phase 1 compatibility | Accepted (active boundary superseded by 0025) |
 | [0019](0019-transport-modes-as-a-registry.md) | Use a registry for transport modes | Accepted |
 | [0020](0020-non-developer-data-contribution-via-form-to-pr.md) | Allow data updates via a web form | Superseded by 0023 |
 | [0021](0021-reliability-score-is-asserted-not-measured.md) | Treat `reliability_score` as asserted, not measured | Accepted |
 | [0022](0022-itafika-builds-the-provider-supply-layer.md) | Itafika builds the provider-side digital layer where none exists | Accepted |
 | [0023](0023-data-lives-in-d1-not-git.md) | Data lives in D1; git holds code, not data (supersedes 0003, 0020) | Accepted |
-| [0024](0024-data-classification-and-protection.md) | Open reference data vs. regulated personal data (Kenya DPA) | Accepted |
+| [0024](0024-data-classification-and-protection.md) | Reference export data classification | Accepted (partially superseded by 0025) |
+| [0025](0025-delivery-orchestration-boundary.md) | Itafika is a delivery orchestration API/control plane | Accepted |
 
-ADRs 0022–0024 are a related set that reframes Phase 2. 0022 establishes that Itafika
-builds the minimal provider supply layer itself (no provider APIs exist to connect to);
-0023 moves the source of truth to D1 with online moderation, a change-log for provenance,
-and an automated public export for openness (superseding the CSV-in-git source-of-truth
-from 0003 and the form→PR flow from 0020); 0024 sets the rule both must obey — open
-reference data vs. regulated personal data under the Kenya DPA. All three are `Accepted`;
-ADR 0024 additionally requires a legal/compliance review before launch (a launch gate, not
-an acceptance gate).
+ADRs 0022–0025 are a related set that reframes Phase 2. 0022 establishes the provider
+supply layer. 0023 moves the source of truth to D1 with online moderation, a change-log
+for provenance, and an automated public export for openness. 0024 sets the reference-data
+export boundary. 0025 defines Itafika as a delivery orchestration API/control plane where
+shops own customer/order data, providers handle fulfillment, and Itafika stores
+orchestration state.
 
 ADRs 0016–0019 are a related set that evolved Itafika from a quoting engine into a
 checkout-delivery layer. They are `Accepted` and implemented in the reference Worker
-(modes registry, collection facts on quotes, the `/v1/options` discovery surface, and
-booking instructions/identity). 0020 (non-developer data contribution) remains
-`Proposed`.
+(modes registry, collection facts on quotes, and the `/v1/options` discovery surface).
+ADR 0025 is the current delivery-orchestration boundary for Phase 2 booking.
 
 ## Format
 

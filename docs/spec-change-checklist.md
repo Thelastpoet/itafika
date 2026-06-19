@@ -4,9 +4,9 @@ Use this checklist whenever you change the API or the core data rules.
 
 This applies to anyone editing:
 - `spec/openapi.yaml` (The API structure)
-- `spec/adapter-contract.md` (Rules for delivery companies)
+- `spec/adapter-contract.md` (Rules for provider adapters)
 - `spec/data/SCHEMA.md` (Rules for our data files)
-- Any other rule that affects how shops or delivery companies interact with Itafika.
+- Any other rule that affects how shops or providers interact with Itafika.
 
 ## Before You Start Your Pull Request
 - [ ] Is this change really a "Rule"? If it's just a small code detail, it doesn't belong in the spec.

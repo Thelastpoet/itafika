@@ -16,7 +16,7 @@ Our goal is to make sure the repository always tells the truth about what it can
 
 ## 3. Check the Data
 - [ ] Run `pnpm data:validate`. Did it pass?
-- [ ] If you changed files in `spec/data/`, did you include where the data came from (source)?
+- [ ] If you changed seed/snapshot files in `spec/data/`, did you include where the data came from (source)?
 - [ ] Did you update the "freshness" date for any towns you changed?
 
 ## 4. Check the Code

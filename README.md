@@ -1,12 +1,12 @@
 # Itafika
 
-**A free, open-source tool to connect all delivery services in Kenya.**
+**A delivery orchestration API/control plane for ecommerce checkout in Kenya.**
 
 *"Itafika"* — Swahili, *it will arrive.*
 
-Itafika gives you one simple way to handle delivery and shipping. Locations, transport modes, and rates are already built in — so you don't have to figure out how Kenyan delivery works from scratch.
+Itafika gives online shops one API for delivery options, provider handoff, and tracking state. Locations, transport modes, providers, and rates are already built in — so shop developers can focus on checkout while Itafika coordinates the delivery layer.
 
-At checkout, a customer picks a location and sees real options to get their goods — a boda rider, a matatu or bus parcel service, or a national courier. Each option shows a price and an estimated time. The shop only needs to make one API call to get all this. They don't have to map stages or integrate with every courier themselves.
+At checkout, a customer picks a location and sees real ways to get their goods — a boda rider, a matatu or bus parcel service, or a national courier. Each option shows a price and an estimated time. The shop keeps its customer and order data, and Itafika returns the delivery facts the checkout needs.
 
 > **Delivery should be something you use, not something you have to build yourself.**
 
@@ -16,7 +16,7 @@ At checkout, a customer picks a location and sees real options to get their good
 
 Online shopping in Kenya is growing fast, but delivery is often the hardest part. It's not because there aren't enough ways to move a parcel, but because there are too many and they don't work together. Every shop tries to solve this on their own, which is slow and difficult. Most shops leave out cheap options like matatus and buses because they are too hard to connect to.
 
-Itafika does that work **once, for everyone.** It is the common standard for Kenyan delivery — like OpenStreetMap, but for moving parcels. It is **not** a delivery company; it is the shared foundation that anyone can use instead of building their own connections to every provider.
+Itafika does that coordination work **once, for everyone.** It is the shared delivery orchestration layer for Kenyan ecommerce — like OpenStreetMap for checkout delivery routes, rates, providers, handoff state, and tracking state.
 
 To integrate Itafika into your shop's checkout, start with the [**integration guide**](docs/integration-guide.md).
 
@@ -36,10 +36,10 @@ This project contains both the rules (the standard) and a working version of the
 
 ```
 itafika/
-├── spec/                  ★ the rules and data that everyone can use
+├── spec/                  ★ the public contract and reference-data schema
 │   ├── openapi.yaml        · the API design
 │   ├── adapter-contract.md · how to connect a new delivery provider
-│   └── data/               · the open list of locations and rates
+│   └── data/               · reference-data seed and public snapshot format
 ├── packages/              the working API code (TypeScript)
 │   ├── core/               · the engine that calculates prices and routes
 │   ├── adapters/           · examples of how to connect to providers
@@ -65,7 +65,7 @@ The current version is built to run on **Cloudflare**:
 | Need | Tool used |
 |------|-----------|
 | Public API | Cloudflare Workers |
-| Locations, rates, and tracking | D1 Database |
+| Locations, rates, and orchestration state | D1 Database |
 | Long flows and retries | Workflows |
 | Background tasks | Queues |
 
@@ -81,7 +81,7 @@ Phase 1 is simple: the API reads data from the database and gives you delivery q
 | `GET`  | `/v1/zones/search?q=` | Search for a location by name |
 | `GET`  | `/v1/freshness` | See when the data for each town was last updated |
 | `POST` | `/v1/quotes` | Get delivery options and prices between two locations |
-| `POST` | `/v1/deliveries` | Pick a quote and get a tracking ID |
+| `POST` | `/v1/deliveries` | Create delivery orchestration state from a selected quote |
 | `GET`  | `/v1/deliveries/{tracking_id}/track` | See where your parcel is |
 | `POST` | `/v1/deliveries/{tracking_id}/events` | Add a manual update to a delivery |
 
@@ -110,7 +110,7 @@ The most important part is `POST /v1/quotes`:
 }
 ```
 
-You can find all the details in [`spec/openapi.yaml`](spec/openapi.yaml). To see how to use this in a shop, check the [integration guide](docs/integration-guide.md).
+You can find all the details in [`spec/openapi.yaml`](spec/openapi.yaml). ADR 0025 defines the Phase 2 booking boundary around `shop_order_ref` and optional `shop_handoff_url`; the current Worker still contains legacy booking-contact compatibility while that migration is pending. To see how to use this in a shop, check the [integration guide](docs/integration-guide.md).
 
 ---
 
@@ -133,7 +133,7 @@ Check [`docs/status.md`](docs/status.md) to see exactly what is ready.
 | Phase | What | State |
 |-------|------|-------|
 | **1 — Basic API** | Prices and locations for common routes. Booking and tracking are also ready. | Working now |
-| **2 — Growing the system** | More towns, providers, and verified prices through community contributions; booking handoff to providers without software. | Planned |
+| **2 — Growing the system** | More towns, providers, verified prices, provider on-ramps, and shop-referenced booking handoff. | Planned |
 | **3 — Better results** | Improving prices and reliability scores based on real deliveries. | Planned |
 
 ---
