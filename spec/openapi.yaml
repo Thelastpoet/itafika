@@ -3,11 +3,12 @@ info:
   title: Itafika API
   version: "1.0.0-phase1"
   description: |
-    An open-source logistics aggregator API for Kenya.
+    A delivery orchestration API/control plane for ecommerce checkout in Kenya.
 
-    Itafika gives any online shop a single interface to quote and book delivery
-    across riders, matatu/bus SACCOs, and national couriers — with Kenyan
-    locations modelled as zones and stages rather than street addresses.
+    Itafika gives any online shop a single interface to quote delivery options,
+    create provider handoff state, and track delivery state across riders,
+    matatu/bus SACCOs, and national couriers — with Kenyan locations modelled
+    as zones and stages rather than street addresses.
 
     This document is the **canonical Phase 1 contract**. The Cloudflare Worker
     reference implementation in `packages/` is generated against it. Any change
@@ -290,9 +291,9 @@ paths:
       tags: [Deliveries]
       summary: Lock in a chosen quote and create a delivery
       description: |
-        Accepts a quote the customer selected, records the delivery, and generates
-        a tracking ID. In Phase 1 the reference Worker records the booking, while
-        provider dispatch through adapters remains follow-on integration work.
+        Accepts a quote the customer selected, records delivery orchestration
+        state, and generates a tracking ID. The shop owns customer/order/contact
+        data and passes a shop-owned reference for provider handoff (ADR 0025).
       operationId: createDelivery
       requestBody:
         required: true
@@ -301,13 +302,8 @@ paths:
             schema: { $ref: '#/components/schemas/DeliveryRequest' }
             example:
               quote_id: qt_b1a56ce02d7345f398ee2c04
-              sender:
-                name: Asha Mwangi
-                phone: "+254712345678"
-              recipient:
-                name: John Otieno
-                phone: "+254723456789"
-              package_description: "Sealed apparel box, 2.5kg"
+              shop_order_ref: ORDER-12345
+              shop_handoff_url: https://shop.example.com/delivery-handoff/ORDER-12345
       responses:
         '201':
           description: Delivery created.
@@ -422,8 +418,8 @@ components:
         an unknown mode from the registry's display metadata rather than treating the
         examples below as exhaustive.
 
-        The seed registry ships with all of these as data rows; `GET /v1/modes` is the
-        source of truth for what currently exists.
+        The seed registry ships with all of these as data rows; `GET /v1/modes` returns
+        the modes currently available through the API.
       examples: [boda_rider, matatu_sacco, bus, national_courier, shuttle, taxi, cargo_truck]
 
     Mode:
@@ -445,7 +441,7 @@ components:
     CollectionType:
       type: string
       description: |
-        How the recipient receives the parcel. Specified by ADR 0016
+        How the customer gets the parcel for this option. Specified by ADR 0016
         (checkout-delivery direction).
       enum: [office_pickup, door_delivery]
 
@@ -538,7 +534,7 @@ components:
         collection_type:
           allOf: [{ $ref: '#/components/schemas/CollectionType' }]
           description: |
-            How the recipient receives this option's parcel — collect at the
+            How the customer gets this option's parcel — collect at the
             provider's office/stage, or door delivery. Specified by ADR 0016
             (checkout-delivery direction).
         collection_point:
@@ -548,7 +544,7 @@ components:
     CollectionPoint:
       type: object
       description: |
-        For `office_pickup`, the zone where the recipient collects the parcel. Absent
+        For `office_pickup`, the zone where the customer collects the parcel. Absent
         for `door_delivery`. Specified by ADR 0016 (checkout-delivery direction).
       properties:
         zone_id: { type: string }
@@ -584,52 +580,25 @@ components:
           description: Indicative starting cost (the route's base cost). Not bookable; get the exact price from POST /v1/quotes.
       required: [provider_name, provider_type, collection_type]
 
-    Contact:
-      type: object
-      properties:
-        name:
-          type: string
-          minLength: 1
-          maxLength: 120
-        phone:
-          type: string
-          description: E.164 format, e.g. +254712345678.
-          pattern: '^\+[1-9]\d{7,14}$'
-          maxLength: 16
-        id_number:
-          type: string
-          maxLength: 40
-          description: |
-            Optional national ID asked for at an office/stage parcel desk on
-            collection. Specified by ADR 0018 (checkout-delivery direction).
-      required: [name, phone]
-
     DeliveryRequest:
       type: object
       properties:
         quote_id:
           type: string
           pattern: '^qt_[a-f0-9]{24}$'
-        sender: { $ref: '#/components/schemas/Contact' }
-        recipient: { $ref: '#/components/schemas/Contact' }
-        package_description:
+        shop_order_ref:
           type: string
           minLength: 1
-          maxLength: 500
-          description: What is in the box (distinct from handover instructions).
-        instructions:
+          maxLength: 120
+          description: Shop-owned order or delivery reference used for orchestration.
+        shop_handoff_url:
           type: string
-          minLength: 1
-          maxLength: 500
+          format: uri
+          maxLength: 1000
           description: |
-            Handover instructions, e.g. "Call before handover; give to Achieng
-            (sister)." Specified by ADR 0018 (checkout-delivery direction).
-        alternate_collector:
-          allOf: [{ $ref: '#/components/schemas/Contact' }]
-          description: |
-            Someone other than the recipient authorised to collect. Specified by
-            ADR 0018 (checkout-delivery direction).
-      required: [quote_id, sender, recipient]
+            Optional shop-owned provider handoff URL. The shop controls the
+            customer/order details behind this URL (ADR 0025).
+      required: [quote_id, shop_order_ref]
 
     Delivery:
       type: object
@@ -640,15 +609,15 @@ components:
           pattern: '^trk_[a-f0-9]{32}$'
         status: { $ref: '#/components/schemas/TrackingStatus' }
         quote: { $ref: '#/components/schemas/Quote' }
-        sender: { $ref: '#/components/schemas/Contact' }
-        recipient: { $ref: '#/components/schemas/Contact' }
-        instructions:
+        shop_order_ref:
           type: string
-          description: |
-            Handover instructions recorded at booking. Specified by ADR 0018
-            (checkout-delivery direction).
+          description: Shop-owned order or delivery reference used for orchestration.
+        shop_handoff_url:
+          type: string
+          format: uri
+          description: Optional shop-owned provider handoff URL.
         created_at: { type: string, format: date-time }
-      required: [tracking_id, status, quote, sender, recipient, created_at]
+      required: [tracking_id, status, quote, shop_order_ref, created_at]
 
     TrackingEvent:
       type: object

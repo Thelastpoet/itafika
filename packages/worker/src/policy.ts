@@ -15,6 +15,10 @@ export function createTrackingId(): string {
   return opaqueId("trk", 32);
 }
 
+export function createSubmissionId(): string {
+  return opaqueId("sub", 24);
+}
+
 export function addHours(iso: string, hours: number): string {
   return new Date(Date.parse(iso) + hours * 60 * 60 * 1000).toISOString();
 }

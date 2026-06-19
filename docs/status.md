@@ -1,6 +1,6 @@
 # Project Status
 
-This project is currently being built.
+This project is currently being built as a delivery orchestration API/control plane for ecommerce checkout.
 
 This page shows what is currently working and what is still being built. Use it together with these other docs:
 
@@ -31,7 +31,7 @@ The API supports these actions:
 - See when each town's data was last updated.
 - Browse different delivery modes and options for each town.
 - Get delivery quotes (prices and times).
-- Book a delivery and get a tracking ID.
+- Create delivery orchestration state from a selected quote and get a tracking ID.
 - Track a parcel and see its history.
 - Add manual updates to a delivery.
 
@@ -40,7 +40,8 @@ Current behavior is simple:
 - Quotes come from the data we've already added to the system.
 - Quotes are valid for 24 hours.
 - You can only book a quote once.
-- Tracking uses one simple list of statuses for every provider.
+- Tracking uses one status flow across providers.
+- The current Worker still includes Phase 1 booking-contact compatibility. ADR 0025 defines the Phase 2 boundary: shops keep customer/order/contact data and Itafika stores shop references plus delivery orchestration state.
 
 ## What is still being improved
 
@@ -48,13 +49,13 @@ Some parts of the project are just starting out:
 
 - **Price freshness:** Prices come from the community-maintained dataset. Keeping them fresh is community work — checking prices, updating them, and recording a source for every one.
 - **Tracking updates:** Tracking works through booking events and manual updates. Updates confirmed by providers (for example, a parcel desk replying on WhatsApp) come next.
-- **Data coverage:** We are still adding more towns and delivery companies. Some data is just for testing right now.
+- **Data coverage:** We are still adding more towns and providers. Some data is just for testing right now.
 
 ## What is planned for the future
 
 These are big features we want to add as the project grows:
 
-- Connections to more providers — through human handoff (WhatsApp or SMS to a parcel desk) for most, and through APIs for the few couriers that have them.
+- Provider on-ramps — hosted universal adapter surfaces for routes, rates, booking confirmation, and tracking updates.
 - Automatic background tasks (like checking for tracking updates).
 - Better tools for handling complicated delivery steps and retries.
 
@@ -71,8 +72,8 @@ If you want to run it on your own computer or deploy it yourself, see [`docs/dep
 The main Phase 1 features are ready. Now we are focused on:
 
 - **Adding more data:** Replacing test prices with real ones and adding more towns.
-- **Easier contribution:** Making it easier for non-developers to share data using a simple form.
-- **Human-handoff booking:** Designing how a booking reaches a provider that has no software (for example, a WhatsApp message to a SACCO parcel desk).
+- **Easier contribution:** Making it easier for non-developers and providers to submit reference data through the provider on-ramp and online moderation flow.
+- **Provider handoff:** Implementing shop-referenced provider tasks for providers that use the hosted universal adapter surface.
 
 ## How to contribute
 

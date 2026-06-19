@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Itafika — open-source logistics aggregator API for Kenya</title>
+<title>Itafika — delivery orchestration API/control plane for Kenya</title>
 <style>
   :root{
     --ink:#0b1726;
@@ -278,8 +278,8 @@
 <header class="hero">
   <div class="wrap">
     <h1>Itafika</h1>
-    <div class="tag">A free, open-source tool to connect all delivery services in Kenya.</div>
-    <p class="hero-lead">One clean API any online shop can use to solve delivery — <b>locations, transport modes, and rates already built in.</b> At checkout, a customer picks a location and sees real ways to get the goods to them, with clear prices and times. Developers don't have to build Kenya's delivery system from zero anymore.</p>
+    <div class="tag">A delivery orchestration API/control plane for ecommerce checkout in Kenya.</div>
+    <p class="hero-lead">One clean API any online shop can use to orchestrate delivery — <b>locations, transport modes, providers, and rates already built in.</b> At checkout, a customer picks a location and sees real ways to get the goods to them, with clear prices and times. Shops keep customer and order data while Itafika coordinates delivery options and provider handoff state.</p>
     <div class="ctarow">
       <a class="btn primary" href="#try">▶ Try the quote API</a>
       <a class="btn ghost" href="#contribute">Become a contributor</a>
@@ -421,7 +421,7 @@
         <div class="ic">🗺️</div>
         <h3>Contribute data</h3>
         <p>No code required. Add a stage, hub, or a rate you actually know — this is the most helpful thing most people can do.</p>
-        <div class="more">Edit <code>spec/data/*.csv</code>, add your row with a <code>source</code>, and open a Pull Request. Correcting an old rate is just as important as adding a new one.</div>
+        <div class="more">Add a route, rate, or stage with a clear <code>source</code>. Phase 2 routes submissions through online moderation into D1 and keeps the open dataset available as a generated public snapshot.</div>
         <div class="tap">Tap to expand ↓</div>
       </div>
       <div class="ac" data-ac>
@@ -453,7 +453,7 @@
       </div>
       <div class="add-row">
         <button id="addRow">+ Add my local route</button>
-        <span class="note">That's the entire contribution flow — a row, a source, a pull request.</span>
+        <span class="note">The useful unit is still simple: a route, a rate, and a source.</span>
       </div>
     </div>
   </div>
@@ -505,7 +505,7 @@
 <footer>
   <div class="wrap">
     <div class="big">Itafika — so that any shop can simply say: it will arrive.</div>
-    <div>Open-source logistics aggregator API for Kenya</div>
+    <div>Delivery orchestration API/control plane for Kenya</div>
   </div>
 </footer>
 
@@ -683,9 +683,9 @@ const EPS=[
   {v:"POST",path:"/v1/quotes",t:"Get delivery options",d:"The heart of Itafika. Returns every option across all transport classes with cost, time, and reliability.",
    req:{origin_zone_id:"ZONE_NBI_CBD_01",destination_zone_id:"ZONE_NKR_MAIN",package_weight_kg:2.5,package_type:"apparel"},
    res:{quotes:[{quote_id:"qt_2mn41bq",provider_type:"matatu_sacco",provider_name:"Mololine Sacco",estimated_cost_kes:400,estimated_time:"3 hours",reliability_score:0.98}]}},
-  {v:"POST",path:"/v1/deliveries",t:"Book a quote",d:"Locks in a chosen quote, records the delivery, and returns a tracking ID.",
-   req:{quote_id:"qt_2mn41bq",sender:{name:"Asha",phone:"+254712345678"},recipient:{name:"John",phone:"+254723456789"}},
-   res:{tracking_id:"trk_kf93md2",status:"package_picked",created_at:"2026-06-08T08:14:00Z"}},
+  {v:"POST",path:"/v1/deliveries",t:"Create delivery state",d:"Creates delivery orchestration state from a chosen quote and returns a tracking ID.",
+   req:{quote_id:"qt_2mn41bq",shop_order_ref:"ORDER-12345",shop_handoff_url:"https://shop.example.com/delivery-handoff/ORDER-12345"},
+   res:{tracking_id:"trk_kf93md2",status:"booking_requested",created_at:"2026-06-08T08:14:00Z"}},
   {v:"GET",path:"/v1/deliveries/{id}/track",t:"Track a delivery",d:"Returns the universal status and history — one vocabulary across every provider.",
    req:"GET /v1/deliveries/trk_kf93md2/track",res:{tracking_id:"trk_kf93md2",status:"in_transit",history:[{status:"package_picked",at:"2026-06-08T08:14:00Z"},{status:"in_transit",at:"2026-06-08T08:40:00Z"}]}},
 ];

@@ -32,9 +32,10 @@ Providers reach Itafika through **two on-ramps, same destination:**
 - **Technical (has a system/devs).** Implement the open adapter contract directly, or
   self-host Itafika.
 
-The core mission is **unchanged**: make ecommerce delivery work for online shops —
-one API call, all the options. The provider tool exists only to produce what the core
-API needs: a real booking confirmation and a real tracking event.
+The core mission is **unchanged**: Itafika is a delivery orchestration API/control
+plane for ecommerce checkout — one API call, all the delivery options and provider
+handoff state. The provider tool produces what the orchestration API needs: real
+provider supply, booking confirmation, and tracking events.
 
 ## Rationale
 
@@ -54,14 +55,11 @@ Rejected. For the bulk of the market there is no API to connect to, and there is
 credible path to one appearing. Building the first live adapter is still worthwhile but
 is the *tail* of Phase 2, not its premise.
 
-### Build full provider operations software (a provider SaaS)
+### Build broad provider operations software
 
-Rejected as scope and as mission drift. A tool that manages a provider's own
-operations — beyond producing the confirmation and tracking event Itafika needs — turns
-Itafika into a different company and contradicts the concept doc: *"Itafika is not trying
-to be a delivery company. It's the open foundation."* Keep the tool as thin as
-"receive booking → confirm → mark delivered." If providers pull us toward more, let it be
-demand-driven and decided under its own ADR.
+Rejected as Phase 2 scope. The hosted provider surface stays focused on route/rate
+submission, booking confirmation, and tracking updates. Broader provider operations
+features require their own ADR.
 
 ## Consequences
 

@@ -2,11 +2,11 @@
 
 > This is the official standard for Itafika adapters. Any adapter — no matter the language it's written in — must follow this contract. The TypeScript interface is in `packages/adapters/src/types.ts` and uses types from [`openapi.yaml`](openapi.yaml).
 >
-> Right now, the system uses adapters for **quotes and bookings** (ADRs 0013, 0014). Tracking through adapters is coming later; for now, tracking updates come from bookings and manual updates (ADR 0015).
+> The system uses adapters for **quotes and delivery orchestration handoff** (ADRs 0013, 0014, 0025). Tracking through adapters is coming later; for now, tracking updates come from bookings and manual updates (ADR 0015).
 
 ## What an adapter is
 
-An **adapter** is what connects Itafika to a provider — like a rider pool, a matatu/bus SACCO, or a courier. The main engine doesn't have code for specific providers. Instead, it talks to every provider using this same small interface, gets their answers, and shows them to the shop.
+An **adapter** connects Itafika to a provider — like a rider pool, a matatu/bus SACCO, or a courier. The main engine talks to providers through this small interface, gets route/price/handoff answers, and returns them to the shop.
 
 ```
 Core Routing Engine
@@ -17,14 +17,14 @@ Core Routing Engine
    └──► G4SAdapter              (national_courier)
 ```
 
-This is how we grow: to add a new provider, you just write one adapter. The contract is stable; the system already handles quotes and bookings through adapters. Tracking through adapters comes later (ADR 0015).
+This is how we grow: to add a new provider, you write one adapter. The contract is stable; the system handles quotes and delivery handoff through adapters. Tracking through adapters comes later (ADR 0015).
 
 ## The interface
 
 Each adapter answers a few basic questions about its provider. These methods match the API in [`openapi.yaml`](openapi.yaml).
 
 ```typescript
-interface LogisticsProviderInterface {
+interface DeliveryOrchestrationAdapter {
   /**
    * Basic info about this provider.
    */
@@ -40,8 +40,8 @@ interface LogisticsProviderInterface {
   quote(request: QuoteRequest): Promise<ProviderQuote | null>;
 
   /**
-   * Book a delivery that was already quoted. Returns a provider reference
-   * and the starting status.
+   * Create provider handoff state for a delivery that was already quoted.
+   * Returns a provider reference and the starting status.
    *
    * Drives: POST /v1/deliveries
    */
@@ -88,12 +88,8 @@ interface BookingOrder {
   quote_id: string;
   origin_zone_id: string;
   destination_zone_id: string;
-  sender: Contact;
-  recipient: Contact;
-  package_description?: string;
-
-  instructions?: string;                  // handover instructions (ADR 0018)
-  alternate_collector?: Contact;          // someone else authorized to collect (ADR 0018)
+  shop_order_ref: string;                 // shop-owned order/delivery reference (ADR 0025)
+  shop_handoff_url?: string;              // shop-owned provider handoff URL (ADR 0025)
 }
 
 // ADR 0017 (discovery)
@@ -114,7 +110,9 @@ interface BookingResult {
 }
 ```
 
-`QuoteRequest`, `ProviderType`, `TrackingStatus`, `Contact`, `CollectionType`, and `CollectionPoint` are defined in [`openapi.yaml`](openapi.yaml). Adapters use these shared types.
+`QuoteRequest`, `ProviderType`, `TrackingStatus`, `CollectionType`, and `CollectionPoint` are defined in [`openapi.yaml`](openapi.yaml). Adapters use these shared types.
+
+The shop owns customer/order/contact data. `shop_order_ref` and `shop_handoff_url` are the orchestration handles an adapter uses for provider handoff.
 
 ## The three kinds of adapter
 

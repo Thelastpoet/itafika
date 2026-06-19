@@ -11,6 +11,16 @@ import { bookDelivery } from "./delivery-service.js";
 import { clampLimit, isQuoteId, isTrackingId, parseContact, parseInstructions, parsePackageDescription, parseTrackingNote } from "./validation.js";
 import { createQuotes } from "./quote-service.js";
 import { listOptions } from "./options-service.js";
+import { authenticateModerator } from "./auth.js";
+import { exportReferenceData } from "./export-service.js";
+import {
+  approveSubmission,
+  createSubmission,
+  listSubmissions,
+  rejectSubmission,
+  type SubmissionInput,
+  type SubmissionStatus,
+} from "./moderation.js";
 
 const json = (data: unknown, status = 200): Response =>
   new Response(JSON.stringify(data), { status, headers: { "content-type": "application/json" } });
@@ -176,6 +186,79 @@ async function handleCreateTrackingEvent(request: Request, env: Env, trackingId:
   return json(result, 201);
 }
 
+const SUBMISSION_TARGETS = new Set(["rates", "zones", "providers", "modes"]);
+const SUBMISSION_OPERATIONS = new Set(["create", "update"]);
+const SUBMISSION_STATUSES = new Set(["pending", "approved", "rejected"]);
+
+async function handleCreateSubmission(request: Request, env: Env): Promise<Response> {
+  let body: Partial<SubmissionInput>;
+  try {
+    body = (await request.json()) as Partial<SubmissionInput>;
+  } catch {
+    return fail("invalid_request", "Request body must be valid JSON", 400);
+  }
+
+  if (typeof body.target !== "string" || !SUBMISSION_TARGETS.has(body.target)) {
+    return fail("invalid_request", "target must be one of rates, zones, providers, modes", 400);
+  }
+  if (typeof body.operation !== "string" || !SUBMISSION_OPERATIONS.has(body.operation)) {
+    return fail("invalid_request", "operation must be create or update", 400);
+  }
+  if (typeof body.payload !== "object" || body.payload === null) {
+    return fail("invalid_request", "payload must be an object", 400);
+  }
+  if (typeof body.source !== "string" || body.source.trim().length === 0) {
+    return fail("invalid_request", "source is required", 400);
+  }
+  if (typeof body.submitted_by !== "string" || body.submitted_by.trim().length === 0) {
+    return fail("invalid_request", "submitted_by is required", 400);
+  }
+
+  const input: SubmissionInput = {
+    target: body.target as SubmissionInput["target"],
+    operation: body.operation as SubmissionInput["operation"],
+    payload: body.payload,
+    source: body.source,
+    submitted_by: body.submitted_by,
+  };
+  const submission = await createSubmission(env.itafika, input, new Date().toISOString());
+  if (!submission) return fail("invalid_request", "payload is not valid for the given target", 400);
+  return json(submission, 201);
+}
+
+async function reviewNoteFrom(request: Request): Promise<string | null> {
+  try {
+    const body = (await request.json()) as { note?: unknown };
+    return typeof body.note === "string" ? body.note : null;
+  } catch {
+    return null;
+  }
+}
+
+async function handleReviewSubmission(
+  request: Request,
+  env: Env,
+  id: string,
+  action: "approve" | "reject",
+): Promise<Response> {
+  const moderator = authenticateModerator(env, request);
+  if (!moderator) return fail("unauthorized", "valid moderator credentials are required", 401);
+
+  const note = await reviewNoteFrom(request);
+  const now = new Date().toISOString();
+  const result =
+    action === "approve"
+      ? await approveSubmission(env.itafika, id, moderator, note, now)
+      : await rejectSubmission(env.itafika, id, moderator, note, now);
+
+  if (!result.ok) {
+    if (result.reason === "not_found") return fail("not_found", "Unknown submission", 404);
+    if (result.reason === "already_reviewed") return fail("already_reviewed", "submission is not pending", 409);
+    return fail("invalid_request", "submission payload is not applicable", 422);
+  }
+  return json(result.submission);
+}
+
 export default {
   async fetch(request, env): Promise<Response> {
     const url = new URL(request.url);
@@ -231,6 +314,40 @@ export default {
           const result = await listOptions(env.itafika, originZoneId, destinationTown, mode ?? undefined);
           return json(result);
         });
+      }
+
+      if (pathname === "/v1/export") {
+        return await handleReadRoute(method, async () => {
+          const data = await exportReferenceData(env.itafika, new Date().toISOString());
+          return json(data);
+        });
+      }
+
+      if (pathname === "/v1/submissions") {
+        if (method === "GET" || method === "HEAD" || method === "OPTIONS") {
+          const allowedMethods = ["GET", "HEAD", "POST", "OPTIONS"];
+          if (method === "OPTIONS") return options(allowedMethods);
+          const moderator = authenticateModerator(env, request);
+          if (!moderator) return fail("unauthorized", "valid moderator credentials are required", 401);
+          const handler = async () => {
+            const statusParam = url.searchParams.get("status");
+            if (statusParam !== null && !SUBMISSION_STATUSES.has(statusParam)) {
+              return fail("invalid_request", "status must be pending, approved, or rejected", 400);
+            }
+            const submissions = await listSubmissions(env.itafika, (statusParam ?? undefined) as SubmissionStatus | undefined);
+            return json({ submissions });
+          };
+          return method === "HEAD" ? head(await handler()) : await handler();
+        }
+        if (method === "POST") return await handleCreateSubmission(request, env);
+        return methodNotAllowed(["GET", "HEAD", "POST", "OPTIONS"]);
+      }
+
+      const review = pathname.match(/^\/v1\/submissions\/([^/]+)\/(approve|reject)$/);
+      if (review) {
+        return await handleWriteRoute(method, async () =>
+          await handleReviewSubmission(request, env, decodeURIComponent(review[1]!), review[2] as "approve" | "reject"),
+        );
       }
 
       if (pathname === "/v1/quotes") {

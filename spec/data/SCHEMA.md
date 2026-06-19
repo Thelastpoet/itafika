@@ -1,8 +1,15 @@
 # Open Dataset — Schema & Rules
 
-These files show how parcels move across Kenya. They are maintained by the community and are the official source of truth for the Itafika project.
+These files define the seed and public snapshot schema for Itafika reference data:
+zones, providers, modes, routes, rates, and freshness. They describe the data used by
+the delivery orchestration API/control plane to quote options and hand off delivery
+state.
 
-The data is organized into four files: **zones**, **providers**, **rates**, and **modes**. They are CSV files, so they are easy to edit and review in a Pull Request.
+ADR 0023 makes D1 the operational source of truth for reference data. The CSV format
+remains the portable seed/export shape so the dataset stays inspectable, forkable, and
+auditable.
+
+The data is organized into four files: **zones**, **providers**, **rates**, and **modes**.
 
 ---
 
@@ -24,7 +31,7 @@ Every place where a package can be picked up or dropped off.
 
 ---
 
-## `providers.csv` — carriers
+## `providers.csv` — providers
 
 | Column | Type | Notes |
 |--------|------|-------|
@@ -37,7 +44,8 @@ Every place where a package can be picked up or dropped off.
 
 ## `modes.csv` — transport modes
 
-The different ways parcels can be moved (e.g. by boda, matatu, or bus). This list is managed in this file, not in the code. If you add a mode here, it will automatically show up in the API.
+The different ways parcels can be moved (e.g. by boda, matatu, or bus). This list is
+managed as reference data, not hardcoded in application logic.
 
 | Column | Type | Notes |
 |--------|------|-------|

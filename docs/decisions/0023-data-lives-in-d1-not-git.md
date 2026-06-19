@@ -42,7 +42,8 @@ the closed system its own concept doc criticizes.
   keeping the dataset open, forkable, and auditable. The export also serves as the backup
   that git used to provide for free.
 - The export obeys [ADR 0024](0024-data-classification-and-protection.md): it is
-  allowlist-only over **reference** tables and never includes personal data.
+  allowlist-only over **reference** tables and never includes customer data or active
+  delivery orchestration records.
 
 ## Rationale
 

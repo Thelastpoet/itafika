@@ -1,14 +1,20 @@
 # How to Help with Delivery Data
 
-This guide is for anyone who wants to help improve our list of delivery locations and prices.
+This guide is for anyone who wants to help improve Itafika reference data: locations,
+providers, routes, rates, and freshness.
 
-You don't need to be a developer to help. If you know a stage, a route, a delivery company, or a price that needs to be added or fixed, you can contribute.
+Today, the CSV files in `spec/data/` are the seed and public snapshot format. ADR 0023
+makes D1 the operational source of truth for reference data, with moderated online
+updates as Phase 2 is built.
+
+You don't need to be a developer to help. If you know a stage, a route, a provider, or
+a price that needs to be added or fixed, you can contribute.
 
 ## What you can help with
 
 - Add a new town, stage, or hub.
 - Fix the name or location of a stage.
-- Add a new delivery company (provider).
+- Add a new provider.
 - Add a new price for a route.
 - Fix an old or wrong price.
 - Update the date when a town's prices were last checked.
@@ -18,7 +24,7 @@ You don't need to be a developer to help. If you know a stage, a route, a delive
 Our data is kept in the `spec/data/` folder in these files:
 
 - `zones.csv` — List of towns and stages.
-- `providers.csv` — List of delivery companies.
+- `providers.csv` — List of providers.
 - `rates.csv` — List of prices between locations.
 - `freshness.csv` — When each town's data was last checked.
 
@@ -35,7 +41,7 @@ mololine,ZONE_NBI_CBD_01,ZONE_NYR_MAIN,350,0,3 hours,20,sacco-desk-call
 
 What each value means:
 
-- `provider_id`: The ID of the company (find it in `providers.csv`).
+- `provider_id`: The ID of the provider (find it in `providers.csv`).
 - `origin_zone_id`: Where the parcel starts (find it in `zones.csv`).
 - `destination_zone_id`: Where the parcel is going (find it in `zones.csv`).
 - `base_cost_kes`: The starting price in Kenya Shillings.
@@ -54,7 +60,7 @@ Good examples of a source:
 - `sacco-desk-call` (you called their office)
 - `merchant-verified` (a shop owner confirmed it)
 
-Please don't just guess. If you're not 100% sure about a price, tell us it's an estimate in your pull request.
+Please don't just guess. If you're not 100% sure about a price, tell us it's an estimate in your submission.
 
 ## Before you submit your changes
 

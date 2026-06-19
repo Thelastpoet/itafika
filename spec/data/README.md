@@ -1,11 +1,16 @@
 # Itafika Open Dataset
 
-This is where we store all information about zones, providers, and prices. See [`SCHEMA.md`](SCHEMA.md) for details on the format.
+This folder defines the seed and public snapshot format for Itafika reference data:
+zones, providers, modes, routes, rates, and freshness. See [`SCHEMA.md`](SCHEMA.md)
+for details on the format.
+
+ADR 0023 makes D1 the operational source of truth for reference data. These CSV files
+remain useful as seed data, examples, and generated public export snapshots.
 
 | File | What's in it |
 |------|------|
 | `zones.csv` | Locations — like CBD hubs, stages, and estates |
-| `providers.csv` | List of carriers and their reliability |
+| `providers.csv` | List of providers and their reliability |
 | `rates.csv` | Price list: provider × origin × destination |
 | `freshness.csv` | When data for each town was last updated |
 

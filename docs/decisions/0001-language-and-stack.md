@@ -16,7 +16,7 @@ The reference implementation uses **TypeScript and Cloudflare Workers**.
 Key components:
 
 - **Workers** for the HTTP API.
-- **D1** for storing zones, providers, rates, and tracking events.
+- **D1** for storing zones, providers, rates, delivery orchestration state, and tracking events.
 - **Queues** for background tasks like processing webhooks.
 - **Workflows** for multi-step processes like booking and retries.
 - **Durable Objects** for managing state when a single authority is needed.
@@ -29,7 +29,7 @@ The API contract remains in [`spec/openapi.yaml`](../../spec/openapi.yaml). The 
 - **Contributor-friendly.** TypeScript, JSON, and HTTP are familiar to the web developers most likely to contribute adapters and examples.
 - **Spec fidelity.** Generated types keep the Worker, core engine, and adapters aligned with the OpenAPI contract.
 - **Low operating burden.** Workers, D1, Queues, Workflows, and Durable Objects remove the need to run separate API servers, job workers, and databases for the early product.
-- **Good fit for logistics.** Delivery flows are naturally asynchronous and retry-heavy. Cloudflare Workflows and Queues give those flows durable execution without turning the API into a long-running server process.
+- **Good fit for delivery orchestration.** Delivery flows are naturally asynchronous and retry-heavy. Cloudflare Workflows and Queues give those flows durable execution without turning the API into a long-running server process.
 - **Small Phase 1 surface.** The MVP can be a Worker plus D1. More primitives are introduced only when the lifecycle needs them.
 
 ## Consequences
