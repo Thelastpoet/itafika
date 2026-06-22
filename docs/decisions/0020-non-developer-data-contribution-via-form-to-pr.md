@@ -1,11 +1,11 @@
-# ADR 0020 — Allow data updates via a web form
+# ADR 0020: Allow data updates via a web form
 
 **Status:** Superseded by [ADR 0023](0023-data-lives-in-d1-not-git.md)
 **Date:** 2026-06-09
 
 > Never implemented. The form → pull request model is replaced by an online moderation
-> queue writing to D1 (see [ADR 0023](0023-data-lives-in-d1-not-git.md)). The goal —
-> letting non-developers contribute — is retained; the mechanism changed.
+> queue writing to D1 (see [ADR 0023](0023-data-lives-in-d1-not-git.md)). The goal,
+> letting non-developers contribute, is retained; the mechanism changed.
 
 ## Context
 
@@ -40,14 +40,14 @@ contributor → form Worker → GitHub PR against spec/data/*.csv
 
 ## Options considered
 
-- **Form writes directly to D1.** Rejected — inverts the canonical model (CSV is the
+- **Form writes directly to D1.** Rejected: inverts the canonical model (CSV is the
   source of truth, D1 is disposable), bypasses provenance and review, and either gets
   wiped on reseed or drifts into a second source of truth. Unverified data going live
   instantly is precisely the "confident guess" the project guards against.
-- **Form lives on the public API Worker.** Rejected — puts a GitHub token and a public
+- **Form lives on the public API Worker.** Rejected: puts a GitHub token and a public
   write/spam surface on the clean read API; mixes concerns ADR 0009 keeps apart.
 - **A staging queue with a moderation UI now** (Worker writes submissions to a review
-  store; a maintainer approves; approved rows are batched into a CSV PR). Deferred —
+  store; a maintainer approves; approved rows are batched into a CSV PR). Deferred:
   more to build than is warranted yet. Keep as the **scale-up step** if PR-per-
   submission becomes noisy; the front-door form is unchanged either way.
 
@@ -61,4 +61,4 @@ contributor → form Worker → GitHub PR against spec/data/*.csv
 - No API contract change; no `spec/` edit.
 - Once built, `CONTRIBUTING.md` and `docs/contribute-data.md` should point non-
   developers at the form first, and the developer CSV/PR path becomes the advanced
-  route — closing the gap between the promise and the reality.
+  route, closing the gap between the promise and the reality.

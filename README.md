@@ -2,11 +2,11 @@
 
 **A delivery orchestration API/control plane for ecommerce checkout in Kenya.**
 
-*"Itafika"* — Swahili, *it will arrive.*
+*"Itafika"* is Swahili for *it will arrive.*
 
-Itafika gives online shops one API for delivery options, provider handoff, and tracking state. Locations, transport modes, providers, and rates are already built in — so shop developers can focus on checkout while Itafika coordinates the delivery layer.
+Itafika gives online shops one API for delivery options, provider handoff, and tracking state. Locations, transport modes, providers, and rates are already built in, so shops can focus on checkout while Itafika coordinates the delivery layer.
 
-At checkout, a customer picks a location and sees real ways to get their goods — a boda rider, a matatu or bus parcel service, or a national courier. Each option shows a price and an estimated time. The shop keeps its customer and order data, and Itafika returns the delivery facts the checkout needs.
+At checkout, a customer picks a location and sees real ways to get their goods: a boda rider, a matatu or bus parcel service, or a courier. Each option shows a price and an estimated time. The shop keeps its customer and order data, and Itafika returns the delivery facts the checkout needs.
 
 > **Delivery should be something you use, not something you have to build yourself.**
 
@@ -16,7 +16,7 @@ At checkout, a customer picks a location and sees real ways to get their goods �
 
 Online shopping in Kenya is growing fast, but delivery is often the hardest part. It's not because there aren't enough ways to move a parcel, but because there are too many and they don't work together. Every shop tries to solve this on their own, which is slow and difficult. Most shops leave out cheap options like matatus and buses because they are too hard to connect to.
 
-Itafika does that coordination work **once, for everyone.** It is the shared delivery orchestration layer for Kenyan ecommerce — like OpenStreetMap for checkout delivery routes, rates, providers, handoff state, and tracking state.
+Itafika does that coordination work **once, for everyone.** It is the shared delivery layer for Kenyan ecommerce, a bit like what OpenStreetMap is for maps: shared routes, rates, providers, handoff state, and tracking state that everyone can build on.
 
 To integrate Itafika into your shop's checkout, start with the [**integration guide**](docs/integration-guide.md).
 
@@ -122,7 +122,7 @@ Itafika is open source, so you can change it to fit your needs. If your shop has
 
 ## Status
 
-🚧 **Phase 1 — Currently being built.**
+🚧 **Phase 1: currently being built.**
 
 The basic parts are already working: the API, the database, tests, and a simple shop example.
 
@@ -132,9 +132,9 @@ Check [`docs/status.md`](docs/status.md) to see exactly what is ready.
 
 | Phase | What | State |
 |-------|------|-------|
-| **1 — Basic API** | Prices and locations for common routes. Booking and tracking are also ready. | Working now |
-| **2 — Growing the system** | More towns, providers, verified prices, provider on-ramps, and shop-referenced booking handoff. | Planned |
-| **3 — Better results** | Improving prices and reliability scores based on real deliveries. | Planned |
+| **1: Basic API** | Prices and locations for common routes. Booking and tracking are also ready. | Working now |
+| **2: Growing the system** | More towns, providers, verified prices, provider on-ramps, and shop-referenced booking handoff. | Planned |
+| **3: Better results** | Improving prices and reliability scores based on real deliveries. | Planned |
 
 ---
 
@@ -162,8 +162,8 @@ Start with [`CONTRIBUTING.md`](CONTRIBUTING.md). If you want to connect a new de
 
 ## License
 
-[MIT](LICENSE) — you can use this for anything, including for-profit businesses. The code is free for everyone to copy and use. The real value is the community-maintained list of how delivery actually works in Kenya.
+[MIT](LICENSE). You can use this for anything, including for-profit businesses. The code is free for everyone to copy and use. The real value is the community-maintained list of how delivery actually works in Kenya.
 
 ---
 
-*Itafika — so that any shop can simply say: it will arrive.*
+*Itafika, so that any shop can simply say: it will arrive.*

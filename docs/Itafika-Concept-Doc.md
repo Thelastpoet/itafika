@@ -2,9 +2,9 @@
 
 ### A delivery orchestration API/control plane for ecommerce checkout in Kenya
 
-*"Itafika"* — Swahili, *it will arrive*.
+*"Itafika"* is Swahili for *it will arrive*.
 
-Itafika gives online shops one API for delivery options, provider handoff, and tracking state. Locations, transport modes, providers, and rates are already built in so shop developers can focus on checkout.
+Itafika gives online shops one API for delivery options, provider handoff, and tracking state. Locations, transport modes, providers, and rates are already built in so shops can focus on checkout.
 
 ---
 
@@ -12,7 +12,7 @@ Itafika gives online shops one API for delivery options, provider handoff, and t
 
 Any online shop in Kenya can plug into Itafika to solve their delivery problems.
 
-At checkout, a customer picks their location and sees real options to get their goods — a boda rider, a matatu or bus parcel service, or a national courier. Each option shows a price and an estimated time. The shop owns the customer and order data; Itafika returns the delivery facts and orchestration state the checkout needs.
+At checkout, a customer picks their location and sees real options to get their goods: a boda rider, a matatu or bus parcel service, or a courier. Each option shows a price and an estimated time. The shop owns the customer and order data; Itafika returns the delivery facts and orchestration state the checkout needs.
 
 **Delivery should be something you use, not something you have to build yourself.**
 
@@ -22,7 +22,7 @@ At checkout, a customer picks their location and sees real options to get their 
 
 Online shopping in Kenya is growing fast, but delivery is often the hardest part. It's not because there aren't enough ways to move a parcel, but because there are too many and they don't work together.
 
-A shop owner who wants to ship a 2kg box from Nairobi to Nyeri can use a boda rider, a matatu SACCO's parcel desk, a long-distance bus, or a national courier. Each has its own prices, its own coverage, and its own way of describing locations. Often, there is no software at all. Also, locations in Kenya don't always behave like street addresses. "Drop it at the stage behind the chemist" is a common and valid instruction that GPS doesn't handle well.
+A shop owner who wants to ship a 2kg box from Nairobi to Nyeri can use a boda rider, a matatu SACCO's parcel desk, a long-distance bus, or a courier. Each has its own prices, its own coverage, and its own way of describing locations. Often, there is no software at all. Also, locations in Kenya don't always behave like street addresses. "Drop it at the stage behind the chemist" is a common and valid instruction that GPS doesn't handle well.
 
 Right now, every developer in Kenya has to figure out delivery on their own, which is slow and difficult. They end up only using a few couriers and ignore cheaper options like matatus and buses because they are too hard to connect to.
 
@@ -32,7 +32,7 @@ Itafika does that work **once, for everyone.**
 
 ## 3. The goal: One delivery orchestration layer for checkout
 
-Itafika acts as the control plane between shops and providers. A shop owner using Itafika can ask one question — *how can this package get from here to there, and what are the options?* — and get one clear answer.
+Itafika acts as the control plane between shops and providers. A shop owner using Itafika can ask one question, *how can this package get from here to there, and what are the options?*, and get one clear answer.
 
 Our job is to turn delivery routes, rates, provider availability, booking confirmation, and tracking state into a clean API for checkout.
 
@@ -161,11 +161,11 @@ GET /v1/deliveries/{tracking_id}/track
 
 We keep our data simple and clear so anyone can help improve it.
 
-**Locations / Zones** — Names of stages and hubs, their type, and where they are located.
+**Locations / Zones:** names of stages and hubs, their type, and where they are located.
 
-**Providers** — The companies and services that move parcels (riders, saccos, couriers).
+**Providers:** the companies and services that move parcels (riders, saccos, couriers).
 
-**Rates** — This is the most valuable part. It lists the cost to move a parcel between any two zones for each provider.
+**Rates:** the most valuable part. It lists the cost to move a parcel between any two zones for each provider.
 
 This information is kept in simple files that anyone can edit. The API uses this data to give you accurate prices.
 
@@ -173,11 +173,11 @@ This information is kept in simple files that anyone can edit. The API uses this
 
 ## 9. Roadmap
 
-**Phase 1 — Basic API (MVP).** We start with the most common routes and rates for Nairobi and other major towns. We've built the API to give useful quotes from this data right now. Even without live tracking for every provider, having standard locations and reliable price estimates is very useful for developers.
+**Phase 1, Basic API (MVP).** We start with the most common routes and rates for Nairobi and other major towns. We've built the API to give useful quotes from this data right now. Even without live tracking for every provider, having standard locations and reliable price estimates is very useful for developers.
 
-**Phase 2 — Growing the system.** We'll invite more people and providers to add towns, routes, rates, and provider details. Providers can use a hosted universal adapter surface for rates, booking confirmation, and tracking updates.
+**Phase 2, Growing the system.** We'll invite more people and providers to add towns, routes, rates, and provider details. Providers can use a hosted universal adapter surface for rates, booking confirmation, and tracking updates.
 
-**Phase 3 — Getting better with time.** As more people use Itafika, we will have more data on which providers are the most reliable. We'll use this to improve our reliability scores and help customers pick the best options.
+**Phase 3, Getting better with time.** As more people use Itafika, we will have more data on which providers are the most reliable. We'll use this to improve our reliability scores and help customers pick the best options.
 
 ---
 
@@ -202,4 +202,4 @@ Our next steps:
 - Improve our working API on Cloudflare.
 - Help others connect more delivery providers to the system.
 
-*Itafika — so that any shop can simply say: it will arrive.*
+*Itafika, so that any shop can simply say: it will arrive.*

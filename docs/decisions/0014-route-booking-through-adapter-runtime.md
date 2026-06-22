@@ -1,4 +1,4 @@
-# ADR 0014 — Use adapters for bookings
+# ADR 0014: Use adapters for bookings
 
 **Status:** Accepted
 **Date:** 2026-06-09
@@ -16,7 +16,7 @@ booking for an expired or already-booked quote. The unique index on
 `deliveries.quote_id` (migration 0004) remains the authority for races; a booking
 that loses the race fails soft and returns "not bookable" rather than throwing.
 
-This change touches neither the public API nor the adapter contract — both already
+This change touches neither the public API nor the adapter contract; both already
 specify this behavior. Per the spec-first rule it needs no `openapi.yaml` change.
 
 ## Rejected options
@@ -34,7 +34,7 @@ additive API change that can be made later under its own ADR if a client needs i
 ### Keep hard-coding the initial status
 
 Rejected because it leaves booking nominally adapter-driven while the provider has
-no say in the outcome — the exact gap this stage exists to close.
+no say in the outcome, the exact gap this stage exists to close.
 
 ## Consequences
 

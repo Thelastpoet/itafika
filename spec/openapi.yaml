@@ -7,7 +7,7 @@ info:
 
     Itafika gives any online shop a single interface to quote delivery options,
     create provider handoff state, and track delivery state across riders,
-    matatu/bus SACCOs, and national couriers — with Kenyan locations modelled
+    matatu/bus SACCOs, and couriers, with Kenyan locations modelled
     as zones and stages rather than street addresses.
 
     This document is the **canonical Phase 1 contract**. The Cloudflare Worker
@@ -25,7 +25,7 @@ servers:
 
 tags:
   - name: Zones
-    description: Locations — CBD hubs, upcountry stages, residential areas.
+    description: Locations such as CBD hubs, upcountry stages, and residential areas.
   - name: Dataset
     description: Metadata about the currently loaded open dataset.
   - name: Discovery
@@ -149,7 +149,7 @@ paths:
       description: |
         Returns the navigable option tree for the shop's origin into the customer's
         town: which providers serve the route, in which mode, where they collect, and
-        an indicative starting cost. This is **navigation, not pricing** — it takes no
+        an indicative starting cost. This is **navigation, not pricing**: it takes no
         package weight and returns no bookable price. Once the customer picks a
         collection point (which becomes the `destination_zone_id`) and the weight is
         known, the shop calls `POST /v1/quotes` for the exact, bookable price.
@@ -207,7 +207,7 @@ paths:
       description: |
         Returns the transport modes a customer can choose between, each with display
         metadata. The registry is governed reference data (ADR 0019), not a hardcoded
-        list — a shop can render any mode, including ones added after it was built,
+        list, so a shop can render any mode, including ones added after it was built,
         without a code change.
       operationId: listModes
       responses:
@@ -410,7 +410,7 @@ components:
     ProviderType:
       type: string
       description: |
-        A transport-mode identifier — the "mode" a customer chooses, and how adapters
+        A transport-mode identifier: the "mode" a customer chooses, and how adapters
         are grouped. This is an **open identifier drawn from the modes registry**
         (`GET /v1/modes`), **not a closed set** (ADR 0019). New modes are added as
         governed reference data (`modes.csv`), never by changing this contract or the
@@ -426,7 +426,7 @@ components:
       type: object
       description: |
         A transport mode in the registry, with display metadata so a shop can render
-        any mode — including ones added after it was built — without a code change
+        any mode, including ones added after it was built, without a code change
         (ADR 0019).
       properties:
         id: { $ref: '#/components/schemas/ProviderType' }
@@ -528,13 +528,13 @@ components:
           minimum: 0
           maximum: 1
           description: |
-            0–1 confidence in on-time, intact delivery. Asserted by the community or
-            the provider's adapter — not yet measured from real deliveries. Omitted
+            0 to 1 confidence in on-time, intact delivery. Asserted by the community or
+            the provider's adapter, not yet measured from real deliveries. Omitted
             when there is no basis for a value (ADR 0021).
         collection_type:
           allOf: [{ $ref: '#/components/schemas/CollectionType' }]
           description: |
-            How the customer gets this option's parcel — collect at the
+            How the customer gets this option's parcel: collect at the
             provider's office/stage, or door delivery. Specified by ADR 0016
             (checkout-delivery direction).
         collection_point:
@@ -556,7 +556,7 @@ components:
       type: object
       description: |
         A provider+mode the customer can choose for a destination town, with where it
-        collects and an indicative starting cost. Navigation only — the exact bookable
+        collects and an indicative starting cost. Navigation only: the exact bookable
         price comes from POST /v1/quotes. Specified by ADR 0017 (checkout-delivery
         direction). `provider_id` is deliberately not exposed (internal column).
       properties:
@@ -568,7 +568,7 @@ components:
           minimum: 0
           maximum: 1
           description: |
-            0–1 confidence; asserted, not measured. Omitted when there is no basis
+            0 to 1 confidence; asserted, not measured. Omitted when there is no basis
             for a value (ADR 0021).
         collection_type: { $ref: '#/components/schemas/CollectionType' }
         collection_points:

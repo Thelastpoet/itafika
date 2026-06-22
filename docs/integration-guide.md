@@ -1,4 +1,4 @@
-# Integration Guide — Using Itafika in Your Checkout
+# Integration Guide: Using Itafika in Your Checkout
 
 This guide is for developers who want to add delivery orchestration to their online shop without rebuilding Kenyan route, stage, provider, and pricing knowledge. You make a few API calls, and Itafika returns checkout-ready delivery options, provider handoff state, and tracking state.
 
@@ -15,7 +15,7 @@ You can use the live API here:
 https://itafika-api.emcie4.workers.dev
 ```
 
-Right now, there is no password or API key needed — anyone can use it. We are using version 1 of the API (`/v1`).
+Right now, there is no password or API key needed, so anyone can use it. We are using version 1 of the API (`/v1`).
 
 If something goes wrong, the API will return an error like this:
 

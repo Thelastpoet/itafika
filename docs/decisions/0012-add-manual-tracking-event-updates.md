@@ -1,4 +1,4 @@
-# ADR 0012 — Allow manual tracking updates
+# ADR 0012: Allow manual tracking updates
 
 **Status:** Accepted
 **Date:** 2026-06-08

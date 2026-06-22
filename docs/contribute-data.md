@@ -23,10 +23,10 @@ a price that needs to be added or fixed, you can contribute.
 
 Our data is kept in the `spec/data/` folder in these files:
 
-- `zones.csv` — List of towns and stages.
-- `providers.csv` — List of providers.
-- `rates.csv` — List of prices between locations.
-- `freshness.csv` — When each town's data was last checked.
+- `zones.csv`: list of towns and stages.
+- `providers.csv`: list of providers.
+- `rates.csv`: list of prices between locations.
+- `freshness.csv`: when each town's data was last checked.
 
 ## Example: How to add a rate
 

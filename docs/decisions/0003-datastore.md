@@ -1,6 +1,6 @@
-# ADR 0003 — Use Cloudflare D1 for data storage
+# ADR 0003: Use Cloudflare D1 for data storage
 
-**Status:** Accepted — partially superseded by [ADR 0023](0023-data-lives-in-d1-not-git.md)
+**Status:** Accepted, partially superseded by [ADR 0023](0023-data-lives-in-d1-not-git.md)
 **Date:** 2026-06-08
 
 > The choice of D1 stands. The "CSV files are the source of truth, D1 is disposable" part

@@ -9,7 +9,7 @@ remain useful as seed data, examples, and generated public export snapshots.
 
 | File | What's in it |
 |------|------|
-| `zones.csv` | Locations — like CBD hubs, stages, and estates |
+| `zones.csv` | Locations such as CBD hubs, stages, and estates |
 | `providers.csv` | List of providers and their reliability |
 | `rates.csv` | Price list: provider × origin × destination |
 | `freshness.csv` | When data for each town was last updated |

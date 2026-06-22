@@ -1,4 +1,4 @@
-# ADR 0018 — Historical delivery-contact fields for Phase 1 compatibility
+# ADR 0018: Historical delivery-contact fields for Phase 1 compatibility
 
 **Status:** Accepted (2026-06-10); active booking boundary superseded by [ADR 0025](0025-delivery-orchestration-boundary.md)
 **Date:** 2026-06-09
@@ -37,20 +37,20 @@ Phase 2 delivery orchestration API.
 ## Rationale
 
 - **Makes the booking actionable offline.** The merchant dispatches against a record
-  that contains everything the parcel desk needs — no side-channel WhatsApp.
+  that contains everything the parcel desk needs, with no side-channel WhatsApp.
 - **Matches how pickup actually works** (name + ID + sometimes a proxy), without
   forcing it where it doesn't apply (door delivery, low-value parcels).
 - **Additive.** No break to the `/v1` delivery contract.
 
 ## Options considered
 
-- **Overload `package_description` for instructions.** Rejected — conflates contents
+- **Overload `package_description` for instructions.** Rejected: conflates contents
   with handover instructions; the two are read by different people for different
   reasons.
-- **A free-form metadata bag (`metadata: object`).** Rejected for now — too loose to
+- **A free-form metadata bag (`metadata: object`).** Rejected for now: too loose to
   build reliable handover UX on; named fields set clearer expectations. A general
   metadata field can be argued separately later if shops need it.
-- **Require ID for all office pickups.** Rejected — not every desk demands it and
+- **Require ID for all office pickups.** Rejected: not every desk demands it and
   not every customer has it to hand; keep it optional and let providers/shops decide.
 
 ## Consequences

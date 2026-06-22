@@ -2,7 +2,7 @@
 
 An ADR captures a single significant decision: the context, the options considered, the choice, and its consequences. They exist so the *why* behind Itafika outlives the conversations that produced it.
 
-Per [GOVERNANCE.md](../../GOVERNANCE.md), any change to the spec is accompanied by an ADR. ADRs are immutable once accepted — to change a decision, write a new ADR that supersedes the old one and update the status below.
+Per [GOVERNANCE.md](../../GOVERNANCE.md), any change to the spec is accompanied by an ADR. ADRs are immutable once accepted; to change a decision, write a new ADR that supersedes the old one and update the status below.
 
 | # | Title | Status |
 |---|-------|--------|
@@ -31,14 +31,14 @@ Per [GOVERNANCE.md](../../GOVERNANCE.md), any change to the spec is accompanied 
 | [0024](0024-data-classification-and-protection.md) | Reference export data classification | Accepted (partially superseded by 0025) |
 | [0025](0025-delivery-orchestration-boundary.md) | Itafika is a delivery orchestration API/control plane | Accepted |
 
-ADRs 0022–0025 are a related set that reframes Phase 2. 0022 establishes the provider
+ADRs 0022-0025 are a related set that reframes Phase 2. 0022 establishes the provider
 supply layer. 0023 moves the source of truth to D1 with online moderation, a change-log
 for provenance, and an automated public export for openness. 0024 sets the reference-data
 export boundary. 0025 defines Itafika as a delivery orchestration API/control plane where
 shops own customer/order data, providers handle fulfillment, and Itafika stores
 orchestration state.
 
-ADRs 0016–0019 are a related set that evolved Itafika from a quoting engine into a
+ADRs 0016-0019 are a related set that evolved Itafika from a quoting engine into a
 checkout-delivery layer. They are `Accepted` and implemented in the reference Worker
 (modes registry, collection facts on quotes, and the `/v1/options` discovery surface).
 ADR 0025 is the current delivery-orchestration boundary for Phase 2 booking.

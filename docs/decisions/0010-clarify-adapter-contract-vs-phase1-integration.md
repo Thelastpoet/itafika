@@ -1,4 +1,4 @@
-# ADR 0010 — Define how adapters and the Worker interact
+# ADR 0010: Define how adapters and the Worker interact
 
 **Status:** Accepted
 **Date:** 2026-06-08

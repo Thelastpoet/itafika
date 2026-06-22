@@ -1,4 +1,4 @@
-# ADR 0022 — Itafika builds the provider-side digital layer where none exists
+# ADR 0022: Itafika builds the provider-side digital layer where none exists
 
 **Status:** Accepted
 **Date:** 2026-06-15
@@ -7,9 +7,9 @@
 
 Phase 2 was originally framed as "connect Itafika to live provider adapters and
 their online APIs." Field reality contradicts that framing. Most Kenyan delivery
-providers — matatu SACCOs, bus parcel desks, boda riders — have no API and no
+providers (matatu SACCOs, bus parcel desks, boda riders) have no API and no
 software at all; they take parcels by phone, at a desk, or over WhatsApp. The few
-national couriers that *do* have APIs (e.g. Posta) are precisely the segment that
+couriers that *do* have APIs (e.g. Posta) are precisely the segment that
 needs an aggregator least.
 
 You cannot aggregate a supply that has no digital existence. So the original Phase 2
@@ -33,7 +33,7 @@ Providers reach Itafika through **two on-ramps, same destination:**
   self-host Itafika.
 
 The core mission is **unchanged**: Itafika is a delivery orchestration API/control
-plane for ecommerce checkout — one API call, all the delivery options and provider
+plane for ecommerce checkout: one API call, all the delivery options and provider
 handoff state. The provider tool produces what the orchestration API needs: real
 provider supply, booking confirmation, and tracking events.
 
@@ -42,7 +42,7 @@ provider supply, booking confirmation, and tracking events.
 - **The supply side feeds the demand side.** Shops are the product; provider digitization
   is the means to have real supply behind the quotes shops already ask for.
 - **It is already in the contract.** The manual adapter is one of the three adapter kinds.
-  This is not a new architecture — it is the first serious implementation of an existing
+  This is not a new architecture; it is the first serious implementation of an existing
   seam, plus a self-serve front door for people who cannot write code.
 - **It meets providers where they are**, instead of waiting for an API that, for SACCOs
   and riders, is not coming.

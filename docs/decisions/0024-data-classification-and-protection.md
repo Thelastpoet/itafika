@@ -1,4 +1,4 @@
-# ADR 0024 — Data classification & protection for reference export
+# ADR 0024: Data classification & protection for reference export
 
 **Status:** Accepted, partially superseded by [ADR 0025](0025-delivery-orchestration-boundary.md)
 **Date:** 2026-06-15
@@ -17,12 +17,12 @@ This ADR sets the reference export boundary that the storage decision
 
 Itafika data is classified by purpose.
 
-**Reference data — open and exportable.**
+**Reference data, open and exportable.**
 Zones, routes, rates, modes, provider registry, and coverage. These are operational
 facts about delivery options and provider supply. This is the open, forkable foundation;
 the public export reads from here.
 
-**Orchestration data — operational and private.**
+**Orchestration data, operational and private.**
 Quote ids, tracking ids, provider task ids, shop references, handoff URLs, confirmation
 states, tracking states, timestamps, and audit metadata. This powers the checkout
 delivery flow and provider handoff.
@@ -44,11 +44,11 @@ The separation is **structural, not procedural**: the public export job is
 
 ### Treat every table as public export data
 
-Rejected — openness applies to reference data.
+Rejected: openness applies to reference data.
 
 ### Rely on review/discipline to keep exports clean
 
-Rejected — export safety is structural through an allowlist over reference tables.
+Rejected: export safety is structural through an allowlist over reference tables.
 
 ## Consequences
 

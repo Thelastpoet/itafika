@@ -1,4 +1,4 @@
-# ADR 0013 — Connect the Worker to adapters for quotes
+# ADR 0013: Connect the Worker to adapters for quotes
 
 **Status:** Accepted
 **Date:** 2026-06-09

@@ -1,4 +1,4 @@
-# ADR 0001 — Use TypeScript and Cloudflare Workers
+# ADR 0001: Use TypeScript and Cloudflare Workers
 
 **Status:** Accepted
 **Date:** 2026-06-08

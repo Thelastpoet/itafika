@@ -1,12 +1,12 @@
 # The Adapter Contract
 
-> This is the official standard for Itafika adapters. Any adapter — no matter the language it's written in — must follow this contract. The TypeScript interface is in `packages/adapters/src/types.ts` and uses types from [`openapi.yaml`](openapi.yaml).
+> This is the official standard for Itafika adapters. Any adapter, no matter the language it's written in, must follow this contract. The TypeScript interface is in `packages/adapters/src/types.ts` and uses types from [`openapi.yaml`](openapi.yaml).
 >
 > The system uses adapters for **quotes and delivery orchestration handoff** (ADRs 0013, 0014, 0025). Tracking through adapters is coming later; for now, tracking updates come from bookings and manual updates (ADR 0015).
 
 ## What an adapter is
 
-An **adapter** connects Itafika to a provider — like a rider pool, a matatu/bus SACCO, or a courier. The main engine talks to providers through this small interface, gets route/price/handoff answers, and returns them to the shop.
+An **adapter** connects Itafika to a provider, such as a rider pool, a matatu/bus SACCO, or a courier. The main engine talks to providers through this small interface, gets route/price/handoff answers, and returns them to the shop.
 
 ```
 Core Routing Engine
@@ -57,7 +57,7 @@ interface DeliveryOrchestrationAdapter {
 
   /**
    * List where this provider picks up and drops off parcels.
-   * Optional — if not implemented, the provider won't show up in GET /v1/options.
+   * Optional. If not implemented, the provider won't show up in GET /v1/options.
    *
    * Drives: GET /v1/options
    */
@@ -72,7 +72,7 @@ interface ProviderInfo {
   id: string;                 // stable slug, e.g. "mololine"
   name: string;               // display name, e.g. "Mololine Sacco"
   type: ProviderType;         // transport mode (ADR 0019)
-  reliability_score?: number; // 0–1; asserted, not measured — omit rather than guess (ADR 0021)
+  reliability_score?: number; // 0 to 1; asserted, not measured, so omit rather than guess (ADR 0021)
 }
 
 interface ProviderQuote {
@@ -118,11 +118,11 @@ The shop owns customer/order/contact data. `shop_order_ref` and `shop_handoff_ur
 
 Adapters only differ in *how* they get their answers.
 
-**Static adapter** — gets quotes from the files in [`data/`](data/). It doesn't need the internet to work. Most contributors start here. For example, a matatu adapter looks up the price in a rate table.
+**Static adapter:** gets quotes from the files in [`data/`](data/). It doesn't need the internet to work. Most contributors start here. For example, a matatu adapter looks up the price in a rate table.
 
-**Manual (Human-in-the-loop) adapter** — for providers who don't have software, which is most providers in Kenya. `book()` might send a message (like via WhatsApp) to a rider or parcel desk. A human reply ("Accept") then updates the system. This lets Itafika work with traditional providers without forcing them to have an API.
+**Manual (Human-in-the-loop) adapter:** for providers who don't have software, which is most providers in Kenya. `book()` might send a message (like via WhatsApp) to a rider or parcel desk. A human reply ("Accept") then updates the system. This lets Itafika work with traditional providers without forcing them to have an API.
 
-**Live adapter** — for the few providers that have their own system. It gets quotes by calling that system (like an API), and should use static data as a backup if the provider's system is down. Most Kenyan providers don't have an API — that's what static and manual adapters are for.
+**Live adapter:** for the few providers that have their own system. It gets quotes by calling that system (like an API), and should use static data as a backup if the provider's system is down. Most Kenyan providers don't have an API, which is what static and manual adapters are for.
 
 ## Rules for adapters
 
@@ -130,7 +130,7 @@ Adapters only differ in *how* they get their answers.
 2. **Use the five universal statuses.** Don't invent your own. If your provider doesn't have a match for a status, just skip it.
 3. **Prices are in KES (integers).** Times are readable strings. Follow the `Quote` schema exactly.
 4. **Be resilient.** If a live adapter can't reach its provider, it should use static data or return `null`. It must not crash the whole system.
-5. **Only assert a `reliability_score` you can stand behind.** It's optional — omit it rather than guess. There is no measurement loop yet, so any value is asserted, not computed from real deliveries (ADR 0021).
+5. **Only assert a `reliability_score` you can stand behind.** It's optional, so omit it rather than guess. There is no measurement loop yet, so any value is asserted, not computed from real deliveries (ADR 0021).
 6. **No secrets in the code.** Live adapters must read API keys from environment variables, never from files saved in the repo.
 
 ## How to add an adapter

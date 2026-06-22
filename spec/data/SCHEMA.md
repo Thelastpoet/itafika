@@ -1,4 +1,4 @@
-# Open Dataset — Schema & Rules
+# Open Dataset: Schema & Rules
 
 These files define the seed and public snapshot schema for Itafika reference data:
 zones, providers, modes, routes, rates, and freshness. They describe the data used by
@@ -13,7 +13,7 @@ The data is organized into four files: **zones**, **providers**, **rates**, and 
 
 ---
 
-## `zones.csv` — locations
+## `zones.csv`: locations
 
 Every place where a package can be picked up or dropped off.
 
@@ -27,22 +27,22 @@ Every place where a package can be picked up or dropped off.
 | `lat` | number | Latitude (optional for stages). |
 | `lng` | number | Longitude (optional for stages). |
 
-**ID rules:** use short town codes — `NBI` (Nairobi), `NKR` (Nakuru), `NYR` (Nyeri), `ELD` (Eldoret), `MSA` (Mombasa), `KSM` (Kisumu). For KIND, use `CBD`, `STG` (stage), or `RES` (residential).
+**ID rules:** use short town codes such as `NBI` (Nairobi), `NKR` (Nakuru), `NYR` (Nyeri), `ELD` (Eldoret), `MSA` (Mombasa), `KSM` (Kisumu). For KIND, use `CBD`, `STG` (stage), or `RES` (residential).
 
 ---
 
-## `providers.csv` — providers
+## `providers.csv`: providers
 
 | Column | Type | Notes |
 |--------|------|-------|
 | `id` | string | Unique ID, e.g. `mololine`, `g4s`. |
 | `name` | string | Name shown to customers, e.g. `Mololine Sacco`. |
 | `type` | string | Transport mode ID (from `modes.csv`), e.g. `matatu_sacco`. |
-| `reliability_score` | number | **Optional.** 0–1 score. This is asserted, not measured — leave it blank rather than guess (ADR 0021). |
+| `reliability_score` | number | **Optional.** A 0 to 1 score. This is asserted, not measured, so leave it blank rather than guess (ADR 0021). |
 
 ---
 
-## `modes.csv` — transport modes
+## `modes.csv`: transport modes
 
 The different ways parcels can be moved (e.g. by boda, matatu, or bus). This list is
 managed as reference data, not hardcoded in application logic.
@@ -58,7 +58,7 @@ The default modes are `boda_rider`, `matatu_sacco`, `bus`, `national_courier`, `
 
 ---
 
-## `rates.csv` — the price list
+## `rates.csv`: the price list
 
 One row for every route a provider serves. This is the most important part of the dataset.
 

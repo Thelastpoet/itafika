@@ -10,23 +10,23 @@ Itafika is an open standard with a reference implementation. How it's governed s
 
 ## Roles
 
-**Contributors** — anyone who opens an issue, PR, or data entry. No commitment required.
+**Contributors**: anyone who opens an issue, PR, or data entry. No commitment required.
 
-**Maintainers** — review and merge PRs, triage issues, and safeguard the spec. Maintainers are added by existing maintainers based on a track record of good contributions and judgment.
+**Maintainers**: review and merge PRs, triage issues, and safeguard the spec. Maintainers are added by existing maintainers based on a track record of good contributions and judgment.
 
-**Stewards** — a small group (initially the founder) responsible for the project's direction, the license, and breaking-change decisions. Stewardship is a responsibility, not ownership; the code is MIT and forkable by design.
+**Stewards**: a small group (initially the founder) responsible for the project's direction, the license, and breaking-change decisions. Stewardship is a responsibility, not ownership; the code is MIT and forkable by design.
 
 ## How decisions are made
 
-**Everyday changes** (bug fixes, new adapters, data additions/corrections, docs) — a maintainer reviews and merges. No ceremony.
+**Everyday changes** (bug fixes, new adapters, data additions/corrections, docs): a maintainer reviews and merges. No ceremony.
 
-**Spec changes** (endpoints, fields, types, tracking states, the adapter contract) — require:
+**Spec changes** (endpoints, fields, types, tracking states, the adapter contract) require:
 1. A pull request to `spec/`.
 2. A short ADR in `docs/decisions/` explaining the problem, the options, and the choice.
 3. Sign-off from at least one maintainer who did not author the change.
 4. For **breaking** changes: steward sign-off and a versioning/deprecation plan.
 
-**Disagreements** — discussed in the issue or PR. If consensus among maintainers can't be reached, a steward decides and records the reasoning in an ADR. Decisions are reversible; an ADR can be superseded by a later one.
+**Disagreements** are discussed in the issue or PR. If consensus among maintainers can't be reached, a steward decides and records the reasoning in an ADR. Decisions are reversible; an ADR can be superseded by a later one.
 
 ## Versioning
 

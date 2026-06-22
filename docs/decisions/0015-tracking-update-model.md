@@ -1,4 +1,4 @@
-# ADR 0015 — Simplify tracking as a single event log
+# ADR 0015: Simplify tracking as a single event log
 
 **Status:** Accepted
 **Date:** 2026-06-09
@@ -9,7 +9,7 @@ As we add more ways to update a delivery's status (manually or via providers), w
 
 ## Decision
 
-We will use a **single, append-only event log** for tracking. Every update—whether it's from a manual entry, a provider, or a webhook—gets added as a new event in this log. The current status is always the latest event. We also record the source of each update (e.g., "manual" or "provider") for auditing.
+We will use a **single, append-only event log** for tracking. Every update, whether it's from a manual entry, a provider, or a webhook, gets added as a new event in this log. The current status is always the latest event. We also record the source of each update (e.g., "manual" or "provider") for auditing.
 
 ## Rejected options
 
@@ -21,7 +21,7 @@ one log.
 
 ### Implement a static `track()` now
 
-Rejected because a static adapter can only echo the status we already recorded — it
+Rejected because a static adapter can only echo the status we already recorded; it
 would be circular and would imply provider-driven tracking that does not exist yet.
 
 ## Consequences

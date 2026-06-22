@@ -8,7 +8,7 @@ The "Spec" (in the `spec/` folder) defines how Itafika works for the outside wor
 
 - Put rules in `spec/` if they affect the API or if other developers need to follow them.
 - If a change affects how a shop interacts with Itafika, it must be in the spec.
-- Don't put "how-to-code-it" details in the spec—only "what-it-does" rules.
+- Don't put "how-to-code-it" details in the spec, only "what-it-does" rules.
 
 ## 2. No Hidden Rules in the Code
 

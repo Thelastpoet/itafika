@@ -1,4 +1,4 @@
-# ADR 0002 — Use a spec-first monorepo structure
+# ADR 0002: Use a spec-first monorepo structure
 
 **Status:** Accepted; data-source portions superseded by [ADR 0023](0023-data-lives-in-d1-not-git.md)
 **Date:** 2026-06-08

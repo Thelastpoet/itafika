@@ -1,4 +1,4 @@
-# ADR 0023 — Data lives in D1; git holds code, not data
+# ADR 0023: Data lives in D1; git holds code, not data
 
 **Status:** Accepted
 **Date:** 2026-06-15
@@ -21,7 +21,7 @@ leaves D1 perpetually drifting from the CSVs between reseeds. ADR 0020 itself an
 this and *deferred* an online moderation queue as the "scale-up step." It is time to
 adopt it.
 
-The risk in moving off git is losing the two things git gave Itafika for free —
+The risk in moving off git is losing the two things git gave Itafika for free:
 **provenance** (`git blame` answers "how do you know this price?") and **openness**
 (anyone can clone the dataset and run their own Itafika). Lose those and Itafika becomes
 the closed system its own concept doc criticizes.
@@ -34,11 +34,11 @@ the closed system its own concept doc criticizes.
   writes submissions into a **moderation queue**; trusted **moderators** approve online,
   and approved data goes live in D1. This replaces the form → pull request flow.
 - **Provenance** is preserved by an **append-only change log** in D1 (who changed what,
-  when, source, before → after) — the database equivalent of git history, and the basis
+  when, source, before and after), the database equivalent of git history, and the basis
   for trust in the dataset.
 - **Openness** is preserved by an **automated, scheduled export of reference data to a
   public snapshot** (e.g. CSV/JSON in git or a public bucket) plus the open read API. The
-  snapshot is machine-generated, not hand-edited — this kills the manual PR workflow while
+  snapshot is machine-generated, not hand-edited, which kills the manual PR workflow while
   keeping the dataset open, forkable, and auditable. The export also serves as the backup
   that git used to provide for free.
 - The export obeys [ADR 0024](0024-data-classification-and-protection.md): it is
@@ -63,13 +63,13 @@ permanently drifting from D1.
 
 ### Move to D1 and stop there (no export, no change log)
 
-Rejected — it discards provenance and openness and turns Itafika into a closed,
+Rejected: it discards provenance and openness and turns Itafika into a closed,
 unauditable, unforkable dataset, contradicting the mission. The export and change log are
 hard requirements, not nice-to-haves.
 
 ### Auto-publish provider submissions without moderation
 
-Rejected — same risk [ADR 0020](0020-non-developer-data-contribution-via-form-to-pr.md)
+Rejected: same risk [ADR 0020](0020-non-developer-data-contribution-via-form-to-pr.md)
 rejected for "form writes directly." Even first-party provider data goes through
 validation and a moderator; first-party provenance is recorded and may fast-track trusted
 providers later, but the gate stays.

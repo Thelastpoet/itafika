@@ -1,6 +1,6 @@
 # What's Next for Itafika?
 
-This document lists the practical tasks we are working on next. It is not a long-term roadmap—it's a to-do list for the next few weeks.
+This document lists the practical tasks we are working on next. It is not a long-term roadmap, just a to-do list for the next few weeks.
 
 ## Where We Are Today
 The Phase 1 code is mostly finished. Shops can already search for zones, get quotes, book deliveries, and track parcels using our "reference" worker.
@@ -23,7 +23,7 @@ Our dataset is the most important part of the project. Today, some of the data i
   - Use D1 freshness records and the change log to flag stale town data; moderators refresh stale rates through the online moderation flow described in the Phase 2 implementation handoff.
 
 ### 2. Add a Way for Anyone to Contribute Data (P3)
-Right now, you have to know how to use GitHub to add data. We want to make it so anyone—even someone at a stage desk, or a provider updating their own rates—can contribute. The mechanism is the provider on-ramp and online moderation described in Phase 2 below (ADRs 0023–0024), not a GitHub pull request.
+Right now, you have to know how to use GitHub to add data. We want to make it so anyone, even someone at a stage desk or a provider updating their own rates, can contribute. The mechanism is the provider on-ramp and online moderation described in Phase 2 below (ADRs 0023-0024), not a GitHub pull request.
 
 - **Tasks:**
   - Build an online app where people (and providers) submit a price, route, or stage.
@@ -34,19 +34,19 @@ Right now, you have to know how to use GitHub to add data. We want to make it so
 
 ## Phase 2 Goals (Growing the System)
 
-Phase 2 grows Itafika as a **delivery orchestration API/control plane** for ecommerce checkout. Most Kenyan providers — SACCOs, bus parcel desks, boda riders — run by phone, desk, or WhatsApp, so Itafika gives them a universal adapter surface for routes, rates, booking confirmation, and tracking updates (ADR 0022 and ADR 0025). The provider tool is the means to make real supply available to shops.
+Phase 2 grows Itafika as a **delivery orchestration API/control plane** for ecommerce checkout. Most Kenyan providers (SACCOs, bus parcel desks, boda riders) run by phone, desk, or WhatsApp, so Itafika gives them a universal adapter surface for routes, rates, booking confirmation, and tracking updates (ADR 0022 and ADR 0025). The provider tool is the means to make real supply available to shops.
 
 ### 1. Provider On-Ramps (ADR 0022)
 Two doors, same destination. **Non-technical providers** use a hosted Itafika tool: upload their routes and rates, and receive and confirm bookings. **Technical providers** implement the open adapter contract or self-host. This is the human-in-the-loop ("manual") adapter from the adapter contract, made good: a booking reaches a provider, a human confirms it, and that confirmation becomes the tracking event.
 
 ### 2. Move the Data Model to D1 with Online Moderation (ADR 0023)
-The CSV → pull request → reseed loop is the wrong tool for provider-owned, changing rates. Data becomes operationally owned by **D1**, contributed through an online app into a **moderation queue**, with provenance kept in an append-only change log. Openness is preserved by an automated public export of reference data (it stays forkable and auditable) — git holds code, not data. This supersedes the form→PR flow (ADR 0020) and the "CSV is source of truth" part of ADR 0003.
+The CSV → pull request → reseed loop is the wrong tool for provider-owned, changing rates. Data becomes operationally owned by **D1**, contributed through an online app into a **moderation queue**, with provenance kept in an append-only change log. Openness is preserved by an automated public export of reference data, so it stays forkable and auditable: git holds code, not data. This supersedes the form→PR flow (ADR 0020) and the "CSV is source of truth" part of ADR 0003.
 
 ### 3. Keep the Customer Data Boundary Clear (ADR 0025)
 Shops own customer, order, payment, and contact data. Providers handle the physical handoff. Itafika stores orchestration state: route, provider, quote, shop reference, provider task, confirmation state, and tracking state. Public export stays allowlist-only over reference tables.
 
 ### 4. One Live Adapter (Last, Not First)
-A small number of national couriers do have APIs. One thin live adapter for one of them would make booking end-to-end real for a single lane. Useful — but those couriers are the segment that needs Itafika least, so this is the tail of Phase 2, not the headline.
+A small number of couriers do have APIs. One thin live adapter for one of them would make booking end-to-end real for a single lane. That is useful, but those couriers are the segment that needs Itafika least, so this is the tail of Phase 2, not the headline.
 
 Tracking improves the same way: manual events and handoff confirmations first; automatic feeds only where a provider can actually supply them.
 

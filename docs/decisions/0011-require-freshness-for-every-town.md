@@ -1,4 +1,4 @@
-# ADR 0011 — Ensure all towns have freshness data
+# ADR 0011: Ensure all towns have freshness data
 
 **Status:** Accepted
 **Date:** 2026-06-08

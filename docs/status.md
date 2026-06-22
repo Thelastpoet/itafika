@@ -4,16 +4,16 @@ This project is currently being built as a delivery orchestration API/control pl
 
 This page shows what is currently working and what is still being built. Use it together with these other docs:
 
-- `README.md` — High-level overview.
-- `docs/Itafika-Concept-Doc.md` — Long-term vision.
-- `docs/next-phase.md` — What we are working on next.
-- `spec/` — The technical rules and data format.
+- `README.md`: high-level overview.
+- `docs/Itafika-Concept-Doc.md`: long-term vision.
+- `docs/next-phase.md`: what we are working on next.
+- `spec/`: the technical rules and data format.
 
 ## What works now
 
 We have a solid foundation for Phase 1:
 
-- **Project structure:** A organized code repository.
+- **Project structure:** An organized code repository.
 - **Core engine:** The code that calculates delivery options and prices.
 - **API:** A working version of the API on Cloudflare.
 - **Adapters:** Examples of how to connect to delivery providers.
@@ -47,7 +47,7 @@ Current behavior is simple:
 
 Some parts of the project are just starting out:
 
-- **Price freshness:** Prices come from the community-maintained dataset. Keeping them fresh is community work — checking prices, updating them, and recording a source for every one.
+- **Price freshness:** Prices come from the community-maintained dataset. Keeping them fresh is community work: checking prices, updating them, and recording a source for every one.
 - **Tracking updates:** Tracking works through booking events and manual updates. Updates confirmed by providers (for example, a parcel desk replying on WhatsApp) come next.
 - **Data coverage:** We are still adding more towns and providers. Some data is just for testing right now.
 
@@ -55,7 +55,7 @@ Some parts of the project are just starting out:
 
 These are big features we want to add as the project grows:
 
-- Provider on-ramps — hosted universal adapter surfaces for routes, rates, booking confirmation, and tracking updates.
+- Provider on-ramps: hosted universal adapter surfaces for routes, rates, booking confirmation, and tracking updates.
 - Automatic background tasks (like checking for tracking updates).
 - Better tools for handling complicated delivery steps and retries.
 

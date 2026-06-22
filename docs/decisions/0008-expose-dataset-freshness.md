@@ -1,4 +1,4 @@
-# ADR 0008 — Show data freshness in the API
+# ADR 0008: Show data freshness in the API
 
 **Status:** Accepted
 **Date:** 2026-06-08
@@ -20,9 +20,9 @@ Add a `GET /v1/freshness` endpoint that returns the freshness records for each t
 
 ## Options considered
 
-- **Keep freshness only in repository files.** Rejected — that is less useful to API consumers and contradicts the D1/API direction already described in the datastore ADR.
-- **Attach freshness to every quote response.** Rejected for now — useful later, but it adds response complexity where a small focused endpoint is enough.
-- **Wait for a later major phase.** Rejected — this is a small, low-risk addition that improves transparency now.
+- **Keep freshness only in repository files.** Rejected: that is less useful to API consumers and contradicts the D1/API direction already described in the datastore ADR.
+- **Attach freshness to every quote response.** Rejected for now: useful later, but it adds response complexity where a small focused endpoint is enough.
+- **Wait for a later major phase.** Rejected: this is a small, low-risk addition that improves transparency now.
 
 ## Consequences
 

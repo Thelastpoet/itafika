@@ -1,4 +1,4 @@
-# ADR 0007 — Simplify validation and quote fields
+# ADR 0007: Simplify validation and quote fields
 
 **Status:** Accepted
 **Date:** 2026-06-08
@@ -26,9 +26,9 @@ We will update the API spec to match how the code actually works. This includes:
 
 ## Options considered
 
-- **Leave the spec loose and explain the differences elsewhere.** Rejected — that keeps the canonical contract less trustworthy than the status doc and the code.
-- **Remove `package_type` entirely from Phase 1.** Rejected — the field is still useful as a forward-compatible part of the quote request shape, and removing it would be an unnecessary contract change.
-- **Change the Worker to match every stale spec example.** Rejected — the Worker behavior is already more defensible in areas like ID entropy and request validation.
+- **Leave the spec loose and explain the differences elsewhere.** Rejected: that keeps the canonical contract less trustworthy than the status doc and the code.
+- **Remove `package_type` entirely from Phase 1.** Rejected: the field is still useful as a forward-compatible part of the quote request shape, and removing it would be an unnecessary contract change.
+- **Change the Worker to match every stale spec example.** Rejected: the Worker behavior is already more defensible in areas like ID entropy and request validation.
 
 ## Consequences
 

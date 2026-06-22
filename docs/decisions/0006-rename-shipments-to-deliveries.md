@@ -1,4 +1,4 @@
-# ADR 0006 — Rename "shipment" to "delivery"
+# ADR 0006: Rename "shipment" to "delivery"
 
 **Status:** Accepted
 **Date:** 2026-06-08
@@ -26,11 +26,11 @@ The term "tracking" remains unchanged.
 
 ## Options considered
 
-- **Keep "shipment".** Rejected — the whole point is that the standard's language should fit Kenyan delivery, and this was the moment to fix it for free.
+- **Keep "shipment".** Rejected: the whole point is that the standard's language should fit Kenyan delivery, and this was the moment to fix it for free.
 - **"consignment", "parcel", "dispatch".** Considered. "Parcel" names the item, not the booking; "consignment"/"dispatch" are more jargon than the audience (shop owners, domain experts) needs. "Delivery" is the clearest fit for the consumer-facing framing.
 
 ## Consequences
 
-- ADRs 0001 and 0003 mention a "shipments" D1 table in their accepted text. ADRs are immutable once accepted; they are not edited. This ADR is the authority on the current name — read "shipments" there as the resource now called "deliveries".
+- ADRs 0001 and 0003 mention a "shipments" D1 table in their accepted text. ADRs are immutable once accepted; they are not edited. This ADR is the authority on the current name: read "shipments" there as the resource now called "deliveries".
 - Within `/v1` the change is a straight rename made before any consumer exists; there is no deprecation obligation. Any future rename after adoption would require a `/v2` and a deprecation window per GOVERNANCE.md.
 - The reference implementation's `deliveries` table, handlers, types, and tests use the new name.

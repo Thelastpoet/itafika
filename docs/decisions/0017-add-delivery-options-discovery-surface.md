@@ -1,4 +1,4 @@
-# ADR 0017 — Add an endpoint to discover delivery options
+# ADR 0017: Add an endpoint to discover delivery options
 
 **Status:** Accepted (2026-06-10)
 **Date:** 2026-06-09
@@ -36,13 +36,13 @@ collection point, exactly as `Quote` is.
 
 ## Options considered
 
-- **Overload `POST /v1/quotes` to accept a town and optional weight.** Rejected —
+- **Overload `POST /v1/quotes` to accept a town and optional weight.** Rejected:
   conflates navigation and pricing, makes the quote's cost fields sometimes-binding
   and sometimes-indicative, and muddies caching.
 - **Make shops call `/v1/quotes` across candidate zones to discover coverage.**
-  Rejected — N calls to learn structure, and it needs a weight Itafika shouldn't
+  Rejected: N calls to learn structure, and it needs a weight Itafika shouldn't
   require for browsing.
-- **Expose `provider_id` to let shops build their own discovery.** Rejected —
+- **Expose `provider_id` to let shops build their own discovery.** Rejected:
   violates the internal-column rule and leaks routing internals.
 
 ## Consequences

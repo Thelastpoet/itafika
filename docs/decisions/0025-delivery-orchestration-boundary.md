@@ -1,4 +1,4 @@
-# ADR 0025 — Itafika is a delivery orchestration API/control plane
+# ADR 0025: Itafika is a delivery orchestration API/control plane
 
 **Status:** Accepted
 **Date:** 2026-06-19

@@ -1,4 +1,4 @@
-# ADR 0009 — Organize Worker code by service boundaries
+# ADR 0009: Organize Worker code by service boundaries
 
 **Status:** Accepted
 **Date:** 2026-06-08

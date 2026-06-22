@@ -1,18 +1,18 @@
-# ADR 0021 — Treat `reliability_score` as asserted, not measured
+# ADR 0021: Treat `reliability_score` as asserted, not measured
 
 **Status:** Accepted
 **Date:** 2026-06-10
 
 ## Context
 
-Every quote carries a `reliability_score` (0–1), and the docs have shown examples like
+Every quote carries a `reliability_score` (0 to 1), and the docs have shown examples like
 `0.98` and `0.92`. The adapter contract used to say "the engine will adjust this based
 on real results over time." None of that is true today: there is no measurement loop,
 no real deliveries to learn from, and every rate in the dataset is still marked
 `seed-illustrative`.
 
 This matters more here than it would elsewhere. Itafika's core promise is trustworthy
-open data with provenance — `SCHEMA.md` requires a `source` for every price. A
+open data with provenance: `SCHEMA.md` requires a `source` for every price. A
 two-decimal reliability score with no source behind it breaks that promise on the most
 visible field in the API. The concept doc correctly defers measured reliability to
 Phase 3, when there are real deliveries to measure.
@@ -24,7 +24,7 @@ Until a measurement loop exists:
 1. **`reliability_score` becomes optional** on quotes, `ProviderInfo`, and the
    `/v1/options` surface. An adapter that has no basis for a score omits it, the same
    way `quote()` returns `null` for a route it doesn't serve: don't guess.
-2. **Where a score is given, it is an asserted value** — a community judgment like any
+2. **Where a score is given, it is an asserted value**, a community judgment like any
    other data contribution, subject to the same review. The spec describes it as
    "asserted, not measured."
 3. **No claim of automatic adjustment.** Docs and the contract must not say the engine
@@ -41,7 +41,7 @@ the worker follow.
 ### Keep the field required with seeded values
 
 Rejected because it forces every contributor to invent a number. A required score with
-no measurement behind it is fabricated data wearing the uniform of real data — the
+no measurement behind it is fabricated data wearing the uniform of real data, the
 exact thing the `source` rule exists to prevent.
 
 ### Remove the field entirely until Phase 3
@@ -53,7 +53,7 @@ directions. Optional-with-honest-semantics keeps the slot without the false clai
 
 ### Rename to something like `asserted_reliability`
 
-Rejected because the name would have to change again when measurement arrives —
+Rejected because the name would have to change again when measurement arrives,
 another breaking change. The semantics live in the spec description, not the name.
 
 ## Consequences
