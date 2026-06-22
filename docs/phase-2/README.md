@@ -1,10 +1,10 @@
 # Phase 2 Spec Pack
 
-**Status:** Ready for implementation  
-**Last updated:** 2026-06-19  
+**Status:** Implemented and verified  
+**Last updated:** 2026-06-22  
 **Goal:** make Phase 2 implementable track-by-track without another planning pass.
 
-This folder is the implementation source for Phase 2. Treat each track as a spec-driven ticket pack: it names the files to touch, behavior to implement, tests to add, and exit criteria.
+This folder is the implementation source and verification record for Phase 2. Treat each track as a spec-driven ticket pack: it names the files to touch, behavior to implement, tests to add, and exit criteria.
 
 ## Source Documents
 
@@ -20,14 +20,14 @@ This folder is the implementation source for Phase 2. Treat each track as a spec
 
 Work in this order unless a PR is explicitly scoped to docs only.
 
-- [ ] [00 - Locked decisions](00-decisions.md)
-- [ ] [01 - Foundation checks](01-foundation-checks.md)
-- [ ] [02 - Moderation backend](02-moderation-backend.md)
-- [ ] [03 - Public export snapshot](03-export-snapshot.md)
-- [ ] [04 - Portal app shell and shared UI](04-portal-app.md)
-- [ ] [05 - Provider data portal](05-provider-data-portal.md)
-- [ ] [06 - Provider booking confirmation](06-provider-booking-confirmation.md)
-- [ ] [07 - Customer data boundary and compliance controls](07-retention-compliance.md)
+- [x] [00 - Locked decisions](00-decisions.md)
+- [x] [01 - Foundation checks](01-foundation-checks.md)
+- [x] [02 - Moderation backend](02-moderation-backend.md)
+- [x] [03 - Public export snapshot](03-export-snapshot.md)
+- [x] [04 - Portal app shell and shared UI](04-portal-app.md)
+- [x] [05 - Provider data portal](05-provider-data-portal.md)
+- [x] [06 - Provider booking confirmation](06-provider-booking-confirmation.md)
+- [x] [07 - Customer data boundary and compliance controls](07-retention-compliance.md)
 
 ## Implementation Rules
 
@@ -75,17 +75,17 @@ pnpm typecheck
 
 Phase 2 is done when:
 
-- [ ] Non-developers can submit reference-data updates without GitHub.
-- [ ] Moderators can approve and reject submissions online.
-- [ ] Strict `create` and `update` moderation semantics are implemented.
-- [ ] Approved reference data lives in D1 and is audited in `change_log`.
-- [ ] Public reference-data JSON export is generated from reference tables only.
-- [ ] Providers authenticate with invite tokens.
-- [ ] Providers submit their own rates through moderation.
-- [ ] Provider-backed bookings create provider-visible tasks.
-- [ ] Providers accept or reject bookings.
-- [ ] Provider confirmation/cancellation appears in public delivery status.
-- [ ] Provider tracking updates appear in normal tracking history.
-- [ ] Provider booking access is scoped to the assigned provider.
-- [ ] Active delivery booking uses shop-owned references through `shop_order_ref` and optional `shop_handoff_url`.
-- [ ] `pnpm data:validate`, `pnpm typecheck`, and `pnpm test` pass.
+- [x] Non-developers can submit reference-data updates without GitHub.
+- [x] Moderators can approve and reject submissions online.
+- [x] Strict `create` and `update` moderation semantics are implemented.
+- [x] Approved reference data lives in D1 and is audited in `change_log`.
+- [x] Public reference-data JSON export is generated from reference tables only.
+- [x] Providers authenticate with invite tokens.
+- [x] Providers submit their own rates through moderation.
+- [x] Provider-backed bookings create provider-visible tasks.
+- [x] Providers accept or reject bookings.
+- [x] Provider confirmation/cancellation appears in public delivery status.
+- [x] Provider tracking updates appear in normal tracking history.
+- [x] Provider booking access is scoped to the assigned provider.
+- [x] Active delivery booking uses shop-owned references through `shop_order_ref` and optional `shop_handoff_url`.
+- [x] `pnpm data:validate`, `pnpm typecheck`, and `pnpm test` pass.

@@ -71,85 +71,85 @@ In `packages/worker/wrangler.jsonc`, add:
 
 In `packages/worker/src/index.ts`:
 
-- [ ] Keep all `/v1/*` routes in the Worker.
-- [ ] After API routing, return `env.ASSETS.fetch(request)` for non-API paths.
-- [ ] Do not add CORS for portal routes; app and API are same-origin.
+- [x] Keep all `/v1/*` routes in the Worker.
+- [x] After API routing, return `env.ASSETS.fetch(request)` for non-API paths.
+- [x] Do not add CORS for portal routes; app and API are same-origin.
 
 ## Contribution Routes
 
-- [ ] `/contribute`
-- [ ] `/contribute/rate`
-- [ ] `/contribute/zone`
-- [ ] `/contribute/provider`
-- [ ] `/contribute/mode`
-- [ ] `/contribute/success/:submissionId`
+- [x] `/contribute`
+- [x] `/contribute/rate`
+- [x] `/contribute/zone`
+- [x] `/contribute/provider`
+- [x] `/contribute/mode`
+- [x] `/contribute/success/:submissionId`
 
 Controls:
 
-- [ ] Typed forms only, no raw JSON textarea.
-- [ ] Select controls for enum fields.
-- [ ] Number inputs for numeric fields.
-- [ ] Field-level validation messages.
-- [ ] No phone or email fields.
-- [ ] Successful submit shows submission id and status.
+- [x] Typed forms only, no raw JSON textarea.
+- [x] Select controls for enum fields.
+- [x] Number inputs for numeric fields.
+- [x] Field-level validation messages.
+- [x] No phone or email fields.
+- [x] Successful submit shows submission id and status.
 
 ## Moderator Routes
 
-- [ ] `/moderate`
-- [ ] `/moderate/submissions/:id`
-- [ ] `/moderate/change-log`
+- [x] `/moderate`
+- [x] `/moderate/submissions/:id`
+- [x] `/moderate/change-log`
 
 Rules:
 
-- [ ] Prompt for moderator token.
-- [ ] Store token in React memory/session state only.
-- [ ] Do not store moderator token in local storage.
-- [ ] Queue has status and target filters.
-- [ ] Detail page shows proposed payload, current row, source, submitter, submitted time, diff, approve action, reject action.
+- [x] Prompt for moderator token.
+- [x] Store token in React memory/session state only.
+- [x] Do not store moderator token in local storage.
+- [x] Queue has status and target filters.
+- [x] Detail page shows proposed payload, current row, source, submitter, submitted time, diff, approve action, reject action.
 
 ## Provider Routes
 
-- [ ] `/provider`
-- [ ] `/provider/submissions/rate`
-- [ ] `/provider/bookings`
-- [ ] `/provider/bookings/:id`
+- [x] `/provider`
+- [x] `/provider/submissions/rate`
+- [x] `/provider/bookings`
+- [x] `/provider/bookings/:id`
 
 Rules:
 
-- [ ] Prompt for provider token.
-- [ ] Store token in React memory/session state only.
-- [ ] Do not store provider token in local storage.
-- [ ] Dashboard links to rate submission and bookings.
-- [ ] Booking detail has accept/reject and tracking update controls.
+- [x] Prompt for provider token.
+- [x] Store token in React memory/session state only.
+- [x] Do not store provider token in local storage.
+- [x] Dashboard links to rate submission and bookings.
+- [x] Booking detail has accept/reject and tracking update controls.
 
 ## API Helper
 
 `apps/portal/src/api.ts` must expose:
 
-- [ ] `createSubmission(input)`
-- [ ] `listSubmissions(token, filters)`
-- [ ] `getSubmission(token, id)`
-- [ ] `approveSubmission(token, id, note?)`
-- [ ] `rejectSubmission(token, id, note)`
-- [ ] `listChangeLog(token, filters)`
-- [ ] `providerMe(token)`
-- [ ] `providerCreateSubmission(token, input)`
-- [ ] `providerListBookings(token, status?)`
-- [ ] `providerGetBooking(token, id)`
-- [ ] `providerAcceptBooking(token, id)`
-- [ ] `providerRejectBooking(token, id, note)`
-- [ ] `providerAppendTrackingEvent(token, id, input)`
+- [x] `createSubmission(input)`
+- [x] `listSubmissions(token, filters)`
+- [x] `getSubmission(token, id)`
+- [x] `approveSubmission(token, id, note?)`
+- [x] `rejectSubmission(token, id, note)`
+- [x] `listChangeLog(token, filters)`
+- [x] `providerMe(token)`
+- [x] `providerCreateSubmission(token, input)`
+- [x] `providerListBookings(token, status?)`
+- [x] `providerGetBooking(token, id)`
+- [x] `providerAcceptBooking(token, id)`
+- [x] `providerRejectBooking(token, id, note)`
+- [x] `providerAppendTrackingEvent(token, id, input)`
 
 ## Tests
 
-- [ ] Portal builds with `pnpm --filter @itafika/portal build`.
-- [ ] Portal typechecks with `pnpm --filter @itafika/portal typecheck`.
-- [ ] Form validation tests cover required fields.
-- [ ] API helper tests cover auth header inclusion.
+- [x] Portal builds with `pnpm --filter @itafika/portal build`.
+- [x] Portal typechecks with `pnpm --filter @itafika/portal typecheck`.
+- [x] Form validation tests cover required fields.
+- [x] API helper tests cover auth header inclusion.
 
 ## Exit Criteria
 
-- [ ] Portal serves from Worker static assets.
-- [ ] Contribution flow can create a pending submission.
-- [ ] Moderator flow can approve/reject.
-- [ ] Provider flow can authenticate once Track 05 exists.
+- [x] Portal serves from Worker static assets.
+- [x] Contribution flow can create a pending submission.
+- [x] Moderator flow can approve/reject.
+- [x] Provider flow can authenticate once Track 05 exists.

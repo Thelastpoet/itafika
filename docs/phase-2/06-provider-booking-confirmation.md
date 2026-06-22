@@ -66,10 +66,10 @@ booking_confirmed -> delivery_cancelled
 
 Rules:
 
-- [ ] `delivered` is terminal.
-- [ ] `delivery_cancelled` is terminal.
-- [ ] Status cannot move backward.
-- [ ] Physical tracking statuses cannot be appended before task acceptance.
+- [x] `delivered` is terminal.
+- [x] `delivery_cancelled` is terminal.
+- [x] Status cannot move backward.
+- [x] Physical tracking statuses cannot be appended before task acceptance.
 
 ## Migration 0013
 
@@ -77,13 +77,13 @@ Create `packages/worker/migrations/0013_expand_tracking_statuses.sql`.
 
 It must:
 
-- [ ] Rebuild `deliveries` with expanded status `CHECK`.
-- [ ] Rebuild `tracking_events` with expanded status `CHECK`.
-- [ ] Preserve all existing columns.
-- [ ] Preserve `tracking_events.source`.
-- [ ] Add nullable `shop_order_ref TEXT`.
-- [ ] Add nullable `shop_handoff_url TEXT`.
-- [ ] Recreate `idx_tracking_events_delivery`.
+- [x] Rebuild `deliveries` with expanded status `CHECK`.
+- [x] Rebuild `tracking_events` with expanded status `CHECK`.
+- [x] Preserve all existing columns.
+- [x] Preserve `tracking_events.source`.
+- [x] Add nullable `shop_order_ref TEXT`.
+- [x] Add nullable `shop_handoff_url TEXT`.
+- [x] Recreate `idx_tracking_events_delivery`.
 
 Use the existing table-rebuild style from `0010_reliability_optional.sql`.
 
@@ -114,21 +114,21 @@ CREATE INDEX idx_provider_booking_tasks_provider
 
 In `packages/worker/src/policy.ts`:
 
-- [ ] Add `createProviderBookingTaskId()` returning `pbt_<24 hex>`.
-- [ ] Add `PROVIDER_BOOKING_TASK_ID_RE = /^pbt_[a-f0-9]{24}$/`.
+- [x] Add `createProviderBookingTaskId()` returning `pbt_<24 hex>`.
+- [x] Add `PROVIDER_BOOKING_TASK_ID_RE = /^pbt_[a-f0-9]{24}$/`.
 
 ## Booking Creation
 
 When `POST /v1/deliveries` books a quote:
 
-- [ ] Accept `quote_id`, `shop_order_ref`, and optional `shop_handoff_url`.
-- [ ] Active Phase 2 contract succeeds with `quote_id` and `shop_order_ref`.
-- [ ] Create delivery with status `booking_requested`.
-- [ ] Append tracking event `booking_requested` with source `booking`.
-- [ ] If provider has an active account, create `provider_booking_tasks` row:
+- [x] Accept `quote_id`, `shop_order_ref`, and optional `shop_handoff_url`.
+- [x] Active Phase 2 contract succeeds with `quote_id` and `shop_order_ref`.
+- [x] Create delivery with status `booking_requested`.
+- [x] Append tracking event `booking_requested` with source `booking`.
+- [x] If provider has an active account, create `provider_booking_tasks` row:
   - `status = pending`
   - `expires_at = created_at + 24 hours`
-- [ ] If provider has no active account, preserve static adapter behavior:
+- [x] If provider has no active account, preserve static adapter behavior:
   - call adapter runtime
   - store `provider_ref`
   - append `booking_confirmed`
@@ -138,11 +138,11 @@ When `POST /v1/deliveries` books a quote:
 
 Add:
 
-- [ ] `GET /v1/provider/bookings`
-- [ ] `GET /v1/provider/bookings/{id}`
-- [ ] `POST /v1/provider/bookings/{id}/accept`
-- [ ] `POST /v1/provider/bookings/{id}/reject`
-- [ ] `POST /v1/provider/bookings/{id}/events`
+- [x] `GET /v1/provider/bookings`
+- [x] `GET /v1/provider/bookings/{id}`
+- [x] `POST /v1/provider/bookings/{id}/accept`
+- [x] `POST /v1/provider/bookings/{id}/reject`
+- [x] `POST /v1/provider/bookings/{id}/events`
 
 ### List Response
 
@@ -193,28 +193,28 @@ Add:
 
 Accept:
 
-- [ ] Only pending task can be accepted.
-- [ ] Marks task `accepted`.
-- [ ] Sets delivery status `booking_confirmed`.
-- [ ] Appends `booking_confirmed` event with source `provider`.
+- [x] Only pending task can be accepted.
+- [x] Marks task `accepted`.
+- [x] Sets delivery status `booking_confirmed`.
+- [x] Appends `booking_confirmed` event with source `provider`.
 
 Reject:
 
-- [ ] Requires non-empty `note`.
-- [ ] Only pending task can be rejected.
-- [ ] Marks task `rejected`.
-- [ ] Sets delivery status `delivery_cancelled`.
-- [ ] Appends `delivery_cancelled` event with source `provider`.
+- [x] Requires non-empty `note`.
+- [x] Only pending task can be rejected.
+- [x] Marks task `rejected`.
+- [x] Sets delivery status `delivery_cancelled`.
+- [x] Appends `delivery_cancelled` event with source `provider`.
 
 Events:
 
-- [ ] Only accepted task can append physical tracking statuses.
-- [ ] Allowed statuses: `package_picked`, `in_transit`, `at_sorting_hub`, `ready_for_pickup`, `delivered`.
+- [x] Only accepted task can append physical tracking statuses.
+- [x] Allowed statuses: `package_picked`, `in_transit`, `at_sorting_hub`, `ready_for_pickup`, `delivered`.
 
 Access:
 
-- [ ] Provider only sees own tasks.
-- [ ] Out-of-scope task id returns `404 not_found`.
+- [x] Provider only sees own tasks.
+- [x] Out-of-scope task id returns `404 not_found`.
 
 ## Error Contract
 
@@ -229,29 +229,29 @@ Access:
 
 ## Portal Work
 
-- [ ] `ProviderBookings.tsx` lists tasks by status.
-- [ ] `ProviderBookingDetail.tsx` displays exact detail response fields.
-- [ ] Accept button calls accept route.
-- [ ] Reject button requires note.
-- [ ] Tracking form appears only after acceptance.
+- [x] `ProviderBookings.tsx` lists tasks by status.
+- [x] `ProviderBookingDetail.tsx` displays exact detail response fields.
+- [x] Accept button calls accept route.
+- [x] Reject button requires note.
+- [x] Tracking form appears only after acceptance.
 
 ## Tests
 
-- [ ] provider-backed booking creates pending task.
-- [ ] static provider without account keeps existing adapter behavior.
-- [ ] delivery booking accepts `shop_order_ref`.
-- [ ] delivery booking succeeds with `shop_order_ref` only.
-- [ ] provider can see own tasks.
-- [ ] provider task access is scoped to the assigned provider.
-- [ ] accept updates task and public tracking.
-- [ ] reject requires note and cancels delivery.
-- [ ] physical event before acceptance fails.
-- [ ] status order enforced.
+- [x] provider-backed booking creates pending task.
+- [x] static provider without account keeps existing adapter behavior.
+- [x] delivery booking accepts `shop_order_ref`.
+- [x] delivery booking succeeds with `shop_order_ref` only.
+- [x] provider can see own tasks.
+- [x] provider task access is scoped to the assigned provider.
+- [x] accept updates task and public tracking.
+- [x] reject requires note and cancels delivery.
+- [x] physical event before acceptance fails.
+- [x] status order enforced.
 
 ## Exit Criteria
 
-- [ ] Public tracking supports new statuses.
-- [ ] Provider can accept/reject booking online.
-- [ ] Provider booking detail uses shop reference and handoff URL.
-- [ ] Provider tracking updates appear in public tracking history.
-- [ ] Provider isolation tests pass.
+- [x] Public tracking supports new statuses.
+- [x] Provider can accept/reject booking online.
+- [x] Provider booking detail uses shop reference and handoff URL.
+- [x] Provider tracking updates appear in public tracking history.
+- [x] Provider isolation tests pass.

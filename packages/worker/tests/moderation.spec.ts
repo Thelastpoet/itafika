@@ -44,6 +44,8 @@ beforeAll(async () => {
   await env.itafika.batch([
     env.itafika.prepare("INSERT OR IGNORE INTO zones (id, name, type, town, county) VALUES (?,?,?,?,?)").bind("ZONE_NBI_CBD_01", "RNG Plaza", "cbd_hub", "Nairobi", "Nairobi"),
     env.itafika.prepare("INSERT OR IGNORE INTO zones (id, name, type, town, county) VALUES (?,?,?,?,?)").bind("ZONE_MOD_NEW", "Moderation Test Stage", "stage", "Moderation", "Test"),
+    env.itafika.prepare("INSERT OR IGNORE INTO zones (id, name, type, town, county) VALUES (?,?,?,?,?)").bind("ZONE_MOD_FRESH", "Moderation Fresh Stage", "stage", "Moderation", "Test"),
+    env.itafika.prepare("INSERT OR IGNORE INTO zones (id, name, type, town, county) VALUES (?,?,?,?,?)").bind("ZONE_MOD_TWICE", "Moderation Twice Stage", "stage", "Moderation", "Test"),
     env.itafika.prepare("INSERT OR IGNORE INTO modes (id, label, description, source) VALUES (?,?,?,?)").bind("matatu_sacco", "Matatu SACCO", "Shared-taxi SACCO parcel desk.", "seed"),
     env.itafika.prepare("INSERT OR IGNORE INTO providers (id, name, type, reliability_score) VALUES (?,?,?,?)").bind("mololine", "Mololine Sacco", "matatu_sacco", 0.98),
   ]);
@@ -67,13 +69,23 @@ describe("submissions queue", () => {
 
 describe("approveSubmission", () => {
   it("applies a new rate and records a change_log row with no prior snapshot", async () => {
-    const created = await createSubmission(env.itafika, ratesSubmission({ base_cost_kes: 550 }), NOW);
+    // Dedicated route nothing else writes to, so "before" is reliably null regardless
+    // of test order on the shared single-worker D1.
+    const created = await createSubmission(
+      env.itafika,
+      ratesSubmission({ base_cost_kes: 550, destination_zone_id: "ZONE_MOD_FRESH" }),
+      NOW,
+    );
     const result = await approveSubmission(env.itafika, created!.id, "moderator-1", "looks right", NOW);
 
     expect(result.ok).toBe(true);
     if (result.ok) expect(result.submission.status).toBe("approved");
 
-    expect((await rateRow())?.base_cost_kes).toBe(550);
+    const freshRate = await env.itafika
+      .prepare("SELECT base_cost_kes FROM rates WHERE provider_id = ? AND origin_zone_id = ? AND destination_zone_id = ?")
+      .bind("mololine", "ZONE_NBI_CBD_01", "ZONE_MOD_FRESH")
+      .first<{ base_cost_kes: number }>();
+    expect(freshRate?.base_cost_kes).toBe(550);
 
     const log = await env.itafika
       .prepare("SELECT * FROM change_log WHERE submission_id = ?")
@@ -82,7 +94,7 @@ describe("approveSubmission", () => {
     expect(log).not.toBeNull();
     expect(log!.before).toBeNull();
     expect(log!.changed_by).toBe("moderator-1");
-    expect(log!.row_key).toBe("mololine|ZONE_NBI_CBD_01|ZONE_MOD_NEW");
+    expect(log!.row_key).toBe("mololine|ZONE_NBI_CBD_01|ZONE_MOD_FRESH");
     expect(JSON.parse(log!.after).base_cost_kes).toBe(550);
   });
 
@@ -115,7 +127,11 @@ describe("approveSubmission", () => {
   });
 
   it("refuses to approve a submission twice", async () => {
-    const created = await createSubmission(env.itafika, ratesSubmission(), NOW);
+    const created = await createSubmission(
+      env.itafika,
+      ratesSubmission({ destination_zone_id: "ZONE_MOD_TWICE" }),
+      NOW,
+    );
     await approveSubmission(env.itafika, created!.id, "moderator-1", null, NOW);
     const second = await approveSubmission(env.itafika, created!.id, "moderator-1", null, NOW);
     expect(second).toEqual({ ok: false, reason: "already_reviewed" });

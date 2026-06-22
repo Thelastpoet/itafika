@@ -1,7 +1,6 @@
 import type {
   CollectionPoint,
   CollectionType,
-  Contact,
   Provider,
   ProviderType,
   QuoteOption,
@@ -30,13 +29,8 @@ export interface BookingOrder {
   quote_id: string;
   origin_zone_id: string;
   destination_zone_id: string;
-  sender: Contact;
-  recipient: Contact;
-  package_description?: string;
-  // ADR 0018: handover instructions and who collects. sender/recipient Contact may
-  // also carry an optional id_number. A human-in-the-loop adapter relays these.
-  instructions?: string;
-  alternate_collector?: Contact;
+  shop_order_ref: string;
+  shop_handoff_url?: string;
 }
 
 export interface BookingResult {

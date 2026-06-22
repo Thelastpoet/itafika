@@ -54,5 +54,5 @@ Terminal delivery states are `delivered` and `delivery_cancelled`.
 
 ## Checklist
 
-- [ ] Confirm implementation PR follows these decisions.
-- [ ] If implementation needs a different decision, write an ADR before coding the change.
+- [x] Confirm implementation PR follows these decisions.
+- [x] If implementation needs a different decision, write an ADR before coding the change.

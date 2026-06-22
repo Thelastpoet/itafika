@@ -10,7 +10,7 @@ Purpose: make the existing worker and tests green before Phase 2 feature work.
 
 ## Required Work
 
-- [ ] In `packages/worker/wrangler.jsonc`, add:
+- [x] In `packages/worker/wrangler.jsonc`, add:
 
 ```jsonc
 "secrets": {
@@ -18,23 +18,23 @@ Purpose: make the existing worker and tests green before Phase 2 feature work.
 }
 ```
 
-- [ ] Regenerate Worker types:
+- [x] Regenerate Worker types:
 
 ```bash
 pnpm --filter @itafika/worker exec wrangler types
 ```
 
-- [ ] In `packages/worker/tests/moderation.spec.ts`, ensure the test named `applies a new rate and records a change_log row with no prior snapshot` uses a fixture route that does not already exist in seed data.
-- [ ] Keep the fixture provider as `mololine`.
-- [ ] Use a dedicated destination zone such as `ZONE_MOD_NEW`.
-- [ ] Insert the dedicated zone in the test `beforeAll`.
-- [ ] Assert the `change_log.row_key` matches the dedicated test route.
+- [x] In `packages/worker/tests/moderation.spec.ts`, ensure the test named `applies a new rate and records a change_log row with no prior snapshot` uses a fixture route that does not already exist in seed data.
+- [x] Keep the fixture provider as `mololine`.
+- [x] Use a dedicated destination zone such as `ZONE_MOD_NEW`.
+- [x] Insert the dedicated zone in the test `beforeAll`.
+- [x] Assert the `change_log.row_key` matches the dedicated test route.
 
 ## Acceptance Criteria
 
-- [ ] `pnpm data:validate` passes.
-- [ ] `pnpm typecheck` passes.
-- [ ] `pnpm test` passes.
+- [x] `pnpm data:validate` passes.
+- [x] `pnpm typecheck` passes.
+- [x] `pnpm test` passes.
 
 ## Notes
 

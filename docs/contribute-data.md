@@ -5,10 +5,18 @@ providers, routes, rates, and freshness.
 
 Today, the CSV files in `spec/data/` are the seed and public snapshot format. ADR 0023
 makes D1 the operational source of truth for reference data, with moderated online
-updates as Phase 2 is built.
+updates in the Phase 2 portal.
 
 You don't need to be a developer to help. If you know a stage, a route, a provider, or
 a price that needs to be added or fixed, you can contribute.
+
+## Use the portal
+
+Open the same-origin portal at `/contribute` to submit rates, zones, providers, and
+modes without touching GitHub. Moderators review submissions at `/moderate`.
+
+The live reference export is available at `/v1/export`, and the latest cron snapshot is
+available at `/v1/export/latest`.
 
 ## What you can help with
 

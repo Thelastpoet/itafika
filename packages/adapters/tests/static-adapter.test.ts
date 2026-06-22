@@ -108,8 +108,8 @@ describe("StaticRateAdapter", () => {
       quote_id: "qt_b1a56ce02d7345f398ee2c04",
       origin_zone_id: "ZONE_NBI_CBD_01",
       destination_zone_id: "ZONE_NKR_MAIN",
-      sender: { name: "Asha Mwangi", phone: "+254712345678" },
-      recipient: { name: "John Otieno", phone: "+254723456789" },
+      shop_order_ref: "ORDER-12345",
+      shop_handoff_url: "https://shop.example.com/delivery-handoff/ORDER-12345",
     });
 
     expect(result.status).toBe("package_picked");

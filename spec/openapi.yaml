@@ -1,16 +1,17 @@
 openapi: 3.1.0
 info:
   title: Itafika API
-  version: "1.0.0-phase1"
+  version: "1.0.0-phase2"
   description: |
     A delivery orchestration API/control plane for ecommerce checkout in Kenya.
 
     Itafika gives any online shop a single interface to quote delivery options,
-    create provider handoff state, and track delivery state across riders,
+    create provider handoff state, moderate reference-data updates online,
+    export reference data publicly, and track delivery state across riders,
     matatu/bus SACCOs, and couriers, with Kenyan locations modelled
     as zones and stages rather than street addresses.
 
-    This document is the **canonical Phase 1 contract**. The Cloudflare Worker
+    This document is the **canonical Phase 2 contract**. The Cloudflare Worker
     reference implementation in `packages/` is generated against it. Any change
     to this file is governed by GOVERNANCE.md and accompanied by an ADR.
   license:
@@ -36,6 +37,12 @@ tags:
     description: Delivery options and prices between two zones.
   - name: Deliveries
     description: Booking a chosen quote and tracking it.
+  - name: Exports
+    description: Public reference-data export snapshots.
+  - name: Moderation
+    description: Online reference-data submission and review flows.
+  - name: Provider
+    description: Provider invite, booking, and tracking workflows.
 
 paths:
   /v1/zones:
@@ -361,9 +368,9 @@ paths:
       tags: [Deliveries]
       summary: Append a tracking event to a delivery
       description: |
-        Adds a new event to the delivery's unified tracking history.
-        In Phase 1 this is a manual/internal update path used before full
-        adapter-driven or webhook-driven tracking flows exist.
+        Adds a new event to the delivery's unified tracking history. This path is
+        used by manual updates and by provider-confirmed tracking updates after a
+        booking task has been accepted.
       operationId: createTrackingEvent
       parameters:
         - name: tracking_id
@@ -398,6 +405,451 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/Error' }
+
+  /v1/export:
+    get:
+      tags: [Exports]
+      summary: Fetch the current public reference export
+      operationId: getReferenceExport
+      responses:
+        '200':
+          description: Public reference-data snapshot with metadata and row counts.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ReferenceExport' }
+
+  /v1/export/latest:
+    get:
+      tags: [Exports]
+      summary: Fetch the latest generated export snapshot
+      operationId: getLatestReferenceExport
+      responses:
+        '200':
+          description: Latest generated export snapshot.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ReferenceExport' }
+        '503':
+          description: No generated snapshot exists yet.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /v1/submissions:
+    get:
+      tags: [Moderation]
+      summary: List moderation submissions
+      operationId: listSubmissions
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema: { $ref: '#/components/schemas/SubmissionStatus' }
+        - name: target
+          in: query
+          required: false
+          schema: { $ref: '#/components/schemas/SubmissionTarget' }
+        - name: limit
+          in: query
+          required: false
+          schema: { type: integer, default: 100, minimum: 1, maximum: 500 }
+      responses:
+        '200':
+          description: Matching submissions.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  submissions:
+                    type: array
+                    items: { $ref: '#/components/schemas/Submission' }
+        '401':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+          description: Valid moderator credentials are required.
+    post:
+      tags: [Moderation]
+      summary: Create a moderation submission
+      operationId: createSubmission
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SubmissionCreateRequest' }
+      responses:
+        '201':
+          description: Pending submission created.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Submission' }
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /v1/submissions/{id}:
+    get:
+      tags: [Moderation]
+      summary: Get a submission and its current row
+      operationId: getSubmission
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^sub_[a-f0-9]{24}$'
+      responses:
+        '200':
+          description: Submission detail and current row snapshot.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SubmissionDetail' }
+        '401':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+          description: Valid moderator credentials are required.
+        '404':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+          description: Unknown submission.
+
+  /v1/submissions/{id}/approve:
+    post:
+      tags: [Moderation]
+      summary: Approve a submission
+      operationId: approveSubmission
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^sub_[a-f0-9]{24}$'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ModeratorReviewRequest' }
+      responses:
+        '200':
+          description: Submission updated to approved.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Submission' }
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+          description: Valid moderator credentials are required.
+        '404':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+          description: Unknown submission or missing target row.
+        '409':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+          description: Submission already reviewed or target row state conflicts.
+
+  /v1/submissions/{id}/reject:
+    post:
+      tags: [Moderation]
+      summary: Reject a submission
+      operationId: rejectSubmission
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^sub_[a-f0-9]{24}$'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ModeratorRejectRequest' }
+      responses:
+        '200':
+          description: Submission updated to rejected.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Submission' }
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+          description: Valid moderator credentials are required.
+        '404':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+          description: Unknown submission.
+        '409':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+          description: Submission already reviewed.
+
+  /v1/change-log:
+    get:
+      tags: [Moderation]
+      summary: Inspect the reference-data change log
+      operationId: listChangeLog
+      parameters:
+        - name: target
+          in: query
+          required: false
+          schema: { $ref: '#/components/schemas/SubmissionTarget' }
+        - name: row_key
+          in: query
+          required: false
+          schema: { type: string }
+        - name: limit
+          in: query
+          required: false
+          schema: { type: integer, default: 100, minimum: 1, maximum: 500 }
+      responses:
+        '200':
+          description: Matching change-log rows.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  changes:
+                    type: array
+                    items: { $ref: '#/components/schemas/ChangeLogEntry' }
+        '401':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+          description: Valid moderator credentials are required.
+
+  /v1/provider/me:
+    get:
+      tags: [Provider]
+      summary: Get the authenticated provider account
+      operationId: getProviderMe
+      responses:
+        '200':
+          description: The active provider account bound to the bearer token.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ProviderMeResponse' }
+        '401':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+          description: Valid provider credentials are required.
+
+  /v1/provider/submissions:
+    post:
+      tags: [Provider]
+      summary: Create a provider-owned moderation submission
+      operationId: createProviderSubmission
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ProviderSubmissionRequest' }
+      responses:
+        '201':
+          description: Pending provider submission created.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Submission' }
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+          description: Valid provider credentials are required.
+        '403':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+          description: The provider may only submit its own rates.
+
+  /v1/provider/bookings:
+    get:
+      tags: [Provider]
+      summary: List provider booking tasks
+      operationId: listProviderBookings
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema: { $ref: '#/components/schemas/ProviderBookingStatus' }
+      responses:
+        '200':
+          description: Booking tasks visible to the authenticated provider.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  bookings:
+                    type: array
+                    items: { $ref: '#/components/schemas/ProviderBookingSummary' }
+        '401':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+          description: Valid provider credentials are required.
+
+  /v1/provider/bookings/{id}:
+    get:
+      tags: [Provider]
+      summary: Get a provider booking task
+      operationId: getProviderBooking
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^pbt_[a-f0-9]{24}$'
+      responses:
+        '200':
+          description: Booking task detail.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ProviderBookingDetail' }
+        '401':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+          description: Valid provider credentials are required.
+        '404':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+          description: Unknown or out-of-scope booking task.
+
+  /v1/provider/bookings/{id}/accept:
+    post:
+      tags: [Provider]
+      summary: Accept a booking task
+      operationId: acceptProviderBooking
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^pbt_[a-f0-9]{24}$'
+      responses:
+        '200':
+          description: Booking task accepted.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ProviderBookingDetail' }
+        '401':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+          description: Valid provider credentials are required.
+        '404':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+          description: Unknown or out-of-scope booking task.
+        '409':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+          description: Booking task is not pending.
+
+  /v1/provider/bookings/{id}/reject:
+    post:
+      tags: [Provider]
+      summary: Reject a booking task
+      operationId: rejectProviderBooking
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^pbt_[a-f0-9]{24}$'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ProviderBookingRejectRequest' }
+      responses:
+        '200':
+          description: Booking task rejected and delivery cancelled.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ProviderBookingDetail' }
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+          description: Valid provider credentials are required.
+        '404':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+          description: Unknown or out-of-scope booking task.
+        '409':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+          description: Booking task is not pending.
+
+  /v1/provider/bookings/{id}/events:
+    post:
+      tags: [Provider]
+      summary: Append a provider tracking event
+      operationId: appendProviderBookingEvent
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^pbt_[a-f0-9]{24}$'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ProviderBookingEventRequest' }
+      responses:
+        '200':
+          description: Provider tracking event applied.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ProviderBookingDetail' }
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+          description: Valid provider credentials are required.
+        '404':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+          description: Unknown or out-of-scope booking task.
+        '409':
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+          description: Booking task is not accepted or the status transition is invalid.
 
 components:
   schemas:
@@ -447,8 +899,18 @@ components:
 
     TrackingStatus:
       type: string
-      description: The five universal delivery statuses.
-      enum: [package_picked, in_transit, at_sorting_hub, ready_for_pickup, delivered]
+      description: The universal delivery statuses, including booking lifecycle states.
+      enum:
+        [
+          booking_requested,
+          booking_confirmed,
+          package_picked,
+          in_transit,
+          at_sorting_hub,
+          ready_for_pickup,
+          delivered,
+          delivery_cancelled,
+        ]
 
     Coordinates:
       type: object
@@ -580,6 +1042,311 @@ components:
           description: Indicative starting cost (the route's base cost). Not bookable; get the exact price from POST /v1/quotes.
       required: [provider_name, provider_type, collection_type]
 
+    SubmissionTarget:
+      type: string
+      enum: [rates, zones, providers, modes]
+
+    SubmissionOperation:
+      type: string
+      enum: [create, update]
+
+    SubmissionStatus:
+      type: string
+      enum: [pending, approved, rejected]
+
+    SubmissionCreateRequest:
+      type: object
+      properties:
+        target: { $ref: '#/components/schemas/SubmissionTarget' }
+        operation: { $ref: '#/components/schemas/SubmissionOperation' }
+        payload:
+          type: object
+          additionalProperties: true
+        source:
+          type: string
+          minLength: 1
+        submitted_by:
+          type: string
+          minLength: 1
+      required: [target, operation, payload, source, submitted_by]
+
+    ProviderSubmissionRequest:
+      type: object
+      properties:
+        target: { $ref: '#/components/schemas/SubmissionTarget' }
+        operation: { $ref: '#/components/schemas/SubmissionOperation' }
+        payload:
+          type: object
+          additionalProperties: true
+        source:
+          type: string
+          minLength: 1
+      required: [target, operation, payload, source]
+
+    Submission:
+      type: object
+      properties:
+        id:
+          type: string
+          pattern: '^sub_[a-f0-9]{24}$'
+        target: { $ref: '#/components/schemas/SubmissionTarget' }
+        operation: { $ref: '#/components/schemas/SubmissionOperation' }
+        payload:
+          type: object
+          additionalProperties: true
+        source:
+          type: string
+        submitted_by:
+          type: string
+        status: { $ref: '#/components/schemas/SubmissionStatus' }
+        submitted_at:
+          type: string
+          format: date-time
+        reviewed_by:
+          type: string
+          nullable: true
+        reviewed_at:
+          type: string
+          format: date-time
+          nullable: true
+        review_note:
+          type: string
+          nullable: true
+      required: [id, target, operation, payload, source, submitted_by, status, submitted_at, reviewed_by, reviewed_at, review_note]
+
+    SubmissionDetail:
+      type: object
+      properties:
+        submission: { $ref: '#/components/schemas/Submission' }
+        current_row:
+          type: object
+          additionalProperties: true
+          nullable: true
+      required: [submission, current_row]
+
+    ModeratorReviewRequest:
+      type: object
+      properties:
+        note:
+          type: string
+          minLength: 1
+          maxLength: 500
+      required: []
+
+    ModeratorRejectRequest:
+      type: object
+      properties:
+        note:
+          type: string
+          minLength: 1
+          maxLength: 500
+      required: [note]
+
+    ChangeLogEntry:
+      type: object
+      properties:
+        id:
+          type: integer
+        target: { $ref: '#/components/schemas/SubmissionTarget' }
+        operation: { $ref: '#/components/schemas/SubmissionOperation' }
+        row_key:
+          type: string
+        before:
+          type: object
+          additionalProperties: true
+          nullable: true
+        after:
+          type: object
+          additionalProperties: true
+        source:
+          type: string
+        changed_by:
+          type: string
+        submission_id:
+          type: string
+          nullable: true
+        changed_at:
+          type: string
+          format: date-time
+      required: [id, target, operation, row_key, before, after, source, changed_by, submission_id, changed_at]
+
+    ProviderAccount:
+      type: object
+      properties:
+        id:
+          type: string
+          pattern: '^pa_[a-f0-9]{24}$'
+        provider_id:
+          $ref: '#/components/schemas/ProviderType'
+        display_name:
+          type: string
+        status:
+          type: string
+          enum: [active, disabled]
+      required: [id, provider_id, display_name, status]
+
+    ProviderMeResponse:
+      type: object
+      properties:
+        account: { $ref: '#/components/schemas/ProviderAccount' }
+      required: [account]
+
+    ProviderBookingStatus:
+      type: string
+      enum: [pending, accepted, rejected, expired]
+
+    ProviderBookingSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          pattern: '^pbt_[a-f0-9]{24}$'
+        tracking_id:
+          type: string
+          pattern: '^trk_[a-f0-9]{32}$'
+        status: { $ref: '#/components/schemas/ProviderBookingStatus' }
+        created_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+      required: [id, tracking_id, status, created_at, expires_at]
+
+    ProviderBookingDetail:
+      type: object
+      properties:
+        booking:
+          type: object
+          properties:
+            id:
+              type: string
+              pattern: '^pbt_[a-f0-9]{24}$'
+            tracking_id:
+              type: string
+              pattern: '^trk_[a-f0-9]{32}$'
+            status: { $ref: '#/components/schemas/ProviderBookingStatus' }
+            created_at:
+              type: string
+              format: date-time
+            expires_at:
+              type: string
+              format: date-time
+            responded_at:
+              type: string
+              format: date-time
+              nullable: true
+            response_note:
+              type: string
+              nullable: true
+          required: [id, tracking_id, status, created_at, expires_at, responded_at, response_note]
+        delivery:
+          type: object
+          properties:
+            tracking_id:
+              type: string
+              pattern: '^trk_[a-f0-9]{32}$'
+            status: { $ref: '#/components/schemas/TrackingStatus' }
+            shop_order_ref:
+              type: string
+              nullable: true
+            shop_handoff_url:
+              type: string
+              format: uri
+              nullable: true
+          required: [tracking_id, status, shop_order_ref, shop_handoff_url]
+        quote:
+          type: object
+          properties:
+            provider_name:
+              type: string
+            origin_zone_id:
+              type: string
+            destination_zone_id:
+              type: string
+            estimated_cost_kes:
+              type: integer
+            estimated_time:
+              type: string
+          required: [provider_name, origin_zone_id, destination_zone_id, estimated_cost_kes, estimated_time]
+      required: [booking, delivery, quote]
+
+    ProviderBookingRejectRequest:
+      type: object
+      properties:
+        note:
+          type: string
+          minLength: 1
+          maxLength: 500
+      required: [note]
+
+    ProviderBookingEventRequest:
+      type: object
+      properties:
+        status: { $ref: '#/components/schemas/TrackingStatus' }
+        note:
+          type: string
+          minLength: 1
+          maxLength: 500
+      required: [status]
+
+    ReferenceExport:
+      type: object
+      properties:
+        export_version:
+          type: integer
+          enum: [1]
+        generated_at:
+          type: string
+          format: date-time
+        source:
+          type: string
+          enum: [itafika-d1]
+        tables:
+          type: object
+          properties:
+            zones:
+              type: array
+              items:
+                type: object
+                additionalProperties: true
+            modes:
+              type: array
+              items:
+                type: object
+                additionalProperties: true
+            providers:
+              type: array
+              items:
+                type: object
+                additionalProperties: true
+            rates:
+              type: array
+              items:
+                type: object
+                additionalProperties: true
+            freshness:
+              type: array
+              items:
+                type: object
+                additionalProperties: true
+          required: [zones, modes, providers, rates, freshness]
+        row_counts:
+          type: object
+          properties:
+            zones:
+              type: integer
+            modes:
+              type: integer
+            providers:
+              type: integer
+            rates:
+              type: integer
+            freshness:
+              type: integer
+          required: [zones, modes, providers, rates, freshness]
+      required: [export_version, generated_at, source, tables, row_counts]
+
     DeliveryRequest:
       type: object
       properties:
@@ -615,6 +1382,7 @@ components:
         shop_handoff_url:
           type: string
           format: uri
+          nullable: true
           description: Optional shop-owned provider handoff URL.
         created_at: { type: string, format: date-time }
       required: [tracking_id, status, quote, shop_order_ref, created_at]

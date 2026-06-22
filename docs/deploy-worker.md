@@ -1,6 +1,6 @@
 # How to Deploy the Worker
 
-This guide is for maintainers who need to deploy the `@itafika/worker` package to Cloudflare. 
+This guide is for maintainers who need to deploy the `@itafika/worker` package to Cloudflare.
 
 ## Preparation
 
@@ -47,7 +47,16 @@ routes, rates, and freshness, run:
 pnpm --filter @itafika/worker db:seed:remote
 ```
 
-## Step 5: Deploy the API
+## Step 5: Build the Portal
+
+The Worker serves the portal bundle from `apps/portal/dist`, so build it before every
+deploy:
+
+```bash
+pnpm --filter @itafika/portal build
+```
+
+## Step 6: Deploy the API and Portal
 
 Now you are ready to put the Worker online:
 
@@ -55,7 +64,11 @@ Now you are ready to put the Worker online:
 pnpm --filter @itafika/worker run deploy
 ```
 
-## Step 6: Test It
+Cloudflare deploys the `/v1/*` API routes first, then serves the portal shell through the
+`ASSETS` binding. The worker also writes reference export snapshots to the
+`reference_exports` R2 bucket and runs the export cron at 02:10 UTC.
+
+## Step 7: Test It
 
 Once the deploy finishes, Cloudflare will give you a URL. Test it using `curl` or your browser:
 
@@ -71,6 +84,7 @@ If you see a list of zones (locations), your deployment was successful!
 |---|---|---|
 | Setup Tables | `pnpm --filter @itafika/worker db:migrate:local` | `pnpm --filter @itafika/worker db:migrate:remote` |
 | Add Data | `pnpm --filter @itafika/worker db:seed:local` | `pnpm --filter @itafika/worker db:seed:remote` |
+| Build Portal | `pnpm --filter @itafika/portal build` | `pnpm --filter @itafika/portal build` |
 | Start Server | `pnpm --filter @itafika/worker dev` | `pnpm --filter @itafika/worker run deploy` |
 
 ## Quick Tips

@@ -5,11 +5,14 @@ import { TRACKING_STATUS_FLOW, canAdvanceTrackingStatus, latestTrackingStatus } 
 describe("tracking lifecycle helpers", () => {
   it("exposes the universal status order", () => {
     expect(TRACKING_STATUS_FLOW).toEqual([
+      "booking_requested",
+      "booking_confirmed",
       "package_picked",
       "in_transit",
       "at_sorting_hub",
       "ready_for_pickup",
       "delivered",
+      "delivery_cancelled",
     ]);
   });
 
@@ -23,7 +26,10 @@ describe("tracking lifecycle helpers", () => {
   });
 
   it("allows forward movement and rejects regression", () => {
-    expect(canAdvanceTrackingStatus("package_picked", "in_transit")).toBe(true);
+    expect(canAdvanceTrackingStatus("booking_requested", "booking_confirmed")).toBe(true);
+    expect(canAdvanceTrackingStatus("booking_confirmed", "delivery_cancelled")).toBe(true);
+    expect(canAdvanceTrackingStatus("booking_confirmed", "in_transit")).toBe(true);
+    expect(canAdvanceTrackingStatus("package_picked", "booking_confirmed")).toBe(false);
     expect(canAdvanceTrackingStatus("delivered", "ready_for_pickup")).toBe(false);
   });
 });

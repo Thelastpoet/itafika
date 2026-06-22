@@ -4,8 +4,10 @@
 	"private": true,
 	"scripts": {
 		"deploy": "wrangler deploy",
+		"predev": "pnpm --filter @itafika/portal build",
 		"dev": "wrangler dev",
 		"start": "wrangler dev",
+		"pretest": "pnpm --filter @itafika/portal build",
 		"test": "vitest run",
 		"typecheck": "tsc --noEmit",
 		"cf-typegen": "wrangler types",

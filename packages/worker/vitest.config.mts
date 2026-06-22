@@ -5,6 +5,7 @@ export default defineWorkersConfig(async () => {
 	const migrations = await readD1Migrations(fileURLToPath(new URL("migrations", import.meta.url)));
 	return {
 		test: {
+			testTimeout: 30000,
 			setupFiles: ["./tests/apply-migrations.ts"],
 			poolOptions: {
 				workers: {

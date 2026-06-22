@@ -62,49 +62,49 @@ pnpm --filter @itafika/worker exec wrangler types
 
 ## Implementation Checklist
 
-- [ ] Keep hardcoded allowlist:
+- [x] Keep hardcoded allowlist:
 
 ```ts
 const REFERENCE_TABLES = ["zones", "modes", "providers", "rates", "freshness"] as const;
 ```
 
-- [ ] Add `export_version`, `source`, and `row_counts`.
-- [ ] Add Worker `scheduled(controller, env, ctx)` handler.
-- [ ] Scheduled handler writes `reference/latest.json`.
-- [ ] Scheduled handler writes `reference/archive/{generated_at}.json`.
-- [ ] `generated_at` object key uses safe UTC format, e.g. `2026-06-19T02-10-00Z`.
-- [ ] R2 writes use `content-type: application/json; charset=utf-8`.
-- [ ] Add `GET /v1/export/latest`.
-- [ ] If no R2 snapshot exists, `GET /v1/export/latest` returns `503 export_unavailable`.
+- [x] Add `export_version`, `source`, and `row_counts`.
+- [x] Add Worker `scheduled(controller, env, ctx)` handler.
+- [x] Scheduled handler writes `reference/latest.json`.
+- [x] Scheduled handler writes `reference/archive/{generated_at}.json`.
+- [x] `generated_at` object key uses safe UTC format, e.g. `2026-06-19T02-10-00Z`.
+- [x] R2 writes use `content-type: application/json; charset=utf-8`.
+- [x] Add `GET /v1/export/latest`.
+- [x] If no R2 snapshot exists, `GET /v1/export/latest` returns `503 export_unavailable`.
 
 ## Never Export
 
-- [ ] `submissions`
-- [ ] `change_log`
-- [ ] `quotes`
-- [ ] `deliveries`
-- [ ] `tracking_events`
-- [ ] `provider_accounts`
-- [ ] `provider_booking_tasks`
-- [ ] legacy contact fields
-- [ ] provider/customer handoff details
+- [x] `submissions`
+- [x] `change_log`
+- [x] `quotes`
+- [x] `deliveries`
+- [x] `tracking_events`
+- [x] `provider_accounts`
+- [x] `provider_booking_tasks`
+- [x] legacy contact fields
+- [x] provider/customer handoff details
 
 ## Tests
 
-- [ ] `GET /v1/export` includes metadata and row counts.
-- [ ] Export contains only allowlisted tables.
-- [ ] Export contains reference tables only.
-- [ ] `GET /v1/export/latest` returns `503` before first snapshot.
-- [ ] Scheduled snapshot writes latest key.
-- [ ] Scheduled snapshot writes archive key.
+- [x] `GET /v1/export` includes metadata and row counts.
+- [x] Export contains only allowlisted tables.
+- [x] Export contains reference tables only.
+- [x] `GET /v1/export/latest` returns `503` before first snapshot.
+- [x] Scheduled snapshot writes latest key.
+- [x] Scheduled snapshot writes archive key.
 
 ## Docs
 
-- [ ] Update `docs/contribute-data.md` with public export usage.
-- [ ] Update `docs/deploy-worker.md` with R2 binding and cron setup.
+- [x] Update `docs/contribute-data.md` with public export usage.
+- [x] Update `docs/deploy-worker.md` with R2 binding and cron setup.
 
 ## Exit Criteria
 
-- [ ] Public user can fetch live reference export.
-- [ ] Public user can fetch latest generated snapshot after first cron run.
-- [ ] Export leak tests pass.
+- [x] Public user can fetch live reference export.
+- [x] Public user can fetch latest generated snapshot after first cron run.
+- [x] Export leak tests pass.

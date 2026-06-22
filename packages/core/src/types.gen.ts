@@ -66,7 +66,7 @@ export interface paths {
          * Browse delivery options into a destination area
          * @description Returns the navigable option tree for the shop's origin into the customer's
          *     town: which providers serve the route, in which mode, where they collect, and
-         *     an indicative starting cost. This is **navigation, not pricing** — it takes no
+         *     an indicative starting cost. This is **navigation, not pricing**: it takes no
          *     package weight and returns no bookable price. Once the customer picks a
          *     collection point (which becomes the `destination_zone_id`) and the weight is
          *     known, the shop calls `POST /v1/quotes` for the exact, bookable price.
@@ -93,7 +93,7 @@ export interface paths {
          * List the transport-mode registry
          * @description Returns the transport modes a customer can choose between, each with display
          *     metadata. The registry is governed reference data (ADR 0019), not a hardcoded
-         *     list — a shop can render any mode, including ones added after it was built,
+         *     list, so a shop can render any mode, including ones added after it was built,
          *     without a code change.
          */
         get: operations["listModes"];
@@ -139,9 +139,9 @@ export interface paths {
         put?: never;
         /**
          * Lock in a chosen quote and create a delivery
-         * @description Accepts a quote the customer selected, records the delivery, and generates
-         *     a tracking ID. In Phase 1 the reference Worker records the booking, while
-         *     provider dispatch through adapters remains follow-on integration work.
+         * @description Accepts a quote the customer selected, records delivery orchestration
+         *     state, and generates a tracking ID. The shop owns customer/order/contact
+         *     data and passes a shop-owned reference for provider handoff (ADR 0025).
          */
         post: operations["createDelivery"];
         delete?: never;
@@ -183,11 +183,250 @@ export interface paths {
         put?: never;
         /**
          * Append a tracking event to a delivery
-         * @description Adds a new event to the delivery's unified tracking history.
-         *     In Phase 1 this is a manual/internal update path used before full
-         *     adapter-driven or webhook-driven tracking flows exist.
+         * @description Adds a new event to the delivery's unified tracking history. This path is
+         *     used by manual updates and by provider-confirmed tracking updates after a
+         *     booking task has been accepted.
          */
         post: operations["createTrackingEvent"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Fetch the current public reference export */
+        get: operations["getReferenceExport"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/export/latest": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Fetch the latest generated export snapshot */
+        get: operations["getLatestReferenceExport"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/submissions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List moderation submissions */
+        get: operations["listSubmissions"];
+        put?: never;
+        /** Create a moderation submission */
+        post: operations["createSubmission"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/submissions/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a submission and its current row */
+        get: operations["getSubmission"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/submissions/{id}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Approve a submission */
+        post: operations["approveSubmission"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/submissions/{id}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reject a submission */
+        post: operations["rejectSubmission"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/change-log": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Inspect the reference-data change log */
+        get: operations["listChangeLog"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/provider/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get the authenticated provider account */
+        get: operations["getProviderMe"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/provider/submissions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create a provider-owned moderation submission */
+        post: operations["createProviderSubmission"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/provider/bookings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List provider booking tasks */
+        get: operations["listProviderBookings"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/provider/bookings/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a provider booking task */
+        get: operations["getProviderBooking"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/provider/bookings/{id}/accept": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Accept a booking task */
+        post: operations["acceptProviderBooking"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/provider/bookings/{id}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reject a booking task */
+        post: operations["rejectProviderBooking"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/provider/bookings/{id}/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Append a provider tracking event */
+        post: operations["appendProviderBookingEvent"];
         delete?: never;
         options?: never;
         head?: never;
@@ -204,7 +443,7 @@ export interface components {
          */
         ZoneType: "cbd_hub" | "stage" | "residential_area";
         /**
-         * @description A transport-mode identifier — the "mode" a customer chooses, and how adapters
+         * @description A transport-mode identifier: the "mode" a customer chooses, and how adapters
          *     are grouped. This is an **open identifier drawn from the modes registry**
          *     (`GET /v1/modes`), **not a closed set** (ADR 0019). New modes are added as
          *     governed reference data (`modes.csv`), never by changing this contract or the
@@ -212,8 +451,8 @@ export interface components {
          *     an unknown mode from the registry's display metadata rather than treating the
          *     examples below as exhaustive.
          *
-         *     The seed registry ships with all of these as data rows; `GET /v1/modes` is the
-         *     source of truth for what currently exists.
+         *     The seed registry ships with all of these as data rows; `GET /v1/modes` returns
+         *     the modes currently available through the API.
          * @example boda_rider
          * @example matatu_sacco
          * @example bus
@@ -225,7 +464,7 @@ export interface components {
         ProviderType: string;
         /**
          * @description A transport mode in the registry, with display metadata so a shop can render
-         *     any mode — including ones added after it was built — without a code change
+         *     any mode, including ones added after it was built, without a code change
          *     (ADR 0019).
          */
         Mode: {
@@ -236,16 +475,16 @@ export interface components {
             description?: string;
         };
         /**
-         * @description How the recipient receives the parcel. Specified by ADR 0016
+         * @description How the customer gets the parcel for this option. Specified by ADR 0016
          *     (checkout-delivery direction).
          * @enum {string}
          */
         CollectionType: "office_pickup" | "door_delivery";
         /**
-         * @description The five universal delivery statuses.
+         * @description The universal delivery statuses, including booking lifecycle states.
          * @enum {string}
          */
-        TrackingStatus: "package_picked" | "in_transit" | "at_sorting_hub" | "ready_for_pickup" | "delivered";
+        TrackingStatus: "booking_requested" | "booking_confirmed" | "package_picked" | "in_transit" | "at_sorting_hub" | "ready_for_pickup" | "delivered" | "delivery_cancelled";
         Coordinates: {
             /** Format: double */
             lat: number;
@@ -296,13 +535,13 @@ export interface components {
             estimated_time: string;
             /**
              * Format: double
-             * @description 0–1 confidence in on-time, intact delivery. Asserted by the community or
-             *     the provider's adapter — not yet measured from real deliveries. Omitted
+             * @description 0 to 1 confidence in on-time, intact delivery. Asserted by the community or
+             *     the provider's adapter, not yet measured from real deliveries. Omitted
              *     when there is no basis for a value (ADR 0021).
              */
             reliability_score?: number;
             /**
-             * @description How the recipient receives this option's parcel — collect at the
+             * @description How the customer gets this option's parcel: collect at the
              *     provider's office/stage, or door delivery. Specified by ADR 0016
              *     (checkout-delivery direction).
              */
@@ -310,7 +549,7 @@ export interface components {
             collection_point?: components["schemas"]["CollectionPoint"];
         };
         /**
-         * @description For `office_pickup`, the zone where the recipient collects the parcel. Absent
+         * @description For `office_pickup`, the zone where the customer collects the parcel. Absent
          *     for `door_delivery`. Specified by ADR 0016 (checkout-delivery direction).
          */
         CollectionPoint: {
@@ -320,7 +559,7 @@ export interface components {
         };
         /**
          * @description A provider+mode the customer can choose for a destination town, with where it
-         *     collects and an indicative starting cost. Navigation only — the exact bookable
+         *     collects and an indicative starting cost. Navigation only: the exact bookable
          *     price comes from POST /v1/quotes. Specified by ADR 0017 (checkout-delivery
          *     direction). `provider_id` is deliberately not exposed (internal column).
          */
@@ -329,7 +568,7 @@ export interface components {
             provider_type: components["schemas"]["ProviderType"];
             /**
              * Format: double
-             * @description 0–1 confidence; asserted, not measured. Omitted when there is no basis
+             * @description 0 to 1 confidence; asserted, not measured. Omitted when there is no basis
              *     for a value (ADR 0021).
              */
             reliability_score?: number;
@@ -339,45 +578,186 @@ export interface components {
             /** @description Indicative starting cost (the route's base cost). Not bookable; get the exact price from POST /v1/quotes. */
             from_cost_kes?: number;
         };
-        Contact: {
-            name: string;
-            /** @description E.164 format, e.g. +254712345678. */
-            phone: string;
-            /**
-             * @description Optional national ID asked for at an office/stage parcel desk on
-             *     collection. Specified by ADR 0018 (checkout-delivery direction).
-             */
-            id_number?: string;
+        /** @enum {string} */
+        SubmissionTarget: "rates" | "zones" | "providers" | "modes";
+        /** @enum {string} */
+        SubmissionOperation: "create" | "update";
+        /** @enum {string} */
+        SubmissionStatus: "pending" | "approved" | "rejected";
+        SubmissionCreateRequest: {
+            target: components["schemas"]["SubmissionTarget"];
+            operation: components["schemas"]["SubmissionOperation"];
+            payload: {
+                [key: string]: unknown;
+            };
+            source: string;
+            submitted_by: string;
+        };
+        ProviderSubmissionRequest: {
+            target: components["schemas"]["SubmissionTarget"];
+            operation: components["schemas"]["SubmissionOperation"];
+            payload: {
+                [key: string]: unknown;
+            };
+            source: string;
+        };
+        Submission: {
+            id: string;
+            target: components["schemas"]["SubmissionTarget"];
+            operation: components["schemas"]["SubmissionOperation"];
+            payload: {
+                [key: string]: unknown;
+            };
+            source: string;
+            submitted_by: string;
+            status: components["schemas"]["SubmissionStatus"];
+            /** Format: date-time */
+            submitted_at: string;
+            reviewed_by: string | null;
+            /** Format: date-time */
+            reviewed_at: string | null;
+            review_note: string | null;
+        };
+        SubmissionDetail: {
+            submission: components["schemas"]["Submission"];
+            current_row: {
+                [key: string]: unknown;
+            } | null;
+        };
+        ModeratorReviewRequest: {
+            note?: string;
+        };
+        ModeratorRejectRequest: {
+            note: string;
+        };
+        ChangeLogEntry: {
+            id: number;
+            target: components["schemas"]["SubmissionTarget"];
+            operation: components["schemas"]["SubmissionOperation"];
+            row_key: string;
+            before: {
+                [key: string]: unknown;
+            } | null;
+            after: {
+                [key: string]: unknown;
+            };
+            source: string;
+            changed_by: string;
+            submission_id: string | null;
+            /** Format: date-time */
+            changed_at: string;
+        };
+        ProviderAccount: {
+            id: string;
+            provider_id: components["schemas"]["ProviderType"];
+            display_name: string;
+            /** @enum {string} */
+            status: "active" | "disabled";
+        };
+        ProviderMeResponse: {
+            account: components["schemas"]["ProviderAccount"];
+        };
+        /** @enum {string} */
+        ProviderBookingStatus: "pending" | "accepted" | "rejected" | "expired";
+        ProviderBookingSummary: {
+            id: string;
+            tracking_id: string;
+            status: components["schemas"]["ProviderBookingStatus"];
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            expires_at: string;
+        };
+        ProviderBookingDetail: {
+            booking: {
+                id: string;
+                tracking_id: string;
+                status: components["schemas"]["ProviderBookingStatus"];
+                /** Format: date-time */
+                created_at: string;
+                /** Format: date-time */
+                expires_at: string;
+                /** Format: date-time */
+                responded_at: string | null;
+                response_note: string | null;
+            };
+            delivery: {
+                tracking_id: string;
+                status: components["schemas"]["TrackingStatus"];
+                shop_order_ref: string | null;
+                /** Format: uri */
+                shop_handoff_url: string | null;
+            };
+            quote: {
+                provider_name: string;
+                origin_zone_id: string;
+                destination_zone_id: string;
+                estimated_cost_kes: number;
+                estimated_time: string;
+            };
+        };
+        ProviderBookingRejectRequest: {
+            note: string;
+        };
+        ProviderBookingEventRequest: {
+            status: components["schemas"]["TrackingStatus"];
+            note?: string;
+        };
+        ReferenceExport: {
+            /** @enum {integer} */
+            export_version: 1;
+            /** Format: date-time */
+            generated_at: string;
+            /** @enum {string} */
+            source: "itafika-d1";
+            tables: {
+                zones: {
+                    [key: string]: unknown;
+                }[];
+                modes: {
+                    [key: string]: unknown;
+                }[];
+                providers: {
+                    [key: string]: unknown;
+                }[];
+                rates: {
+                    [key: string]: unknown;
+                }[];
+                freshness: {
+                    [key: string]: unknown;
+                }[];
+            };
+            row_counts: {
+                zones: number;
+                modes: number;
+                providers: number;
+                rates: number;
+                freshness: number;
+            };
         };
         DeliveryRequest: {
             quote_id: string;
-            sender: components["schemas"]["Contact"];
-            recipient: components["schemas"]["Contact"];
-            /** @description What is in the box (distinct from handover instructions). */
-            package_description?: string;
+            /** @description Shop-owned order or delivery reference used for orchestration. */
+            shop_order_ref: string;
             /**
-             * @description Handover instructions, e.g. "Call before handover; give to Achieng
-             *     (sister)." Specified by ADR 0018 (checkout-delivery direction).
+             * Format: uri
+             * @description Optional shop-owned provider handoff URL. The shop controls the
+             *     customer/order details behind this URL (ADR 0025).
              */
-            instructions?: string;
-            /**
-             * @description Someone other than the recipient authorised to collect. Specified by
-             *     ADR 0018 (checkout-delivery direction).
-             */
-            alternate_collector?: components["schemas"]["Contact"];
+            shop_handoff_url?: string;
         };
         Delivery: {
             /** @description Use with GET /v1/deliveries/{tracking_id}/track. */
             tracking_id: string;
             status: components["schemas"]["TrackingStatus"];
             quote: components["schemas"]["Quote"];
-            sender: components["schemas"]["Contact"];
-            recipient: components["schemas"]["Contact"];
+            /** @description Shop-owned order or delivery reference used for orchestration. */
+            shop_order_ref: string;
             /**
-             * @description Handover instructions recorded at booking. Specified by ADR 0018
-             *     (checkout-delivery direction).
+             * Format: uri
+             * @description Optional shop-owned provider handoff URL.
              */
-            instructions?: string;
+            shop_handoff_url?: string | null;
             /** Format: date-time */
             created_at: string;
         };
@@ -731,15 +1111,8 @@ export interface operations {
                 /**
                  * @example {
                  *       "quote_id": "qt_b1a56ce02d7345f398ee2c04",
-                 *       "sender": {
-                 *         "name": "Asha Mwangi",
-                 *         "phone": "+254712345678"
-                 *       },
-                 *       "recipient": {
-                 *         "name": "John Otieno",
-                 *         "phone": "+254723456789"
-                 *       },
-                 *       "package_description": "Sealed apparel box, 2.5kg"
+                 *       "shop_order_ref": "ORDER-12345",
+                 *       "shop_handoff_url": "https://shop.example.com/delivery-handoff/ORDER-12345"
                  *     }
                  */
                 "application/json": components["schemas"]["DeliveryRequest"];
@@ -856,6 +1229,600 @@ export interface operations {
                 };
             };
             /** @description Status regression is not allowed. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    getReferenceExport: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Public reference-data snapshot with metadata and row counts. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReferenceExport"];
+                };
+            };
+        };
+    };
+    getLatestReferenceExport: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Latest generated export snapshot. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReferenceExport"];
+                };
+            };
+            /** @description No generated snapshot exists yet. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    listSubmissions: {
+        parameters: {
+            query?: {
+                status?: components["schemas"]["SubmissionStatus"];
+                target?: components["schemas"]["SubmissionTarget"];
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Matching submissions. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        submissions?: components["schemas"]["Submission"][];
+                    };
+                };
+            };
+            /** @description Valid moderator credentials are required. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    createSubmission: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SubmissionCreateRequest"];
+            };
+        };
+        responses: {
+            /** @description Pending submission created. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Submission"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+        };
+    };
+    getSubmission: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Submission detail and current row snapshot. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SubmissionDetail"];
+                };
+            };
+            /** @description Valid moderator credentials are required. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Unknown submission. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    approveSubmission: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["ModeratorReviewRequest"];
+            };
+        };
+        responses: {
+            /** @description Submission updated to approved. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Submission"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            /** @description Valid moderator credentials are required. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Unknown submission or missing target row. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Submission already reviewed or target row state conflicts. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    rejectSubmission: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ModeratorRejectRequest"];
+            };
+        };
+        responses: {
+            /** @description Submission updated to rejected. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Submission"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            /** @description Valid moderator credentials are required. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Unknown submission. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Submission already reviewed. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    listChangeLog: {
+        parameters: {
+            query?: {
+                target?: components["schemas"]["SubmissionTarget"];
+                row_key?: string;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Matching change-log rows. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        changes?: components["schemas"]["ChangeLogEntry"][];
+                    };
+                };
+            };
+            /** @description Valid moderator credentials are required. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    getProviderMe: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The active provider account bound to the bearer token. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProviderMeResponse"];
+                };
+            };
+            /** @description Valid provider credentials are required. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    createProviderSubmission: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProviderSubmissionRequest"];
+            };
+        };
+        responses: {
+            /** @description Pending provider submission created. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Submission"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            /** @description Valid provider credentials are required. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description The provider may only submit its own rates. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    listProviderBookings: {
+        parameters: {
+            query?: {
+                status?: components["schemas"]["ProviderBookingStatus"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Booking tasks visible to the authenticated provider. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        bookings?: components["schemas"]["ProviderBookingSummary"][];
+                    };
+                };
+            };
+            /** @description Valid provider credentials are required. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    getProviderBooking: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Booking task detail. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProviderBookingDetail"];
+                };
+            };
+            /** @description Valid provider credentials are required. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Unknown or out-of-scope booking task. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    acceptProviderBooking: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Booking task accepted. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProviderBookingDetail"];
+                };
+            };
+            /** @description Valid provider credentials are required. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Unknown or out-of-scope booking task. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Booking task is not pending. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    rejectProviderBooking: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProviderBookingRejectRequest"];
+            };
+        };
+        responses: {
+            /** @description Booking task rejected and delivery cancelled. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProviderBookingDetail"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            /** @description Valid provider credentials are required. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Unknown or out-of-scope booking task. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Booking task is not pending. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    appendProviderBookingEvent: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProviderBookingEventRequest"];
+            };
+        };
+        responses: {
+            /** @description Provider tracking event applied. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProviderBookingDetail"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            /** @description Valid provider credentials are required. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Unknown or out-of-scope booking task. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Booking task is not accepted or the status transition is invalid. */
             409: {
                 headers: {
                     [name: string]: unknown;

@@ -1,5 +1,3 @@
-import type { Contact } from "@itafika/core";
-
 import { QUOTE_ID_RE, TRACKING_ID_RE } from "./policy.js";
 
 const PHONE_RE = /^\+[1-9]\d{7,14}$/;
@@ -9,6 +7,14 @@ const ID_NUMBER_MAX_LENGTH = 40;
 const PACKAGE_DESCRIPTION_MAX_LENGTH = 500;
 const INSTRUCTIONS_MAX_LENGTH = 500;
 const TRACKING_NOTE_MAX_LENGTH = 500;
+const SHOP_ORDER_REF_MAX_LENGTH = 120;
+const SHOP_HANDOFF_URL_MAX_LENGTH = 1000;
+
+interface Contact {
+  name: string;
+  phone: string;
+  id_number?: string;
+}
 
 export function clampLimit(raw: string | null): number {
   const n = raw === null ? 100 : Number(raw);
@@ -49,6 +55,21 @@ export function parseInstructions(value: unknown): string | null {
 
 export function parseTrackingNote(value: unknown): string | null {
   return normalizeText(value, TRACKING_NOTE_MAX_LENGTH);
+}
+
+export function parseShopOrderRef(value: unknown): string | null {
+  return normalizeText(value, SHOP_ORDER_REF_MAX_LENGTH);
+}
+
+export function parseShopHandoffUrl(value: unknown): string | null {
+  const normalized = normalizeText(value, SHOP_HANDOFF_URL_MAX_LENGTH);
+  if (normalized === null) return null;
+  try {
+    const url = new URL(normalized);
+    return url.toString();
+  } catch {
+    return null;
+  }
 }
 
 export function isQuoteId(value: string): boolean {

@@ -1,6 +1,5 @@
 import type {
   Delivery,
-  DeliveryRequest,
   Mode,
   Provider,
   Quote,
@@ -14,7 +13,7 @@ import type {
   ZoneType,
   FreshnessEntry,
 } from "@itafika/core";
-import { canAdvanceTrackingStatus, latestTrackingStatus } from "@itafika/core";
+import type { SubmissionOperation, SubmissionTarget } from "./moderation.js";
 import type { PersistableQuote } from "./quote-service.js";
 
 interface ZoneRow {
@@ -263,6 +262,10 @@ export async function pruneExpiredQuotes(db: D1Database, now: string): Promise<v
     .run();
 }
 
+function isUniqueViolation(error: unknown): boolean {
+  return error instanceof Error && /UNIQUE constraint failed/i.test(error.message);
+}
+
 /**
  * Returns the quote row only if it is still bookable: it exists, has not expired,
  * and has not already been booked. Returns null otherwise. This runs before the
@@ -277,71 +280,42 @@ export async function getBookableQuote(db: D1Database, quoteId: string, now: str
     .first<QuoteRow>();
 }
 
-function isUniqueViolation(error: unknown): boolean {
-  return error instanceof Error && /UNIQUE constraint failed/i.test(error.message);
-}
+type DeliveryTrackingStatus =
+  | TrackingStatus
+  | "booking_requested"
+  | "booking_confirmed"
+  | "delivery_cancelled";
 
-/**
- * Persists a booked delivery and its initial tracking event (source 'booking').
- * The status and provider_ref come from the adapter's book() result. Returns null
- * if a concurrent booking won the unique index on deliveries.quote_id.
- */
-export async function recordDelivery(
-  db: D1Database,
-  args: {
-    trackingId: string;
-    quoteRow: QuoteRow;
-    req: DeliveryRequest;
-    status: TrackingStatus;
-    providerRef: string;
-    now: string;
-  },
-): Promise<Delivery | null> {
-  const { trackingId, quoteRow, req, status, providerRef, now } = args;
-  const alt = req.alternate_collector;
-  try {
-    await db.batch([
-      db
-        .prepare(
-          "INSERT INTO deliveries (tracking_id, quote_id, status, provider_ref, sender_name, sender_phone, recipient_name, recipient_phone, package_description, instructions, sender_id_number, recipient_id_number, alternate_collector_name, alternate_collector_phone, alternate_collector_id_number, created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
-        )
-        .bind(
-          trackingId,
-          req.quote_id,
-          status,
-          providerRef,
-          req.sender.name,
-          req.sender.phone,
-          req.recipient.name,
-          req.recipient.phone,
-          req.package_description ?? null,
-          req.instructions ?? null,
-          req.sender.id_number ?? null,
-          req.recipient.id_number ?? null,
-          alt?.name ?? null,
-          alt?.phone ?? null,
-          alt?.id_number ?? null,
-          now,
-        ),
-      db
-        .prepare("INSERT INTO tracking_events (tracking_id, status, at, source) VALUES (?,?,?,?)")
-        .bind(trackingId, status, now, "booking"),
-    ]);
-  } catch (error) {
-    if (isUniqueViolation(error)) return null;
-    throw error;
+const DELIVERY_STATUS_ORDER: readonly DeliveryTrackingStatus[] = [
+  "booking_requested",
+  "booking_confirmed",
+  "package_picked",
+  "in_transit",
+  "at_sorting_hub",
+  "ready_for_pickup",
+  "delivered",
+  "delivery_cancelled",
+] as const;
+
+const DELIVERY_STATUS_INDEX = new Map<DeliveryTrackingStatus, number>(
+  DELIVERY_STATUS_ORDER.map((status, index) => [status, index]),
+);
+
+function canAdvanceDeliveryStatus(current: DeliveryTrackingStatus, next: DeliveryTrackingStatus): boolean {
+  if (current === next) return false;
+  if (current === "booking_requested") return next === "booking_confirmed" || next === "delivery_cancelled";
+  if (current === "booking_confirmed") {
+    return (
+      next === "package_picked" ||
+      next === "in_transit" ||
+      next === "at_sorting_hub" ||
+      next === "ready_for_pickup" ||
+      next === "delivered" ||
+      next === "delivery_cancelled"
+    );
   }
-
-  const delivery: Delivery = {
-    tracking_id: trackingId,
-    status,
-    quote: toQuote(quoteRow),
-    sender: req.sender,
-    recipient: req.recipient,
-    created_at: now,
-  };
-  if (req.instructions !== undefined) delivery.instructions = req.instructions;
-  return delivery;
+  if (current === "delivery_cancelled" || current === "delivered") return false;
+  return (DELIVERY_STATUS_INDEX.get(next) ?? -1) >= (DELIVERY_STATUS_INDEX.get(current) ?? -1);
 }
 
 export async function trackDelivery(db: D1Database, trackingId: string): Promise<TrackingResponse | null> {
@@ -354,12 +328,16 @@ export async function trackDelivery(db: D1Database, trackingId: string): Promise
   const { results } = await db
     .prepare("SELECT status, at, note FROM tracking_events WHERE tracking_id = ? ORDER BY id")
     .bind(trackingId)
-    .all<{ status: TrackingStatus; at: string; note: string | null }>();
+    .all<{ status: string; at: string; note: string | null }>();
 
-  const history: TrackingEvent[] = results.map((e) => (e.note !== null ? { status: e.status, at: e.at, note: e.note } : { status: e.status, at: e.at }));
-  const status = latestTrackingStatus(history);
+  const history = results.map((e) =>
+    e.note !== null
+      ? ({ status: e.status as DeliveryTrackingStatus, at: e.at, note: e.note } as TrackingEvent)
+      : ({ status: e.status as DeliveryTrackingStatus, at: e.at } as TrackingEvent),
+  );
+  const status = history.length === 0 ? null : (history[history.length - 1]!.status as DeliveryTrackingStatus);
   if (status === null) return null;
-  return { tracking_id: delivery.tracking_id, status, history };
+  return { tracking_id: delivery.tracking_id, status: status as TrackingResponse["status"], history };
 }
 
 export async function appendTrackingEvent(
@@ -367,11 +345,12 @@ export async function appendTrackingEvent(
   trackingId: string,
   request: TrackingEventCreateRequest,
   now: string,
+  source: string = "manual",
 ): Promise<TrackingResponse | "not_found" | "invalid_transition"> {
   const current = await trackDelivery(db, trackingId);
   if (!current) return "not_found";
 
-  if (!canAdvanceTrackingStatus(current.status, request.status)) {
+  if (!canAdvanceDeliveryStatus(current.status as DeliveryTrackingStatus, request.status as DeliveryTrackingStatus)) {
     return "invalid_transition";
   }
 
@@ -381,10 +360,320 @@ export async function appendTrackingEvent(
       request.status,
       now,
       request.note ?? null,
-      "manual",
+      source,
     ),
     db.prepare("UPDATE deliveries SET status = ? WHERE tracking_id = ?").bind(request.status, trackingId),
   ]);
 
   return trackDelivery(db, trackingId) as Promise<TrackingResponse>;
+}
+
+export interface DeliveryBookingRequest {
+  quote_id: string;
+  shop_order_ref: string;
+  shop_handoff_url?: string;
+  sender?: {
+    name: string;
+    phone: string;
+    id_number?: string;
+  };
+  recipient?: {
+    name: string;
+    phone: string;
+    id_number?: string;
+  };
+  package_description?: string;
+  instructions?: string;
+  alternate_collector?: {
+    name: string;
+    phone: string;
+    id_number?: string;
+  };
+}
+
+export interface DeliveryBookingRecordArgs {
+  trackingId: string;
+  quoteRow: QuoteRow;
+  request: DeliveryBookingRequest;
+  now: string;
+}
+
+export async function recordDeliveryBooking(db: D1Database, args: DeliveryBookingRecordArgs): Promise<Delivery | null> {
+  const { trackingId, quoteRow, request, now } = args;
+  const sender = request.sender;
+  const recipient = request.recipient;
+  const alt = request.alternate_collector;
+
+  try {
+    await db.batch([
+      db
+        .prepare(
+          "INSERT INTO deliveries (tracking_id, quote_id, status, sender_name, sender_phone, recipient_name, recipient_phone, package_description, instructions, sender_id_number, recipient_id_number, alternate_collector_name, alternate_collector_phone, alternate_collector_id_number, provider_ref, shop_order_ref, shop_handoff_url, created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+        )
+        .bind(
+          trackingId,
+          request.quote_id,
+          "booking_requested",
+          sender?.name ?? null,
+          sender?.phone ?? null,
+          recipient?.name ?? null,
+          recipient?.phone ?? null,
+          request.package_description ?? null,
+          request.instructions ?? null,
+          sender?.id_number ?? null,
+          recipient?.id_number ?? null,
+          alt?.name ?? null,
+          alt?.phone ?? null,
+          alt?.id_number ?? null,
+          null,
+          request.shop_order_ref,
+          request.shop_handoff_url ?? null,
+          now,
+        ),
+      db
+        .prepare("INSERT INTO tracking_events (tracking_id, status, at, source) VALUES (?,?,?,?)")
+        .bind(trackingId, "booking_requested", now, "booking"),
+    ]);
+  } catch (error) {
+    if (isUniqueViolation(error)) return null;
+    throw error;
+  }
+
+  const delivery = {} as unknown as Delivery;
+  Object.assign(delivery, {
+    tracking_id: trackingId,
+    status: "booking_requested" as TrackingResponse["status"],
+    quote: toQuote(quoteRow),
+    shop_order_ref: request.shop_order_ref,
+    created_at: now,
+  });
+  if (request.shop_handoff_url !== undefined) (delivery as any).shop_handoff_url = request.shop_handoff_url;
+  return delivery;
+}
+
+export async function setDeliveryProviderRef(db: D1Database, trackingId: string, providerRef: string): Promise<void> {
+  await db.prepare("UPDATE deliveries SET provider_ref = ? WHERE tracking_id = ?").bind(providerRef, trackingId).run();
+}
+
+export async function appendDeliveryTransition(
+  db: D1Database,
+  trackingId: string,
+  status: DeliveryTrackingStatus,
+  now: string,
+  source: string,
+  note?: string,
+): Promise<TrackingResponse | "not_found" | "invalid_transition"> {
+  return await appendTrackingEvent(
+    db,
+    trackingId,
+    { status: status as TrackingEventCreateRequest["status"], note },
+    now,
+    source,
+  );
+}
+
+export interface ProviderAccountRow {
+  id: string;
+  provider_id: string;
+  display_name: string;
+  status: "active" | "disabled";
+  created_at: string;
+  disabled_at: string | null;
+}
+
+export async function hasActiveProviderAccount(db: D1Database, providerId: string): Promise<boolean> {
+  const row = await db
+    .prepare("SELECT 1 AS one FROM provider_accounts WHERE provider_id = ? AND status = 'active' LIMIT 1")
+    .bind(providerId)
+    .first<{ one: number }>();
+  return row !== null && row !== undefined;
+}
+
+export async function getProviderAccountByTokenHash(db: D1Database, tokenHash: string): Promise<ProviderAccountRow | null> {
+  const row = await db
+    .prepare("SELECT * FROM provider_accounts WHERE token_hash = ?")
+    .bind(tokenHash)
+    .first<ProviderAccountRow>();
+  return row ?? null;
+}
+
+export async function getProviderAccountById(db: D1Database, id: string): Promise<ProviderAccountRow | null> {
+  const row = await db.prepare("SELECT * FROM provider_accounts WHERE id = ?").bind(id).first<ProviderAccountRow>();
+  return row ?? null;
+}
+
+export interface ProviderBookingTaskRow {
+  id: string;
+  delivery_tracking_id: string;
+  provider_id: string;
+  provider_ref: string | null;
+  status: "pending" | "accepted" | "rejected" | "expired";
+  created_at: string;
+  expires_at: string;
+  responded_at: string | null;
+  responded_by: string | null;
+  response_note: string | null;
+}
+
+export async function createProviderBookingTask(
+  db: D1Database,
+  args: {
+    id: string;
+    trackingId: string;
+    providerId: string;
+    createdAt: string;
+    expiresAt: string;
+  },
+): Promise<void> {
+  await db
+    .prepare(
+      "INSERT INTO provider_booking_tasks (id, delivery_tracking_id, provider_id, status, created_at, expires_at) VALUES (?,?,?,?,?,?)",
+    )
+    .bind(args.id, args.trackingId, args.providerId, "pending", args.createdAt, args.expiresAt)
+    .run();
+}
+
+export async function getProviderBookingTask(
+  db: D1Database,
+  taskId: string,
+): Promise<ProviderBookingTaskRow | null> {
+  const row = await db.prepare("SELECT * FROM provider_booking_tasks WHERE id = ?").bind(taskId).first<ProviderBookingTaskRow>();
+  return row ?? null;
+}
+
+export async function listProviderBookingTasks(
+  db: D1Database,
+  providerId: string,
+  status?: ProviderBookingTaskRow["status"],
+): Promise<ProviderBookingTaskRow[]> {
+  const query = status
+    ? db
+        .prepare("SELECT * FROM provider_booking_tasks WHERE provider_id = ? AND status = ? ORDER BY created_at DESC, id DESC")
+        .bind(providerId, status)
+    : db.prepare("SELECT * FROM provider_booking_tasks WHERE provider_id = ? ORDER BY created_at DESC, id DESC").bind(providerId);
+  const { results } = await query.all<ProviderBookingTaskRow>();
+  return results;
+}
+
+export async function getProviderBookingTaskForProvider(
+  db: D1Database,
+  taskId: string,
+  providerId: string,
+): Promise<ProviderBookingTaskRow | null> {
+  const row = await db
+    .prepare("SELECT * FROM provider_booking_tasks WHERE id = ? AND provider_id = ?")
+    .bind(taskId, providerId)
+    .first<ProviderBookingTaskRow>();
+  return row ?? null;
+}
+
+export async function acceptProviderBookingTask(
+  db: D1Database,
+  task: ProviderBookingTaskRow,
+  accountId: string,
+  now: string,
+): Promise<void> {
+  await db.batch([
+    db
+      .prepare(
+        "UPDATE provider_booking_tasks SET status = 'accepted', responded_at = ?, responded_by = ? WHERE id = ?",
+      )
+      .bind(now, accountId, task.id),
+    db.prepare("UPDATE deliveries SET status = 'booking_confirmed' WHERE tracking_id = ?").bind(task.delivery_tracking_id),
+    db
+      .prepare("INSERT INTO tracking_events (tracking_id, status, at, source) VALUES (?,?,?,?)")
+      .bind(task.delivery_tracking_id, "booking_confirmed", now, "provider"),
+  ]);
+}
+
+export async function rejectProviderBookingTask(
+  db: D1Database,
+  task: ProviderBookingTaskRow,
+  accountId: string,
+  now: string,
+  note: string,
+): Promise<void> {
+  await db.batch([
+    db
+      .prepare(
+        "UPDATE provider_booking_tasks SET status = 'rejected', responded_at = ?, responded_by = ?, response_note = ? WHERE id = ?",
+      )
+      .bind(now, accountId, note, task.id),
+    db.prepare("UPDATE deliveries SET status = 'delivery_cancelled' WHERE tracking_id = ?").bind(task.delivery_tracking_id),
+    db
+      .prepare("INSERT INTO tracking_events (tracking_id, status, at, source) VALUES (?,?,?,?)")
+      .bind(task.delivery_tracking_id, "delivery_cancelled", now, "provider"),
+  ]);
+}
+
+export async function appendProviderTrackingEvent(
+  db: D1Database,
+  task: ProviderBookingTaskRow,
+  status: Exclude<DeliveryTrackingStatus, "booking_requested" | "booking_confirmed" | "delivery_cancelled">,
+  now: string,
+  note?: string,
+): Promise<TrackingResponse | "invalid_task_state" | "invalid_transition"> {
+  if (task.status !== "accepted") return "invalid_task_state";
+  const result = await appendTrackingEvent(db, task.delivery_tracking_id, { status: status as TrackingEventCreateRequest["status"], note }, now, "provider");
+  if (result === "not_found") return "invalid_task_state";
+  return result;
+}
+
+function rowKeyWhere(target: SubmissionTarget): string {
+  return target === "rates" ? "provider_id = ? AND origin_zone_id = ? AND destination_zone_id = ?" : "id = ?";
+}
+
+function rowKeyBinds(target: SubmissionTarget, rowKey: string): string[] {
+  return target === "rates" ? rowKey.split("|") : [rowKey];
+}
+
+export async function getSubmissionCurrentRow(
+  db: D1Database,
+  target: SubmissionTarget,
+  rowKey: string,
+): Promise<Record<string, unknown> | null> {
+  const row = await db
+    .prepare(`SELECT * FROM ${target} WHERE ${rowKeyWhere(target)}`)
+    .bind(...rowKeyBinds(target, rowKey))
+    .first<Record<string, unknown>>();
+  return row ?? null;
+}
+
+export interface ChangeLogRow {
+  id: number;
+  target: SubmissionTarget;
+  operation: SubmissionOperation;
+  row_key: string;
+  before: string | null;
+  after: string;
+  source: string;
+  changed_by: string;
+  submission_id: string | null;
+  changed_at: string;
+}
+
+export async function listChangeLog(
+  db: D1Database,
+  filters: { target?: SubmissionTarget; row_key?: string; limit: number },
+): Promise<Array<Omit<ChangeLogRow, "before" | "after"> & { before: unknown; after: unknown }>> {
+  const clauses: string[] = [];
+  const binds: (string | number)[] = [];
+  if (filters.target) {
+    clauses.push("target = ?");
+    binds.push(filters.target);
+  }
+  if (filters.row_key) {
+    clauses.push("row_key = ?");
+    binds.push(filters.row_key);
+  }
+  const where = clauses.length ? `WHERE ${clauses.join(" AND ")}` : "";
+  const { results } = await db
+    .prepare(`SELECT * FROM change_log ${where} ORDER BY id DESC LIMIT ?`)
+    .bind(...binds, filters.limit)
+    .all<ChangeLogRow>();
+  return results.map((row) => ({
+    ...row,
+    before: row.before === null ? null : (JSON.parse(row.before) as unknown),
+    after: JSON.parse(row.after) as unknown,
+  }));
 }

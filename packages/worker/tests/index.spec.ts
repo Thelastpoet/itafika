@@ -3,16 +3,16 @@ import { beforeAll, describe, expect, it } from "vitest";
 
 beforeAll(async () => {
 	await env.itafika.batch([
-		env.itafika.prepare("INSERT OR REPLACE INTO zones (id, name, type, town, county, lat, lng) VALUES (?,?,?,?,?,?,?)").bind("ZONE_NBI_CBD_01", "RNG Plaza", "cbd_hub", "Nairobi", "Nairobi", -1.2841, 36.8255),
-		env.itafika.prepare("INSERT OR REPLACE INTO zones (id, name, type, town, county, lat, lng) VALUES (?,?,?,?,?,?,?)").bind("ZONE_ELD_MAIN", "Eldoret Main Stage", "stage", "Eldoret", "Uasin Gishu", 0.5143, 35.2698),
-		env.itafika.prepare("INSERT OR REPLACE INTO modes (id, label, description, source) VALUES (?,?,?,?)").bind("matatu_sacco", "Matatu SACCO", "Shared-taxi SACCO parcel desk.", "seed-illustrative"),
-		env.itafika.prepare("INSERT OR REPLACE INTO modes (id, label, description, source) VALUES (?,?,?,?)").bind("national_courier", "National Courier", "Branch-network courier.", "seed-illustrative"),
-		env.itafika.prepare("INSERT OR REPLACE INTO providers (id, name, type, reliability_score) VALUES (?,?,?,?)").bind("mololine", "Mololine Sacco", "matatu_sacco", 0.98),
-		env.itafika.prepare("INSERT OR REPLACE INTO providers (id, name, type, reliability_score) VALUES (?,?,?,?)").bind("g4s", "G4S Courier", "national_courier", 0.99),
-		env.itafika.prepare("INSERT OR REPLACE INTO rates (provider_id, origin_zone_id, destination_zone_id, base_cost_kes, cost_per_kg_kes, est_time, max_weight_kg, source) VALUES (?,?,?,?,?,?,?,?)").bind("mololine", "ZONE_NBI_CBD_01", "ZONE_ELD_MAIN", 500, 20, "5 hours", 20, "test"),
-		env.itafika.prepare("INSERT OR REPLACE INTO rates (provider_id, origin_zone_id, destination_zone_id, base_cost_kes, cost_per_kg_kes, est_time, max_weight_kg, source) VALUES (?,?,?,?,?,?,?,?)").bind("g4s", "ZONE_NBI_CBD_01", "ZONE_ELD_MAIN", 650, 40, "next day", 50, "test"),
-		env.itafika.prepare("INSERT OR REPLACE INTO freshness (town, last_updated) VALUES (?,?)").bind("Eldoret", "2026-06-08"),
-		env.itafika.prepare("INSERT OR REPLACE INTO freshness (town, last_updated) VALUES (?,?)").bind("Nairobi", "2026-06-08"),
+		env.itafika.prepare("INSERT OR IGNORE INTO zones (id, name, type, town, county, lat, lng) VALUES (?,?,?,?,?,?,?)").bind("ZONE_NBI_CBD_01", "RNG Plaza", "cbd_hub", "Nairobi", "Nairobi", -1.2841, 36.8255),
+		env.itafika.prepare("INSERT OR IGNORE INTO zones (id, name, type, town, county, lat, lng) VALUES (?,?,?,?,?,?,?)").bind("ZONE_ELD_MAIN", "Eldoret Main Stage", "stage", "Eldoret", "Uasin Gishu", 0.5143, 35.2698),
+		env.itafika.prepare("INSERT OR IGNORE INTO modes (id, label, description, source) VALUES (?,?,?,?)").bind("matatu_sacco", "Matatu SACCO", "Shared-taxi SACCO parcel desk.", "seed-illustrative"),
+		env.itafika.prepare("INSERT OR IGNORE INTO modes (id, label, description, source) VALUES (?,?,?,?)").bind("national_courier", "National Courier", "Branch-network courier.", "seed-illustrative"),
+		env.itafika.prepare("INSERT OR IGNORE INTO providers (id, name, type, reliability_score) VALUES (?,?,?,?)").bind("mololine", "Mololine Sacco", "matatu_sacco", 0.98),
+		env.itafika.prepare("INSERT OR IGNORE INTO providers (id, name, type, reliability_score) VALUES (?,?,?,?)").bind("g4s", "G4S Courier", "national_courier", 0.99),
+		env.itafika.prepare("INSERT OR IGNORE INTO rates (provider_id, origin_zone_id, destination_zone_id, base_cost_kes, cost_per_kg_kes, est_time, max_weight_kg, source) VALUES (?,?,?,?,?,?,?,?)").bind("mololine", "ZONE_NBI_CBD_01", "ZONE_ELD_MAIN", 500, 20, "5 hours", 20, "test"),
+		env.itafika.prepare("INSERT OR IGNORE INTO rates (provider_id, origin_zone_id, destination_zone_id, base_cost_kes, cost_per_kg_kes, est_time, max_weight_kg, source) VALUES (?,?,?,?,?,?,?,?)").bind("g4s", "ZONE_NBI_CBD_01", "ZONE_ELD_MAIN", 650, 40, "next day", 50, "test"),
+		env.itafika.prepare("INSERT OR IGNORE INTO freshness (town, last_updated) VALUES (?,?)").bind("Eldoret", "2026-06-08"),
+		env.itafika.prepare("INSERT OR IGNORE INTO freshness (town, last_updated) VALUES (?,?)").bind("Nairobi", "2026-06-08"),
 	]);
 });
 
@@ -204,18 +204,29 @@ describe("deliveries", () => {
 		return body.quotes[0]!.quote_id;
 	}
 
+	const baseDeliveryBody = (quote_id: string, extra: Record<string, unknown> = {}) => ({
+		quote_id,
+		shop_order_ref: "ORDER-12345",
+		shop_handoff_url: "https://shop.example.com/delivery-handoff/ORDER-12345",
+		sender: { name: "Asha Mwangi", phone: "+254712345678" },
+		recipient: { name: "John Otieno", phone: "+254723456789" },
+		...extra,
+	});
+
 	it("books a quote and then tracks it", async () => {
 		const quote_id = await bookableQuoteId();
-		const created = await json({
-			quote_id,
-			sender: { name: "Asha Mwangi", phone: "+254712345678" },
-			recipient: { name: "John Otieno", phone: "+254723456789" },
-			package_description: "Sealed apparel box, 2.5kg",
-		});
+		const created = await json(baseDeliveryBody(quote_id, { package_description: "Sealed apparel box, 2.5kg" }));
 		expect(created.status).toBe(201);
-		const delivery = (await created.json()) as { tracking_id: string; status: string; quote: { quote_id: string } };
+		const delivery = (await created.json()) as {
+			tracking_id: string;
+			status: string;
+			quote: { quote_id: string };
+			shop_order_ref: string;
+			shop_handoff_url?: string;
+		};
 		expect(delivery.tracking_id).toMatch(/^trk_[a-f0-9]{32}$/);
-		expect(delivery.status).toBe("package_picked");
+		expect(delivery.status).toBe("booking_requested");
+		expect(delivery.shop_order_ref).toBe("ORDER-12345");
 		expect(delivery.quote.quote_id).toBe(quote_id);
 
 		const tracked = await SELF.fetch(`https://api.itafika.dev/v1/deliveries/${delivery.tracking_id}/track`);
@@ -223,32 +234,28 @@ describe("deliveries", () => {
 		const body = (await tracked.json()) as { tracking_id: string; status: string; history: { status: string }[] };
 		expect(body.tracking_id).toBe(delivery.tracking_id);
 		expect(body.status).toBe("package_picked");
-		expect(body.history.map((e) => e.status)).toEqual(["package_picked"]);
+		expect(body.history.map((e) => e.status)).toEqual(["booking_requested", "booking_confirmed", "package_picked"]);
 	});
 
 	it("captures and echoes handover instructions and collection identity", async () => {
 		const quote_id = await bookableQuoteId();
-		const created = await json({
-			quote_id,
-			sender: { name: "Asha Mwangi", phone: "+254712345678" },
-			recipient: { name: "John Otieno", phone: "+254723456789", id_number: "12345678" },
-			instructions: "Call before handover; give to Achieng (sister).",
-			alternate_collector: { name: "Achieng Otieno", phone: "+254700111222", id_number: "87654321" },
-		});
+		const created = await json(
+			baseDeliveryBody(quote_id, {
+				recipient: { name: "John Otieno", phone: "+254723456789", id_number: "12345678" },
+				instructions: "Call before handover; give to Achieng (sister).",
+				alternate_collector: { name: "Achieng Otieno", phone: "+254700111222", id_number: "87654321" },
+			}),
+		);
 		expect(created.status).toBe(201);
-		const delivery = (await created.json()) as {
-			tracking_id: string;
-			instructions?: string;
-			recipient: { id_number?: string };
-		};
-		expect(delivery.instructions).toBe("Call before handover; give to Achieng (sister).");
-		expect(delivery.recipient.id_number).toBe("12345678");
+		const delivery = (await created.json()) as { tracking_id: string };
 
-		// alternate collector / instructions are persisted (internal columns), assert via D1
+		// legacy handover fields are persisted as compatibility data, but the public
+		// delivery response stays shop-reference based.
 		const row = await env.itafika
 			.prepare("SELECT instructions, recipient_id_number, alternate_collector_name, alternate_collector_id_number FROM deliveries WHERE tracking_id = ?")
 			.bind(delivery.tracking_id)
 			.first<{ instructions: string; recipient_id_number: string; alternate_collector_name: string; alternate_collector_id_number: string }>();
+		expect(row?.instructions).toBe("Call before handover; give to Achieng (sister).");
 		expect(row?.recipient_id_number).toBe("12345678");
 		expect(row?.alternate_collector_name).toBe("Achieng Otieno");
 		expect(row?.alternate_collector_id_number).toBe("87654321");
@@ -257,9 +264,7 @@ describe("deliveries", () => {
 	it("rejects a malformed alternate_collector", async () => {
 		const quote_id = await bookableQuoteId();
 		const res = await json({
-			quote_id,
-			sender: { name: "Asha Mwangi", phone: "+254712345678" },
-			recipient: { name: "John Otieno", phone: "+254723456789" },
+			...baseDeliveryBody(quote_id),
 			alternate_collector: { name: "No Phone" },
 		});
 		expect(res.status).toBe(400);
@@ -267,11 +272,7 @@ describe("deliveries", () => {
 
 	it("books through the provider adapter and records its ref and event source", async () => {
 		const quote_id = await bookableQuoteId();
-		const created = await json({
-			quote_id,
-			sender: { name: "Asha Mwangi", phone: "+254712345678" },
-			recipient: { name: "John Otieno", phone: "+254723456789" },
-		});
+		const created = await json(baseDeliveryBody(quote_id));
 		expect(created.status).toBe(201);
 		const { tracking_id } = (await created.json()) as { tracking_id: string };
 
@@ -295,11 +296,7 @@ describe("deliveries", () => {
 
 	it("uses the latest tracking event as the current status", async () => {
 		const quote_id = await bookableQuoteId();
-		const created = await json({
-			quote_id,
-			sender: { name: "Asha Mwangi", phone: "+254712345678" },
-			recipient: { name: "John Otieno", phone: "+254723456789" },
-		});
+		const created = await json(baseDeliveryBody(quote_id));
 		const delivery = (await created.json()) as { tracking_id: string };
 
 		await env.itafika
@@ -315,16 +312,17 @@ describe("deliveries", () => {
 		expect(tracked.status).toBe(200);
 		const body = (await tracked.json()) as { status: string; history: { status: string }[] };
 		expect(body.status).toBe("in_transit");
-		expect(body.history.map((event) => event.status)).toEqual(["package_picked", "in_transit"]);
+		expect(body.history.map((event) => event.status)).toEqual([
+			"booking_requested",
+			"booking_confirmed",
+			"package_picked",
+			"in_transit",
+		]);
 	});
 
 	it("appends a manual tracking event and returns updated history", async () => {
 		const quote_id = await bookableQuoteId();
-		const created = await json({
-			quote_id,
-			sender: { name: "Asha Mwangi", phone: "+254712345678" },
-			recipient: { name: "John Otieno", phone: "+254723456789" },
-		});
+		const created = await json(baseDeliveryBody(quote_id));
 		const delivery = (await created.json()) as { tracking_id: string };
 
 		const updated = await SELF.fetch(`https://api.itafika.dev/v1/deliveries/${delivery.tracking_id}/events`, {
@@ -335,17 +333,18 @@ describe("deliveries", () => {
 		expect(updated.status).toBe(201);
 		const body = (await updated.json()) as { status: string; history: { status: string; note?: string }[] };
 		expect(body.status).toBe("in_transit");
-		expect(body.history.map((event) => event.status)).toEqual(["package_picked", "in_transit"]);
-		expect(body.history[1]?.note).toBe("Loaded onto upcountry parcel van");
+		expect(body.history.map((event) => event.status)).toEqual([
+			"booking_requested",
+			"booking_confirmed",
+			"package_picked",
+			"in_transit",
+		]);
+		expect(body.history[3]?.note).toBe("Loaded onto upcountry parcel van");
 	});
 
 	it("rejects backward manual status transitions", async () => {
 		const quote_id = await bookableQuoteId();
-		const created = await json({
-			quote_id,
-			sender: { name: "Asha Mwangi", phone: "+254712345678" },
-			recipient: { name: "John Otieno", phone: "+254723456789" },
-		});
+		const created = await json(baseDeliveryBody(quote_id));
 		const delivery = (await created.json()) as { tracking_id: string };
 
 		await SELF.fetch(`https://api.itafika.dev/v1/deliveries/${delivery.tracking_id}/events`, {
@@ -373,11 +372,7 @@ describe("deliveries", () => {
 
 	it("does not allow the same quote to be booked twice", async () => {
 		const quote_id = await bookableQuoteId();
-		const payload = {
-			quote_id,
-			sender: { name: "Asha Mwangi", phone: "+254712345678" },
-			recipient: { name: "John Otieno", phone: "+254723456789" },
-		};
+		const payload = baseDeliveryBody(quote_id);
 
 		const first = await json(payload);
 		expect(first.status).toBe(201);
@@ -389,6 +384,7 @@ describe("deliveries", () => {
 	it("returns 404 booking an unknown quote", async () => {
 		const res = await json({
 			quote_id: "qt_aaaaaaaaaaaaaaaaaaaaaaaa",
+			shop_order_ref: "ORDER-404",
 			sender: { name: "A", phone: "+254700000000" },
 			recipient: { name: "B", phone: "+254700000001" },
 		});
@@ -417,13 +413,14 @@ describe("deliveries", () => {
 
 		const res = await json({
 			quote_id: "qt_bbbbbbbbbbbbbbbbbbbbbbbb",
+			shop_order_ref: "ORDER-EXPIRED",
 			sender: { name: "A", phone: "+254700000000" },
 			recipient: { name: "B", phone: "+254700000001" },
 		});
 		expect(res.status).toBe(404);
 	});
 
-	it("returns 400 when sender is missing", async () => {
+	it("returns 400 when shop_order_ref is missing", async () => {
 		const res = await json({ quote_id: "qt_aaaaaaaaaaaaaaaaaaaaaaaa", recipient: { name: "B", phone: "+254700000001" } });
 		expect(res.status).toBe(400);
 	});
@@ -432,6 +429,7 @@ describe("deliveries", () => {
 		const quote_id = await bookableQuoteId();
 		const res = await json({
 			quote_id,
+			shop_order_ref: "ORDER-INVALID",
 			sender: { name: "   ", phone: "0712345678" },
 			recipient: { name: "B", phone: "+254700000001" },
 		});
@@ -442,6 +440,7 @@ describe("deliveries", () => {
 		const quote_id = await bookableQuoteId();
 		const res = await json({
 			quote_id,
+			shop_order_ref: "ORDER-LONG",
 			sender: { name: "Asha Mwangi", phone: "+254712345678" },
 			recipient: { name: "John Otieno", phone: "+254723456789" },
 			package_description: "x".repeat(501),

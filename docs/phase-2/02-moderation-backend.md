@@ -23,47 +23,47 @@ No migration is required for this track unless implementation discovers a missin
 
 ### Submission Operations
 
-- [ ] `create` approval fails with `409 row_exists` if the target row exists.
-- [ ] `update` approval fails with `404 row_missing` if the target row does not exist.
-- [ ] Approval applies reference-data change, writes `change_log`, and marks submission `approved` atomically with D1 `batch()`.
-- [ ] Rejection marks submission `rejected` and never writes `change_log`.
-- [ ] Reject requires non-empty `note`.
-- [ ] Reviewing a non-pending submission returns `409 already_reviewed`.
+- [x] `create` approval fails with `409 row_exists` if the target row exists.
+- [x] `update` approval fails with `404 row_missing` if the target row does not exist.
+- [x] Approval applies reference-data change, writes `change_log`, and marks submission `approved` atomically with D1 `batch()`.
+- [x] Rejection marks submission `rejected` and never writes `change_log`.
+- [x] Reject requires non-empty `note`.
+- [x] Reviewing a non-pending submission returns `409 already_reviewed`.
 
 ### Validation
 
 Rates:
 
-- [ ] `provider_id`, `origin_zone_id`, `destination_zone_id` are required.
-- [ ] Provider exists.
-- [ ] Origin and destination zones exist.
-- [ ] `base_cost_kes` and `cost_per_kg_kes` are non-negative integers.
-- [ ] `est_time` is non-empty.
-- [ ] `max_weight_kg` is `null` or positive.
-- [ ] `collection_type` is `office_pickup` or `door_delivery`.
-- [ ] `source` is non-empty.
+- [x] `provider_id`, `origin_zone_id`, `destination_zone_id` are required.
+- [x] Provider exists.
+- [x] Origin and destination zones exist.
+- [x] `base_cost_kes` and `cost_per_kg_kes` are non-negative integers.
+- [x] `est_time` is non-empty.
+- [x] `max_weight_kg` is `null` or positive.
+- [x] `collection_type` is `office_pickup` or `door_delivery`.
+- [x] `source` is non-empty.
 
 Zones:
 
-- [ ] `id`, `name`, `type`, `town`, `county` are required.
-- [ ] `id` matches `^ZONE_[A-Z0-9]+_(CBD|STG|RES)_[0-9]{2}$`.
-- [ ] `type` is `cbd_hub`, `stage`, or `residential_area`.
-- [ ] `lat` and `lng` are both present or both `null`.
-- [ ] If present, `lat` is between `-5` and `5`.
-- [ ] If present, `lng` is between `33` and `42`.
+- [x] `id`, `name`, `type`, `town`, `county` are required.
+- [x] `id` matches `^ZONE_[A-Z0-9]+_(CBD|STG|RES)_[0-9]{2}$`.
+- [x] `type` is `cbd_hub`, `stage`, or `residential_area`.
+- [x] `lat` and `lng` are both present or both `null`.
+- [x] If present, `lat` is between `-5` and `5`.
+- [x] If present, `lng` is between `33` and `42`.
 
 Providers:
 
-- [ ] `id`, `name`, `type` are required.
-- [ ] `id` matches `^[a-z][a-z0-9_]*$`.
-- [ ] `type` exists in `modes`.
-- [ ] `reliability_score` is `null` or `0..1`.
+- [x] `id`, `name`, `type` are required.
+- [x] `id` matches `^[a-z][a-z0-9_]*$`.
+- [x] `type` exists in `modes`.
+- [x] `reliability_score` is `null` or `0..1`.
 
 Modes:
 
-- [ ] `id`, `label`, `source` are required.
-- [ ] `id` matches `^[a-z][a-z0-9_]*$`.
-- [ ] `description` is `null` or string.
+- [x] `id`, `label`, `source` are required.
+- [x] `id` matches `^[a-z][a-z0-9_]*$`.
+- [x] `description` is `null` or string.
 
 ## Routes
 
@@ -76,8 +76,8 @@ Existing routes to preserve:
 
 Add:
 
-- [ ] `GET /v1/submissions/{id}`
-- [ ] `GET /v1/change-log?target=&row_key=&limit=`
+- [x] `GET /v1/submissions/{id}`
+- [x] `GET /v1/change-log?target=&row_key=&limit=`
 
 ### `GET /v1/submissions/{id}`
 
@@ -143,21 +143,21 @@ Moderator-only response:
 
 ## Tests
 
-- [ ] create new row succeeds.
-- [ ] create existing row fails.
-- [ ] update existing row succeeds with before snapshot.
-- [ ] update missing row fails.
-- [ ] rejected submission does not alter reference data.
-- [ ] double review fails.
-- [ ] invalid foreign keys fail.
-- [ ] missing moderator token returns `401`.
-- [ ] invalid moderator token returns `401`.
-- [ ] valid moderator token records mapped moderator id.
+- [x] create new row succeeds.
+- [x] create existing row fails.
+- [x] update existing row succeeds with before snapshot.
+- [x] update missing row fails.
+- [x] rejected submission does not alter reference data.
+- [x] double review fails.
+- [x] invalid foreign keys fail.
+- [x] missing moderator token returns `401`.
+- [x] invalid moderator token returns `401`.
+- [x] valid moderator token records mapped moderator id.
 
 ## Exit Criteria
 
-- [ ] Moderator can fetch queue and submission detail.
-- [ ] Moderator can inspect current row.
-- [ ] Moderator can approve/reject with strict semantics.
-- [ ] `change_log` provides before/after/source/reviewer/submission id.
-- [ ] `pnpm --filter @itafika/worker test` passes.
+- [x] Moderator can fetch queue and submission detail.
+- [x] Moderator can inspect current row.
+- [x] Moderator can approve/reject with strict semantics.
+- [x] `change_log` provides before/after/source/reviewer/submission id.
+- [x] `pnpm --filter @itafika/worker test` passes.

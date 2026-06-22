@@ -16,6 +16,25 @@
 			"MODERATOR_TOKENS"
 		]
 	},
+	"triggers": {
+		"crons": [
+			"10 2 * * *"
+		]
+	},
+	"assets": {
+		"directory": "../../apps/portal/dist",
+		"binding": "ASSETS",
+		"not_found_handling": "single-page-application",
+		"run_worker_first": [
+			"/v1/*"
+		]
+	},
+	"r2_buckets": [
+		{
+			"binding": "reference_exports",
+			"bucket_name": "itafika-reference-exports"
+		}
+	],
 	"d1_databases": [
 		{
 			"binding": "itafika",
