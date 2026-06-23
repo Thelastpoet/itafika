@@ -33,6 +33,7 @@ import {
   providerRejectBooking,
   rejectSubmission,
 } from "./api.js";
+import { KENYA_COUNTIES, ZONE_TYPE_OPTIONS } from "./constants.js";
 import { coerceReferenceRows } from "./types.js";
 import type {
   PortalContext,
@@ -40,13 +41,17 @@ import type {
   ReferenceLookupProvider,
   ReferenceLookupZone,
   RouteProps,
+  SubmittedItem,
 } from "./types.js";
 import {
-  validateModeForm,
-  validateProviderForm,
+  buildZoneId,
+  slugId,
+  validateNewProvider,
+  validateNewZone,
   validateRateForm,
-  validateZoneForm,
   type ModeFormValues,
+  type NewProviderValues,
+  type NewZoneValues,
   type ProviderFormValues,
   type RateFormValues,
   type ZoneFormValues,
@@ -55,6 +60,9 @@ import {
 function classNames(...classes: Array<string | false | null | undefined>): string {
   return classes.filter(Boolean).join(" ");
 }
+
+/** Sentinel select value meaning "the user wants to add a new one inline". */
+const NEW = "__new__";
 
 function fmtDate(value?: string | null): string {
   if (!value) return "—";
@@ -73,6 +81,20 @@ function statusTone(status: string): PillTone {
   if (status === "rejected" || status === "delivery_cancelled" || status === "expired") return "danger";
   if (status === "pending" || status === "booking_requested") return "warning";
   return "muted";
+}
+
+/** Plain-language status text for the public contributor side. */
+function statusLabel(status: string): string {
+  switch (status) {
+    case "pending":
+      return "Waiting for review";
+    case "approved":
+      return "Live";
+    case "rejected":
+      return "Not accepted";
+    default:
+      return status;
+  }
 }
 
 function Pill({ children, tone = "muted" }: { children: string; tone?: PillTone }) {
@@ -236,18 +258,11 @@ function TokenPrompt({
   );
 }
 
-function QuickLinks({ links }: { links: Array<{ label: string; path: string }> }) {
+function QuickLinks({ links, navigate }: { links: Array<{ label: string; path: string }>; navigate: (path: string) => void }) {
   return (
     <div className="quick-links">
       {links.map((link) => (
-        <ArrowLink
-          key={link.path}
-          label={link.label}
-          onClick={() => {
-            window.history.pushState({}, "", link.path);
-            window.dispatchEvent(new PopStateEvent("popstate"));
-          }}
-        />
+        <ArrowLink key={link.path} label={link.label} onClick={() => navigate(link.path)} />
       ))}
     </div>
   );
@@ -256,14 +271,69 @@ function QuickLinks({ links }: { links: Array<{ label: string; path: string }> }
 function ContributorBar({ context }: { context: PortalContext }) {
   return (
     <div className="identity-bar">
-      <Field label="Contributor name" hint="Used on public submissions.">
+      <Field label="Your name" hint="Shown on what you submit.">
         <TextInput
           value={context.contributorName}
-          placeholder="Asha Mwangi"
+          placeholder="Asha"
           onChange={(event) => context.setContributorName(event.target.value)}
         />
       </Field>
-      <div className="identity-copy">No phone or email fields. Submission provenance comes from the name and the source note.</div>
+      <div className="identity-copy">No phone or email needed.</div>
+    </div>
+  );
+}
+
+function CountySelect({ value, onChange, error }: { value: string; onChange: (next: string) => void; error?: string }) {
+  return (
+    <Field label="County" error={error}>
+      <SelectInput value={value} onChange={(event) => onChange(event.target.value)}>
+        <option value="">Choose…</option>
+        {KENYA_COUNTIES.map((county) => (
+          <option key={county} value={county}>
+            {county}
+          </option>
+        ))}
+      </SelectInput>
+    </Field>
+  );
+}
+
+/** Select an existing transport mode or add a new one inline. */
+function ModeChooser({
+  modes,
+  choice,
+  onChoice,
+  newLabel,
+  onNewLabel,
+  choiceError,
+  labelError,
+}: {
+  modes: ReferenceLookupMode[];
+  choice: string;
+  onChoice: (next: string) => void;
+  newLabel: string;
+  onNewLabel: (next: string) => void;
+  choiceError?: string;
+  labelError?: string;
+}) {
+  return (
+    <div className="stack">
+      <Field label="How do they move parcels?" error={choiceError}>
+        <SelectInput value={choice} onChange={(event) => onChoice(event.target.value)}>
+          <option value="">Choose…</option>
+          {modes.map((mode) => (
+            <option key={mode.id} value={mode.id}>
+              {mode.label}
+            </option>
+          ))}
+          <option value={NEW}>+ Add a new transport type…</option>
+        </SelectInput>
+      </Field>
+      {choice === NEW ? (
+        <Field label="New transport type" error={labelError} hint="e.g. Boda boda, Bus parcel service.">
+          <TextInput value={newLabel} onChange={(event) => onNewLabel(event.target.value)} placeholder="e.g. Boda boda" />
+        </Field>
+      ) : null}
     </div>
   );
 }
@@ -361,11 +431,11 @@ function RateSubmissionSection({
   return (
     <form className="stack" onSubmit={handleSubmit}>
       <div className="grid-2">
-        <Field label="Contributor name" error={errors.submitted_by}>
+        <Field label="Your name" error={errors.submitted_by}>
           <TextInput
             value={context.contributorName}
             onChange={(event) => context.setContributorName(event.target.value)}
-            placeholder="Asha Mwangi"
+            placeholder="Asha"
           />
         </Field>
         <Field label="Source" error={errors.source} hint="Where this rate came from.">
@@ -450,22 +520,15 @@ function ZoneSubmissionSection({
   onSubmit: (request: SubmissionCreateRequest) => Promise<Submission>;
   submitLabel: string;
 }) {
-  const [values, setValues] = useState<ZoneFormValues>({
-    id: "",
-    name: "",
-    type: "stage",
-    town: "",
-    county: "",
-    lat: "",
-    lng: "",
-  });
+  const existingZoneIds = buildZoneRows(context.reference).map((z) => z.id);
+  const [values, setValues] = useState<NewZoneValues>(emptyZone());
   const [errors, setErrors] = useState<ZoneFormErrors>({});
   const [message, setMessage] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const fieldErrors = validateZoneForm(values);
+    const fieldErrors = validateNewZone(values);
     const submitterError = identityError(context.contributorName);
     setErrors({ ...fieldErrors, ...(submitterError ? { submitted_by: submitterError } : {}) });
     if (Object.keys(fieldErrors).length > 0 || submitterError) return;
@@ -477,7 +540,7 @@ function ZoneSubmissionSection({
         target: "zones",
         operation: "create",
         payload: {
-          id: values.id.trim(),
+          id: buildZoneId(values.town, values.type, existingZoneIds),
           name: values.name.trim(),
           type: values.type,
           town: values.town.trim(),
@@ -488,7 +551,7 @@ function ZoneSubmissionSection({
         source: values.name.trim(),
         submitted_by: context.contributorName.trim(),
       });
-      setMessage(`Submission ${submission.id} is ${submission.status}.`);
+      setMessage(`Sent for review. It is ${statusLabel(submission.status).toLowerCase()}.`);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Submission failed");
     } finally {
@@ -496,50 +559,50 @@ function ZoneSubmissionSection({
     }
   };
 
+  const set = (field: keyof NewZoneValues) => (event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
+    setValues((current) => ({ ...current, [field]: event.target.value }));
+
   return (
     <form className="stack" onSubmit={handleSubmit}>
-      <Field label="Contributor name" error={errors.submitted_by}>
+      <Field label="Your name" error={errors.submitted_by}>
         <TextInput
           value={context.contributorName}
           onChange={(event) => context.setContributorName(event.target.value)}
-          placeholder="Asha Mwangi"
+          placeholder="Asha"
         />
       </Field>
 
       <div className="grid-2">
-        <Field label="Zone id" error={errors.id}>
-          <TextInput value={values.id} onChange={(event) => setValues((current) => ({ ...current, id: event.target.value }))} />
+        <Field label="Place name" error={errors.name} hint="A stage, hub, or area people recognise.">
+          <TextInput value={values.name} onChange={set("name")} placeholder="e.g. Nyeri Town Stage" />
         </Field>
-        <Field label="Zone name" error={errors.name}>
-          <TextInput value={values.name} onChange={(event) => setValues((current) => ({ ...current, name: event.target.value }))} />
-        </Field>
-      </div>
-
-      <div className="grid-3">
         <Field label="Type" error={errors.type}>
-          <SelectInput value={values.type} onChange={(event) => setValues((current) => ({ ...current, type: event.target.value }))}>
-            <option value="cbd_hub">CBD hub</option>
-            <option value="stage">Stage</option>
-            <option value="residential_area">Residential area</option>
+          <SelectInput value={values.type} onChange={set("type")}>
+            {ZONE_TYPE_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
           </SelectInput>
         </Field>
+      </div>
+
+      <div className="grid-2">
         <Field label="Town" error={errors.town}>
-          <TextInput value={values.town} onChange={(event) => setValues((current) => ({ ...current, town: event.target.value }))} />
+          <TextInput value={values.town} onChange={set("town")} placeholder="e.g. Nyeri" />
         </Field>
-        <Field label="County" error={errors.county}>
-          <TextInput value={values.county} onChange={(event) => setValues((current) => ({ ...current, county: event.target.value }))} />
-        </Field>
+        <CountySelect value={values.county} onChange={(next) => setValues((current) => ({ ...current, county: next }))} error={errors.county} />
       </div>
 
       <div className="grid-3">
-        <Field label="Latitude" error={errors.lat}>
-          <TextInput value={values.lat} onChange={(event) => setValues((current) => ({ ...current, lat: event.target.value }))} />
+        <Field label="Latitude" error={errors.lat} hint="Optional.">
+          <TextInput value={values.lat} onChange={set("lat")} />
         </Field>
-        <Field label="Longitude" error={errors.lng}>
-          <TextInput value={values.lng} onChange={(event) => setValues((current) => ({ ...current, lng: event.target.value }))} />
+        <Field label="Longitude" error={errors.lng} hint="Optional.">
+          <TextInput value={values.lng} onChange={set("lng")} />
         </Field>
         <div className="field field-spacer">
-          <span className="field-label">Action</span>
+          <span className="field-label">&nbsp;</span>
           <div className="field-inline">
             <Button kind="primary" type="submit" icon={<PackagePlus size={16} />} disabled={submitting}>
               {submitLabel}
@@ -562,47 +625,51 @@ function ProviderSubmissionSection({
   onSubmit: (request: SubmissionCreateRequest) => Promise<Submission>;
   submitLabel: string;
 }) {
-  const [values, setValues] = useState<ProviderFormValues>({
-    id: "",
-    name: "",
-    type: "",
-    reliability_score: "",
-    source: "",
-  });
-  const [errors, setErrors] = useState<ProviderFormErrors>({});
+  const modeRows = buildModeRows(context.reference);
+  const [values, setValues] = useState({ name: "", type: "", source: "" });
+  const [newModeLabel, setNewModeLabel] = useState("");
+  const [errors, setErrors] = useState<ProviderFormErrors & { mode_label?: string }>({});
   const [message, setMessage] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  useEffect(() => {
-    setValues((current) => ({
-      ...current,
-      type: current.type || context.lookups.modes[0]?.id || "",
-    }));
-  }, [context.lookups.modes]);
+  const resolvedModeId = values.type === NEW ? slugId(newModeLabel) : values.type;
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const fieldErrors = validateProviderForm(values);
+    const fieldErrors: ProviderFormErrors & { mode_label?: string } = {};
+    const np = validateNewProvider({ name: values.name, type: values.type });
+    if (np.name) fieldErrors.name = np.name;
+    if (np.type) fieldErrors.type = np.type;
+    if (!fieldErrors.name && !slugId(values.name)) fieldErrors.name = "Use a name with letters.";
+    if (values.type === NEW && (!newModeLabel.trim() || !slugId(newModeLabel))) fieldErrors.mode_label = "Enter the transport type.";
+    if (!values.source.trim()) fieldErrors.source = "Enter the source for this submission.";
     const submitterError = identityError(context.contributorName);
-    setErrors({ ...fieldErrors, ...(submitterError ? { submitted_by: submitterError } : {}) });
-    if (Object.keys(fieldErrors).length > 0 || submitterError) return;
+    if (submitterError) fieldErrors.submitted_by = submitterError;
+    setErrors(fieldErrors);
+    if (Object.keys(fieldErrors).length > 0) return;
 
     setSubmitting(true);
     setMessage(null);
+    const source = values.source.trim();
+    const submitted_by = context.contributorName.trim();
     try {
+      if (values.type === NEW) {
+        await createSubmission({
+          target: "modes",
+          operation: "create",
+          payload: { id: resolvedModeId, label: newModeLabel.trim(), description: null, source },
+          source,
+          submitted_by,
+        });
+      }
       const submission = await onSubmit({
         target: "providers",
         operation: "create",
-        payload: {
-          id: values.id.trim(),
-          name: values.name.trim(),
-          type: values.type,
-          reliability_score: values.reliability_score.trim().length ? Number(values.reliability_score) : null,
-        },
-        source: values.source.trim(),
-        submitted_by: context.contributorName.trim(),
+        payload: { id: slugId(values.name), name: values.name.trim(), type: resolvedModeId, reliability_score: null },
+        source,
+        submitted_by,
       });
-      setMessage(`Submission ${submission.id} is ${submission.status}.`);
+      setMessage(`Sent for review. It is ${statusLabel(submission.status).toLowerCase()}.`);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Submission failed");
     } finally {
@@ -612,40 +679,30 @@ function ProviderSubmissionSection({
 
   return (
     <form className="stack" onSubmit={handleSubmit}>
-      <Field label="Contributor name" error={errors.submitted_by}>
+      <Field label="Your name" error={errors.submitted_by}>
         <TextInput
           value={context.contributorName}
           onChange={(event) => context.setContributorName(event.target.value)}
-          placeholder="Asha Mwangi"
+          placeholder="Asha"
         />
       </Field>
 
-      <div className="grid-2">
-        <Field label="Provider id" error={errors.id}>
-          <TextInput value={values.id} onChange={(event) => setValues((current) => ({ ...current, id: event.target.value }))} />
-        </Field>
-        <Field label="Provider name" error={errors.name}>
-          <TextInput value={values.name} onChange={(event) => setValues((current) => ({ ...current, name: event.target.value }))} />
-        </Field>
-      </div>
+      <Field label="Courier name" error={errors.name}>
+        <TextInput value={values.name} onChange={(event) => setValues((current) => ({ ...current, name: event.target.value }))} placeholder="e.g. Mololine" />
+      </Field>
 
-      <div className="grid-2">
-        <Field label="Transport mode" error={errors.type}>
-          <SelectInput value={values.type} onChange={(event) => setValues((current) => ({ ...current, type: event.target.value }))}>
-            {context.lookups.modes.map((mode) => (
-              <option key={mode.id} value={mode.id}>
-                {mode.label}
-              </option>
-            ))}
-          </SelectInput>
-        </Field>
-        <Field label="Reliability score" error={errors.reliability_score}>
-          <TextInput value={values.reliability_score} onChange={(event) => setValues((current) => ({ ...current, reliability_score: event.target.value }))} />
-        </Field>
-      </div>
+      <ModeChooser
+        modes={modeRows}
+        choice={values.type}
+        onChoice={(next) => setValues((current) => ({ ...current, type: next }))}
+        newLabel={newModeLabel}
+        onNewLabel={setNewModeLabel}
+        choiceError={errors.type}
+        labelError={errors.mode_label}
+      />
 
-      <Field label="Source" error={errors.source}>
-        <TextInput value={values.source} onChange={(event) => setValues((current) => ({ ...current, source: event.target.value }))} />
+      <Field label="How do you know this?" error={errors.source} hint="e.g. called their desk, saw it at the stage.">
+        <TextInput value={values.source} onChange={(event) => setValues((current) => ({ ...current, source: event.target.value }))} placeholder="Called their desk, 2026-06-22" />
       </Field>
 
       <div className="field-inline">
@@ -654,7 +711,7 @@ function ProviderSubmissionSection({
         </Button>
       </div>
 
-      <div className="banner banner-muted">Provider submissions are moderated before they go live.</div>
+      <div className="banner banner-muted">A reviewer checks new couriers before they go live.</div>
       {message ? <div className="banner">{message}</div> : null}
     </form>
   );
@@ -669,22 +726,20 @@ function ModeSubmissionSection({
   onSubmit: (request: SubmissionCreateRequest) => Promise<Submission>;
   submitLabel: string;
 }) {
-  const [values, setValues] = useState<ModeFormValues>({
-    id: "",
-    label: "",
-    description: "",
-    source: "",
-  });
+  const [values, setValues] = useState({ label: "", description: "", source: "" });
   const [errors, setErrors] = useState<ModeFormErrors>({});
   const [message, setMessage] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const fieldErrors = validateModeForm(values);
+    const fieldErrors: ModeFormErrors = {};
+    if (!values.label.trim() || !slugId(values.label)) fieldErrors.label = "Enter a name with letters.";
+    if (!values.source.trim()) fieldErrors.source = "Enter the source for this submission.";
     const submitterError = identityError(context.contributorName);
-    setErrors({ ...fieldErrors, ...(submitterError ? { submitted_by: submitterError } : {}) });
-    if (Object.keys(fieldErrors).length > 0 || submitterError) return;
+    if (submitterError) fieldErrors.submitted_by = submitterError;
+    setErrors(fieldErrors);
+    if (Object.keys(fieldErrors).length > 0) return;
 
     setSubmitting(true);
     setMessage(null);
@@ -693,7 +748,7 @@ function ModeSubmissionSection({
         target: "modes",
         operation: "create",
         payload: {
-          id: values.id.trim(),
+          id: slugId(values.label),
           label: values.label.trim(),
           description: values.description.trim() || null,
           source: values.source.trim(),
@@ -701,7 +756,7 @@ function ModeSubmissionSection({
         source: values.source.trim(),
         submitted_by: context.contributorName.trim(),
       });
-      setMessage(`Submission ${submission.id} is ${submission.status}.`);
+      setMessage(`Sent for review. It is ${statusLabel(submission.status).toLowerCase()}.`);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Submission failed");
     } finally {
@@ -711,33 +766,28 @@ function ModeSubmissionSection({
 
   return (
     <form className="stack" onSubmit={handleSubmit}>
-      <Field label="Contributor name" error={errors.submitted_by}>
+      <Field label="Your name" error={errors.submitted_by}>
         <TextInput
           value={context.contributorName}
           onChange={(event) => context.setContributorName(event.target.value)}
-          placeholder="Asha Mwangi"
+          placeholder="Asha"
         />
       </Field>
 
-      <div className="grid-2">
-        <Field label="Mode id" error={errors.id}>
-          <TextInput value={values.id} onChange={(event) => setValues((current) => ({ ...current, id: event.target.value }))} />
-        </Field>
-        <Field label="Label" error={errors.label}>
-          <TextInput value={values.label} onChange={(event) => setValues((current) => ({ ...current, label: event.target.value }))} />
-        </Field>
-      </div>
+      <Field label="Transport type" error={errors.label} hint="e.g. Boda boda, Bus parcel service.">
+        <TextInput value={values.label} onChange={(event) => setValues((current) => ({ ...current, label: event.target.value }))} placeholder="e.g. Boda boda" />
+      </Field>
 
-      <Field label="Description" error={errors.description}>
-        <TextArea value={values.description} onChange={(event) => setValues((current) => ({ ...current, description: event.target.value }))} rows={4} />
+      <Field label="Description" error={errors.description} hint="Optional.">
+        <TextArea value={values.description} onChange={(event) => setValues((current) => ({ ...current, description: event.target.value }))} rows={3} />
       </Field>
 
       <div className="grid-2">
-        <Field label="Source" error={errors.source}>
-          <TextInput value={values.source} onChange={(event) => setValues((current) => ({ ...current, source: event.target.value }))} />
+        <Field label="How do you know this?" error={errors.source}>
+          <TextInput value={values.source} onChange={(event) => setValues((current) => ({ ...current, source: event.target.value }))} placeholder="Saw it at the stage" />
         </Field>
         <div className="field field-spacer">
-          <span className="field-label">Action</span>
+          <span className="field-label">&nbsp;</span>
           <div className="field-inline">
             <Button kind="primary" type="submit" icon={<PackagePlus size={16} />} disabled={submitting}>
               {submitLabel}
@@ -751,83 +801,513 @@ function ModeSubmissionSection({
   );
 }
 
-export function ContributeHome({ context }: RouteProps) {
-  const providerCount = context.reference ? context.reference.tables.providers.length : 0;
-  const zoneCount = context.reference ? context.reference.tables.zones.length : 0;
-  const modeCount = context.reference ? context.reference.tables.modes.length : 0;
-
+function HowItWorks() {
   return (
-    <div className="stack">
-      <Panel title="Contribution workspace" action={<Pill tone="muted">Public</Pill>}>
-        <div className="stack">
-          <p className="lede">Submit reference data for moderation without opening GitHub.</p>
-          <ContributorBar context={context} />
-          <QuickLinks
-            links={[
-              { label: "New rate", path: "/contribute/rate" },
-              { label: "New zone", path: "/contribute/zone" },
-              { label: "New provider", path: "/contribute/provider" },
-              { label: "New mode", path: "/contribute/mode" },
-            ]}
-          />
-        </div>
-      </Panel>
-
-      <div className="metrics">
-        <div>
-          <span className="metric-label">Providers</span>
-          <strong>{providerCount}</strong>
-        </div>
-        <div>
-          <span className="metric-label">Zones</span>
-          <strong>{zoneCount}</strong>
-        </div>
-        <div>
-          <span className="metric-label">Modes</span>
-          <strong>{modeCount}</strong>
-        </div>
-      </div>
-    </div>
+    <ol className="how-it-works">
+      <li>
+        <span className="step-num">1</span>
+        <span>You share what you know about a delivery price or place.</span>
+      </li>
+      <li>
+        <span className="step-num">2</span>
+        <span>A reviewer checks it.</span>
+      </li>
+      <li>
+        <span className="step-num">3</span>
+        <span>Once approved, it goes live for everyone.</span>
+      </li>
+    </ol>
   );
 }
 
-export function ContributeRate({ context }: RouteProps) {
+export function ContributeHome({ context }: RouteProps) {
   return (
     <div className="stack">
-      <Panel title="Submit rate" action={<Pill tone="muted">Rates</Pill>}>
-        <RateSubmissionSection
-          context={context}
-          submitLabel="Create submission"
-          onSubmit={({ payload, source, submitted_by }) =>
-            createSubmission({
-              target: "rates",
-              operation: "create",
-              payload,
-              source,
-              submitted_by,
-            })
-          }
-          providerHint="The public route lets you choose any provider from the exported registry."
+      <Panel title="Help improve delivery prices">
+        <div className="stack">
+          <p className="lede">
+            Know a delivery price, a stage, or a courier in your area? Share it here. You don't need a GitHub
+            account or any technical know-how.
+          </p>
+          <HowItWorks />
+          <ContributorBar context={context} />
+          <div className="cta-row">
+            <Button kind="primary" icon={<PackagePlus size={16} />} onClick={() => context.navigate("/contribute/rate")}>
+              Add a delivery price
+            </Button>
+          </div>
+        </div>
+      </Panel>
+
+      <Panel title="Other things you can add">
+        <p className="lede">Most people only need "Add a delivery price" above, which can create these for you as you go.</p>
+        <QuickLinks
+          navigate={context.navigate}
+          links={[
+            { label: "Add a place (town or stage)", path: "/contribute/zone" },
+            { label: "Add a courier", path: "/contribute/provider" },
+            { label: "Add a transport type", path: "/contribute/mode" },
+          ]}
         />
       </Panel>
     </div>
   );
 }
 
+type WizardStep = "provider" | "route" | "details" | "review";
+const WIZARD_STEPS: Array<{ key: WizardStep; label: string }> = [
+  { key: "provider", label: "Courier" },
+  { key: "route", label: "Route" },
+  { key: "details", label: "Price" },
+  { key: "review", label: "Review" },
+];
+
+function emptyZone(): NewZoneValues {
+  return { name: "", type: "stage", town: "", county: "", lat: "", lng: "" };
+}
+
+function WizardSteps({ step }: { step: WizardStep }) {
+  const currentIndex = WIZARD_STEPS.findIndex((s) => s.key === step);
+  return (
+    <div className="wizard-steps">
+      {WIZARD_STEPS.map((s, i) => (
+        <div key={s.key} className={classNames("wizard-step", s.key === step && "active", i < currentIndex && "done")}>
+          <span className="step-num">{i + 1}</span>
+          <span>{s.label}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ZoneFields({
+  prefix,
+  values,
+  onChange,
+  errors,
+}: {
+  prefix: string;
+  values: NewZoneValues;
+  onChange: (next: NewZoneValues) => void;
+  errors: Record<string, string>;
+}) {
+  const set = (field: keyof NewZoneValues) => (event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
+    onChange({ ...values, [field]: event.target.value });
+  return (
+    <div className="subsection stack">
+      <div className="grid-2">
+        <Field label="Place name" error={errors[`${prefix}_name`]} hint="A stage, hub, or area people recognise.">
+          <TextInput value={values.name} onChange={set("name")} placeholder="e.g. Nyeri Town Stage" />
+        </Field>
+        <Field label="Type" error={errors[`${prefix}_type`]}>
+          <SelectInput value={values.type} onChange={set("type")}>
+            {ZONE_TYPE_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </SelectInput>
+        </Field>
+      </div>
+      <div className="grid-2">
+        <Field label="Town" error={errors[`${prefix}_town`]}>
+          <TextInput value={values.town} onChange={set("town")} placeholder="e.g. Nyeri" />
+        </Field>
+        <CountySelect value={values.county} onChange={(next) => onChange({ ...values, county: next })} error={errors[`${prefix}_county`]} />
+      </div>
+    </div>
+  );
+}
+
+function RateWizard({ context }: { context: PortalContext }) {
+  const providerRows = buildProviderRows(context.reference);
+  const zoneRows = buildZoneRows(context.reference);
+  const modeRows = buildModeRows(context.reference);
+  const existingZoneIds = useMemo(() => zoneRows.map((z) => z.id), [zoneRows]);
+  const zoneLabel = (id: string) => {
+    const zone = zoneRows.find((z) => z.id === id);
+    return zone ? `${zone.name} — ${zone.town}` : id;
+  };
+
+  const [step, setStep] = useState<WizardStep>("provider");
+  const [providerChoice, setProviderChoice] = useState("");
+  const [newProvider, setNewProvider] = useState<NewProviderValues>({ name: "", type: "" });
+  const [newModeLabel, setNewModeLabel] = useState("");
+  const [originChoice, setOriginChoice] = useState("");
+  const [destChoice, setDestChoice] = useState("");
+  const [newOrigin, setNewOrigin] = useState<NewZoneValues>(emptyZone());
+  const [newDest, setNewDest] = useState<NewZoneValues>(emptyZone());
+  const [details, setDetails] = useState({
+    base_cost_kes: "",
+    cost_per_kg_kes: "",
+    est_time: "",
+    max_weight_kg: "",
+    collection_type: "office_pickup",
+    source: "",
+  });
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setProviderChoice((c) => c || providerRows[0]?.id || NEW);
+    setOriginChoice((c) => c || zoneRows[0]?.id || NEW);
+    setDestChoice((c) => c || (zoneRows.length > 1 ? zoneRows[1]!.id : NEW));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [providerRows.length, zoneRows.length]);
+
+  const resolvedProviderId = providerChoice === NEW ? slugId(newProvider.name) : providerChoice;
+  const resolvedModeId = newProvider.type === NEW ? slugId(newModeLabel) : newProvider.type;
+  const resolvedOriginId = originChoice === NEW ? buildZoneId(newOrigin.town, newOrigin.type, existingZoneIds) : originChoice;
+  const resolvedDestId =
+    destChoice === NEW
+      ? buildZoneId(newDest.town, newDest.type, [...existingZoneIds, ...(originChoice === NEW ? [resolvedOriginId] : [])])
+      : destChoice;
+
+  const providerName = providerChoice === NEW ? newProvider.name.trim() : providerRows.find((p) => p.id === providerChoice)?.name ?? providerChoice;
+
+  const validateStep = (target: WizardStep): Record<string, string> => {
+    const next: Record<string, string> = {};
+    if (target === "provider") {
+      if (providerChoice === NEW) {
+        const e = validateNewProvider(newProvider);
+        if (e.name) next.np_name = e.name;
+        if (e.type) next.np_type = e.type;
+        if (!next.np_name && !slugId(newProvider.name)) next.np_name = "Use a name with letters.";
+        if (slugId(newProvider.name) && providerRows.some((p) => p.id === slugId(newProvider.name)))
+          next.np_name = "A courier with this name already exists — pick it from the list.";
+        if (newProvider.type === NEW) {
+          if (!newModeLabel.trim() || !slugId(newModeLabel)) next.np_mode = "Enter the transport type.";
+          else if (modeRows.some((m) => m.id === slugId(newModeLabel)))
+            next.np_mode = "That transport type already exists — pick it from the list.";
+        }
+      } else if (!providerChoice) {
+        next.provider = "Choose a courier or add one.";
+      }
+    }
+    if (target === "route") {
+      if (originChoice === NEW) {
+        const e = validateNewZone(newOrigin);
+        for (const [k, v] of Object.entries(e)) next[`origin_${k}`] = v as string;
+        if (!resolvedOriginId) next.origin_town = "Add a town so we can name this place.";
+      } else if (!originChoice) next.origin = "Choose an origin or add one.";
+      if (destChoice === NEW) {
+        const e = validateNewZone(newDest);
+        for (const [k, v] of Object.entries(e)) next[`dest_${k}`] = v as string;
+        if (!resolvedDestId) next.dest_town = "Add a town so we can name this place.";
+      } else if (!destChoice) next.dest = "Choose a destination or add one.";
+      if (resolvedOriginId && resolvedDestId && resolvedOriginId === resolvedDestId)
+        next.dest = "Origin and destination must be different.";
+    }
+    if (target === "details") {
+      const rateErrors = validateRateForm({
+        provider_id: resolvedProviderId,
+        origin_zone_id: resolvedOriginId,
+        destination_zone_id: resolvedDestId,
+        base_cost_kes: details.base_cost_kes,
+        cost_per_kg_kes: details.cost_per_kg_kes,
+        est_time: details.est_time,
+        max_weight_kg: details.max_weight_kg,
+        collection_type: details.collection_type,
+        source: details.source,
+      });
+      for (const [k, v] of Object.entries(rateErrors)) {
+        if (k === "provider_id" || k === "origin_zone_id" || k === "destination_zone_id") continue;
+        next[k] = v as string;
+      }
+    }
+    return next;
+  };
+
+  const goNext = () => {
+    const stepErrors = validateStep(step);
+    setErrors(stepErrors);
+    if (Object.keys(stepErrors).length > 0) return;
+    const order: WizardStep[] = ["provider", "route", "details", "review"];
+    setStep(order[order.indexOf(step) + 1] ?? "review");
+  };
+
+  const goBack = () => {
+    const order: WizardStep[] = ["provider", "route", "details", "review"];
+    setStep(order[Math.max(0, order.indexOf(step) - 1)]!);
+  };
+
+  const submitAll = async () => {
+    if (!context.contributorName.trim()) {
+      setSubmitError("Please add your name at the top first.");
+      return;
+    }
+    setSubmitting(true);
+    setSubmitError(null);
+    const items: SubmittedItem[] = [];
+    const source = details.source.trim();
+    const submitted_by = context.contributorName.trim();
+
+    const trySubmit = async (
+      kind: SubmittedItem["kind"],
+      label: string,
+      request: () => Promise<{ id: string }>,
+    ) => {
+      try {
+        const submission = await request();
+        items.push({ kind, label, status: "ok", submissionId: submission.id });
+      } catch (err) {
+        items.push({ kind, label, status: "error", error: err instanceof Error ? err.message : "Failed to send." });
+      }
+    };
+
+    if (providerChoice === NEW && newProvider.type === NEW) {
+      await trySubmit("mode", `Transport type: ${newModeLabel.trim()}`, () =>
+        createSubmission({
+          target: "modes",
+          operation: "create",
+          payload: { id: resolvedModeId, label: newModeLabel.trim(), description: null, source },
+          source,
+          submitted_by,
+        }),
+      );
+    }
+    if (providerChoice === NEW) {
+      await trySubmit("provider", `Courier: ${newProvider.name.trim()}`, () =>
+        createSubmission({
+          target: "providers",
+          operation: "create",
+          payload: { id: resolvedProviderId, name: newProvider.name.trim(), type: resolvedModeId, reliability_score: null },
+          source,
+          submitted_by,
+        }),
+      );
+    }
+    if (originChoice === NEW) {
+      await trySubmit("place", `Place: ${newOrigin.name.trim()}`, () =>
+        createSubmission(zoneCreateRequest(newOrigin, resolvedOriginId, source, submitted_by)),
+      );
+    }
+    if (destChoice === NEW) {
+      await trySubmit("place", `Place: ${newDest.name.trim()}`, () =>
+        createSubmission(zoneCreateRequest(newDest, resolvedDestId, source, submitted_by)),
+      );
+    }
+    await trySubmit("rate", `Price: ${providerName}, ${zoneLabelFor(resolvedOriginId)} → ${zoneLabelFor(resolvedDestId)}`, () =>
+      createSubmission({
+        target: "rates",
+        operation: "create",
+        payload: {
+          provider_id: resolvedProviderId,
+          origin_zone_id: resolvedOriginId,
+          destination_zone_id: resolvedDestId,
+          base_cost_kes: Number(details.base_cost_kes),
+          cost_per_kg_kes: Number(details.cost_per_kg_kes),
+          est_time: details.est_time.trim(),
+          max_weight_kg: details.max_weight_kg.trim().length ? Number(details.max_weight_kg) : null,
+          collection_type: details.collection_type,
+          source,
+        },
+        source,
+        submitted_by,
+      }),
+    );
+
+    setSubmitting(false);
+    context.setSubmissionResult({ contributorName: submitted_by, items });
+    context.navigate("/contribute/success/done");
+  };
+
+  function zoneCreateRequest(values: NewZoneValues, id: string, source: string, submitted_by: string) {
+    return {
+      target: "zones" as const,
+      operation: "create" as const,
+      payload: {
+        id,
+        name: values.name.trim(),
+        type: values.type,
+        town: values.town.trim(),
+        county: values.county.trim(),
+        lat: values.lat.trim().length ? Number(values.lat) : null,
+        lng: values.lng.trim().length ? Number(values.lng) : null,
+      },
+      source,
+      submitted_by,
+    };
+  }
+
+  function zoneLabelFor(id: string): string {
+    if (id === resolvedOriginId && originChoice === NEW) return newOrigin.name.trim() || newOrigin.town.trim();
+    if (id === resolvedDestId && destChoice === NEW) return newDest.name.trim() || newDest.town.trim();
+    return zoneLabel(id);
+  }
+
+  const setDetail = (field: keyof typeof details) => (event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
+    setDetails((current) => ({ ...current, [field]: event.target.value }));
+
+  return (
+    <div className="stack">
+      <ContributorBar context={context} />
+      <Panel title="Add a delivery price">
+        <div className="stack">
+          <WizardSteps step={step} />
+
+          {step === "provider" ? (
+            <div className="stack">
+              <Field label="Which courier?" error={errors.provider}>
+                <SelectInput value={providerChoice} onChange={(event) => setProviderChoice(event.target.value)}>
+                  {providerRows.map((provider) => (
+                    <option key={provider.id} value={provider.id}>
+                      {provider.name}
+                    </option>
+                  ))}
+                  <option value={NEW}>+ Add a new courier…</option>
+                </SelectInput>
+              </Field>
+              {providerChoice === NEW ? (
+                <div className="subsection stack">
+                  <Field label="Courier name" error={errors.np_name}>
+                    <TextInput value={newProvider.name} onChange={(e) => setNewProvider((c) => ({ ...c, name: e.target.value }))} placeholder="e.g. Mololine" />
+                  </Field>
+                  <ModeChooser
+                    modes={modeRows}
+                    choice={newProvider.type}
+                    onChoice={(next) => setNewProvider((c) => ({ ...c, type: next }))}
+                    newLabel={newModeLabel}
+                    onNewLabel={setNewModeLabel}
+                    choiceError={errors.np_type}
+                    labelError={errors.np_mode}
+                  />
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+
+          {step === "route" ? (
+            <div className="stack">
+              <Field label="From (origin)" error={errors.origin}>
+                <SelectInput value={originChoice} onChange={(event) => setOriginChoice(event.target.value)}>
+                  {zoneRows.map((zone) => (
+                    <option key={zone.id} value={zone.id}>
+                      {zone.name} — {zone.town}
+                    </option>
+                  ))}
+                  <option value={NEW}>+ Add a new place…</option>
+                </SelectInput>
+              </Field>
+              {originChoice === NEW ? <ZoneFields prefix="origin" values={newOrigin} onChange={setNewOrigin} errors={errors} /> : null}
+
+              <Field label="To (destination)" error={errors.dest}>
+                <SelectInput value={destChoice} onChange={(event) => setDestChoice(event.target.value)}>
+                  {zoneRows.map((zone) => (
+                    <option key={zone.id} value={zone.id}>
+                      {zone.name} — {zone.town}
+                    </option>
+                  ))}
+                  <option value={NEW}>+ Add a new place…</option>
+                </SelectInput>
+              </Field>
+              {destChoice === NEW ? <ZoneFields prefix="dest" values={newDest} onChange={setNewDest} errors={errors} /> : null}
+            </div>
+          ) : null}
+
+          {step === "details" ? (
+            <div className="stack">
+              <div className="grid-3">
+                <Field label="Starting price (KES)" error={errors.base_cost_kes}>
+                  <TextInput inputMode="numeric" value={details.base_cost_kes} onChange={setDetail("base_cost_kes")} placeholder="350" />
+                </Field>
+                <Field label="Extra per kg (KES)" error={errors.cost_per_kg_kes} hint="Put 0 if there's no per-kg charge.">
+                  <TextInput inputMode="numeric" value={details.cost_per_kg_kes} onChange={setDetail("cost_per_kg_kes")} placeholder="0" />
+                </Field>
+                <Field label="How long does it take?" error={errors.est_time}>
+                  <TextInput value={details.est_time} onChange={setDetail("est_time")} placeholder="e.g. 3 hours" />
+                </Field>
+              </div>
+              <div className="grid-3">
+                <Field label="Most weight they carry (kg)" error={errors.max_weight_kg} hint="Optional.">
+                  <TextInput inputMode="decimal" value={details.max_weight_kg} onChange={setDetail("max_weight_kg")} placeholder="20" />
+                </Field>
+                <Field label="Where does the customer hand over?" error={errors.collection_type}>
+                  <SelectInput value={details.collection_type} onChange={setDetail("collection_type")}>
+                    <option value="office_pickup">At the courier's office</option>
+                    <option value="door_delivery">At the door</option>
+                  </SelectInput>
+                </Field>
+                <Field label="How do you know this?" error={errors.source} hint="e.g. called their desk, saw it at the stage.">
+                  <TextInput value={details.source} onChange={setDetail("source")} placeholder="Called their desk, 2026-06-22" />
+                </Field>
+              </div>
+            </div>
+          ) : null}
+
+          {step === "review" ? (
+            <div className="stack">
+              <p className="lede">Check the details, then send. Anything new you added will be created too.</p>
+              <div className="review-list">
+                <div className="review-row">
+                  <span>Courier</span>
+                  <strong>{providerName}{providerChoice === NEW ? " (new)" : ""}</strong>
+                </div>
+                <div className="review-row">
+                  <span>Route</span>
+                  <strong>
+                    {zoneLabelFor(resolvedOriginId)}{originChoice === NEW ? " (new)" : ""} → {zoneLabelFor(resolvedDestId)}
+                    {destChoice === NEW ? " (new)" : ""}
+                  </strong>
+                </div>
+                <div className="review-row">
+                  <span>Starting price</span>
+                  <strong>KES {details.base_cost_kes || "0"}{details.cost_per_kg_kes && details.cost_per_kg_kes !== "0" ? ` + ${details.cost_per_kg_kes}/kg` : ""}</strong>
+                </div>
+                <div className="review-row">
+                  <span>Time</span>
+                  <strong>{details.est_time || "—"}</strong>
+                </div>
+                <div className="review-row">
+                  <span>Source</span>
+                  <strong>{details.source || "—"}</strong>
+                </div>
+              </div>
+              {submitError ? <div className="banner banner-danger">{submitError}</div> : null}
+            </div>
+          ) : null}
+
+          <div className="action-row">
+            {step !== "provider" ? (
+              <Button kind="ghost" onClick={goBack} disabled={submitting}>
+                Back
+              </Button>
+            ) : null}
+            {step !== "review" ? (
+              <Button kind="primary" icon={<ChevronRight size={16} />} onClick={goNext}>
+                Next
+              </Button>
+            ) : (
+              <Button kind="primary" icon={<PackagePlus size={16} />} onClick={() => void submitAll()} disabled={submitting}>
+                {submitting ? "Sending…" : "Send for review"}
+              </Button>
+            )}
+          </div>
+        </div>
+      </Panel>
+    </div>
+  );
+}
+
+export function ContributeRate({ context }: RouteProps) {
+  return <RateWizard context={context} />;
+}
+
 export function ContributeZone({ context }: RouteProps) {
   return (
-    <Panel title="Submit zone" action={<Pill tone="muted">Zones</Pill>}>
-      <ZoneSubmissionSection context={context} submitLabel="Create submission" onSubmit={createSubmission} />
+    <Panel title="Add a place" action={<Pill tone="muted">Places</Pill>}>
+      <ZoneSubmissionSection context={context} submitLabel="Send" onSubmit={createSubmission} />
     </Panel>
   );
 }
 
 export function ContributeProvider({ context }: RouteProps) {
   return (
-    <Panel title="Submit provider" action={<Pill tone="muted">Providers</Pill>}>
+    <Panel title="Add a courier" action={<Pill tone="muted">Couriers</Pill>}>
       <ProviderSubmissionSection
         context={context}
-        submitLabel="Create submission"
+        submitLabel="Send"
         onSubmit={createSubmission}
       />
     </Panel>
@@ -836,29 +1316,119 @@ export function ContributeProvider({ context }: RouteProps) {
 
 export function ContributeMode({ context }: RouteProps) {
   return (
-    <Panel title="Submit mode" action={<Pill tone="muted">Modes</Pill>}>
-      <ModeSubmissionSection context={context} submitLabel="Create submission" onSubmit={createSubmission} />
+    <Panel title="Add a transport type" action={<Pill tone="muted">Transport</Pill>}>
+      <ModeSubmissionSection context={context} submitLabel="Send" onSubmit={createSubmission} />
     </Panel>
   );
 }
 
-export function ContributionSuccess({ params }: RouteProps) {
+export function ContributionSuccess({ context }: RouteProps) {
+  const result = context.submissionResult;
+
+  if (!result) {
+    return (
+      <Panel title="Thank you">
+        <div className="stack">
+          <p className="lede">Your contribution was sent for review.</p>
+          <div className="cta-row">
+            <Button kind="primary" icon={<PackagePlus size={16} />} onClick={() => context.navigate("/contribute/rate")}>
+              Add another
+            </Button>
+          </div>
+        </div>
+      </Panel>
+    );
+  }
+
+  const anyError = result.items.some((item) => item.status === "error");
+  const okCount = result.items.filter((item) => item.status === "ok").length;
+
   return (
-    <Panel title="Submission created" action={<Pill tone="warning">Pending</Pill>}>
+    <Panel title={anyError ? "Almost there" : "Thank you!"}>
       <div className="stack">
-        <p className="lede">The moderation queue now has a pending submission.</p>
-        <div className="metric-row">
-          <div>
-            <span className="metric-label">Submission id</span>
-            <strong>{params.id}</strong>
+        <p className="lede">
+          Thanks{result.contributorName ? `, ${result.contributorName}` : ""}! {okCount > 0 ? `We sent ${okCount} ${okCount === 1 ? "thing" : "things"} for review.` : ""}
+        </p>
+
+        <div className="review-list">
+          {result.items.map((item, index) => (
+            <div key={index} className="review-row">
+              <span>{item.label}</span>
+              <Pill tone={item.status === "ok" ? "warning" : "danger"}>
+                {item.status === "ok" ? statusLabel("pending") : "Didn't send"}
+              </Pill>
+            </div>
+          ))}
+        </div>
+
+        {anyError ? (
+          <div className="banner banner-danger">
+            Some items didn't send. You can try adding those again. The ones marked "Waiting for review" are fine.
           </div>
-          <div>
-            <span className="metric-label">Status</span>
-            <strong>pending</strong>
-          </div>
+        ) : null}
+
+        <div className="banner banner-muted">
+          What happens next: a reviewer checks each item. If you added a new courier or place, those are approved first,
+          then the price. Once approved, everything shows up in the data automatically.
+        </div>
+
+        <div className="cta-row">
+          <Button kind="primary" icon={<PackagePlus size={16} />} onClick={() => { context.setSubmissionResult(null); context.navigate("/contribute/rate"); }}>
+            Add another
+          </Button>
+          <Button kind="ghost" onClick={() => { context.setSubmissionResult(null); context.navigate("/contribute"); }}>
+            Done
+          </Button>
         </div>
       </div>
     </Panel>
+  );
+}
+
+export function StaffSignIn({ context }: RouteProps) {
+  return (
+    <div className="stack">
+      <Panel title="Staff sign-in" action={<Pill tone="muted">Staff</Pill>}>
+        <p className="lede">
+          This area is for reviewers and couriers. Enter the token you were given. It is kept in this browser tab only
+          and is never saved.
+        </p>
+      </Panel>
+
+      <Panel title="Reviewers" action={<ShieldCheck size={18} />}>
+        <div className="stack">
+          <TokenPrompt
+            label="Reviewer token"
+            token={context.moderatorToken}
+            onChange={context.setModeratorToken}
+            onClear={() => context.setModeratorToken("")}
+            placeholder="Paste your reviewer token"
+          />
+          <div className="cta-row">
+            <Button kind="primary" icon={<ShieldCheck size={16} />} disabled={!context.moderatorToken} onClick={() => context.navigate("/staff/moderate")}>
+              Open review queue
+            </Button>
+          </div>
+        </div>
+      </Panel>
+
+      <Panel title="Couriers" action={<Truck size={18} />}>
+        <div className="stack">
+          <TokenPrompt
+            label="Courier token"
+            token={context.providerToken}
+            onChange={context.setProviderToken}
+            onClear={() => context.setProviderToken("")}
+            placeholder="Paste your courier token"
+          />
+          <div className="cta-row">
+            <Button kind="primary" icon={<Truck size={16} />} disabled={!context.providerToken} onClick={() => context.navigate("/staff/provider")}>
+              Open courier workspace
+            </Button>
+          </div>
+        </div>
+      </Panel>
+    </div>
   );
 }
 
@@ -977,7 +1547,7 @@ export function ModerateQueue({ context }: RouteProps) {
                   {value.submissions.map((submission) => (
                     <tr key={submission.id}>
                       <td>
-                        <button className="link-text" type="button" onClick={() => context.navigate(`/moderate/submissions/${submission.id}`)}>
+                        <button className="link-text" type="button" onClick={() => context.navigate(`/staff/moderate/submissions/${submission.id}`)}>
                           {submission.id}
                         </button>
                       </td>
@@ -1202,9 +1772,10 @@ export function ProviderDashboard({ context }: RouteProps) {
           </Panel>
 
           <QuickLinks
+            navigate={context.navigate}
             links={[
-              { label: "Submit rate", path: "/provider/submissions/rate" },
-              { label: "Bookings", path: "/provider/bookings" },
+              { label: "Submit rate", path: "/staff/provider/submissions/rate" },
+              { label: "Bookings", path: "/staff/provider/bookings" },
             ]}
           />
         </div>
@@ -1226,7 +1797,7 @@ export function ProviderRateSubmission({ context }: RouteProps) {
           <RateSubmissionSection
             context={context}
             lockedProviderId={value?.account.provider_id}
-            submitLabel="Create provider submission"
+            submitLabel="Send"
             providerHint={value ? `Locked to ${value.account.display_name}.` : undefined}
             onSubmit={({ payload, source }) =>
               providerCreateSubmission(token, {
@@ -1289,7 +1860,7 @@ export function ProviderBookings({ context }: RouteProps) {
                   {value.bookings.map((booking: ProviderBookingSummary) => (
                     <tr key={booking.id}>
                       <td>
-                        <button className="link-text" type="button" onClick={() => context.navigate(`/provider/bookings/${booking.id}`)}>
+                        <button className="link-text" type="button" onClick={() => context.navigate(`/staff/provider/bookings/${booking.id}`)}>
                           {booking.id}
                         </button>
                       </td>

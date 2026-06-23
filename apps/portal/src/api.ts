@@ -31,10 +31,36 @@ export interface ProviderBookingFilters {
   status?: ProviderBookingStatus;
 }
 
+const FRIENDLY_ERRORS: Record<string, string> = {
+  row_exists: "This already exists, so it can't be added again. To change it, ask a reviewer to update it.",
+  row_missing: "The thing you're trying to update doesn't exist yet. Add it first.",
+  validation_error: "Some details don't look right. Check the highlighted fields and try again.",
+  invalid_request: "Some details don't look right. Check the highlighted fields and try again.",
+  invalid_payload: "Some details don't look right. Check the highlighted fields and try again.",
+  unauthorized: "That sign-in token isn't valid. Check it and try again.",
+  forbidden: "You don't have access to do that.",
+  not_found: "We couldn't find what you were looking for.",
+};
+
+export function friendlyError(status: number, body: string): string {
+  try {
+    const parsed = JSON.parse(body) as { error?: { code?: string; message?: string } };
+    const code = parsed.error?.code;
+    if (code && FRIENDLY_ERRORS[code]) return FRIENDLY_ERRORS[code];
+    if (parsed.error?.message) return parsed.error.message;
+  } catch {
+    // body was not JSON; fall through to a generic message
+  }
+  if (status === 401) return "That sign-in token isn't valid. Check it and try again.";
+  if (status === 403) return "You don't have access to do that.";
+  if (status === 404) return "We couldn't find what you were looking for.";
+  return "Something went wrong. Please try again.";
+}
+
 async function readJson<T>(response: Response): Promise<T> {
   if (!response.ok) {
-    const message = await response.text().catch(() => "");
-    throw new Error(message || `Request failed with status ${response.status}`);
+    const body = await response.text().catch(() => "");
+    throw new Error(friendlyError(response.status, body));
   }
   return (await response.json()) as T;
 }

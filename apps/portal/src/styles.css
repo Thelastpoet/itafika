@@ -145,7 +145,6 @@ textarea {
 .topbar h1 {
   margin: 0.2rem 0 0;
   font-size: 1.35rem;
-  text-transform: capitalize;
 }
 
 .topbar-meta {
@@ -426,6 +425,96 @@ th {
   margin: 0;
   color: var(--muted);
   max-width: 70ch;
+}
+
+.cta-row {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.staff-link {
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+.how-it-works {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.6rem;
+}
+
+.how-it-works li {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.step-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--border));
+  background: color-mix(in srgb, var(--accent) 14%, var(--surface));
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.wizard-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.1rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.wizard-step {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.wizard-step.active {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.wizard-step.active .step-num {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 28%, var(--surface));
+}
+
+.wizard-step.done .step-num {
+  border-color: color-mix(in srgb, var(--accent-2) 45%, var(--border));
+  background: color-mix(in srgb, var(--accent-2) 18%, var(--surface));
+}
+
+.review-list {
+  display: grid;
+  gap: 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface-2);
+  padding: 0.85rem;
+}
+
+.review-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.review-row > span {
+  color: var(--muted);
 }
 
 @media (max-width: 1120px) {

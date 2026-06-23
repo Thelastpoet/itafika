@@ -48,6 +48,97 @@ function nonEmpty(value: string): boolean {
   return value.trim().length > 0;
 }
 
+const ZONE_TYPE_SEGMENTS: Record<string, string> = {
+  cbd_hub: "CBD",
+  stage: "STG",
+  residential_area: "RES",
+};
+
+/** Turn a free-text name into a backend-valid provider/mode id (^[a-z][a-z0-9_]*$). */
+export function slugId(name: string): string {
+  const slug = name
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+  if (!slug) return "";
+  return /^[a-z]/.test(slug) ? slug : `x_${slug}`;
+}
+
+/** Next free 2-digit sequence for a town+segment among existing zone ids. */
+export function nextZoneSequence(
+  existingZoneIds: readonly string[],
+  townCode: string,
+  segment: string,
+): string {
+  const prefix = `ZONE_${townCode}_${segment}_`;
+  let max = 0;
+  for (const id of existingZoneIds) {
+    if (!id.startsWith(prefix)) continue;
+    const seq = Number(id.slice(prefix.length));
+    if (Number.isInteger(seq) && seq > max) max = seq;
+  }
+  return String(max + 1).padStart(2, "0");
+}
+
+/** Build a backend-valid zone id (ZONE_<TOWN>_<CBD|STG|RES>_<NN>) from friendly inputs. */
+export function buildZoneId(
+  town: string,
+  type: string,
+  existingZoneIds: readonly string[],
+): string {
+  const townCode = town.trim().toUpperCase().replace(/[^A-Z0-9]+/g, "");
+  const segment = ZONE_TYPE_SEGMENTS[type] ?? "STG";
+  if (!townCode) return "";
+  return `ZONE_${townCode}_${segment}_${nextZoneSequence(existingZoneIds, townCode, segment)}`;
+}
+
+export interface NewProviderValues {
+  name: string;
+  type: string;
+}
+
+export interface NewZoneValues {
+  name: string;
+  type: string;
+  town: string;
+  county: string;
+  lat: string;
+  lng: string;
+}
+
+/** Validate the inline "add a new provider" mini-form (id is generated, not typed). */
+export function validateNewProvider(values: NewProviderValues): FieldErrors<keyof NewProviderValues> {
+  const errors: FieldErrors<keyof NewProviderValues> = {};
+  if (!nonEmpty(values.name)) errors.name = "Enter the provider name.";
+  if (!nonEmpty(values.type)) errors.type = "Choose how they move parcels.";
+  return errors;
+}
+
+/** Validate the inline "add a new place" mini-form (id is generated, not typed). */
+export function validateNewZone(values: NewZoneValues): FieldErrors<keyof NewZoneValues> {
+  const errors: FieldErrors<keyof NewZoneValues> = {};
+  if (!nonEmpty(values.name)) errors.name = "Enter the place name.";
+  if (values.type !== "cbd_hub" && values.type !== "stage" && values.type !== "residential_area") {
+    errors.type = "Choose a place type.";
+  }
+  if (!nonEmpty(values.town)) errors.town = "Enter the town.";
+  if (!nonEmpty(values.county)) errors.county = "Enter the county.";
+
+  const hasLat = nonEmpty(values.lat);
+  const hasLng = nonEmpty(values.lng);
+  if (hasLat !== hasLng) {
+    errors.lat = "Latitude and longitude must both be set or both blank.";
+    errors.lng = "Latitude and longitude must both be set or both blank.";
+  } else if (hasLat && hasLng) {
+    const lat = parseFloatValue(values.lat);
+    const lng = parseFloatValue(values.lng);
+    if (lat === null || lat < -5 || lat > 5) errors.lat = "Latitude must be between -5 and 5.";
+    if (lng === null || lng < 33 || lng > 42) errors.lng = "Longitude must be between 33 and 42.";
+  }
+  return errors;
+}
+
 function parseInteger(value: string): number | null {
   if (!nonEmpty(value)) return null;
   const n = Number(value);
@@ -65,6 +156,9 @@ export function validateRateForm(values: RateFormValues): FieldErrors<keyof Rate
   if (!nonEmpty(values.provider_id)) errors.provider_id = "Choose a provider.";
   if (!nonEmpty(values.origin_zone_id)) errors.origin_zone_id = "Choose an origin zone.";
   if (!nonEmpty(values.destination_zone_id)) errors.destination_zone_id = "Choose a destination zone.";
+  else if (nonEmpty(values.origin_zone_id) && values.origin_zone_id === values.destination_zone_id) {
+    errors.destination_zone_id = "Origin and destination must be different.";
+  }
 
   const baseCost = parseInteger(values.base_cost_kes);
   if (baseCost === null || baseCost < 0) errors.base_cost_kes = "Base cost must be a whole number at 0 or above.";

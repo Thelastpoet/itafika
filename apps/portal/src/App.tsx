@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import type * as React from "react";
-import { PackagePlus, ShieldCheck, Truck } from "lucide-react";
+import { ArrowLeft, ClipboardList, History, PackagePlus, ShieldCheck, Truck } from "lucide-react";
 import type { ReferenceExport } from "@itafika/core";
 
 import { getReferenceExport } from "./api.js";
-import { matchRoute } from "./router.js";
+import { isStaffRoute, matchRoute, routeTitle } from "./router.js";
 import { coerceReferenceRows } from "./types.js";
-import type { PortalContext, ReferenceLookups, ReferenceLookupFreshness, RouteProps } from "./types.js";
+import type { PortalContext, ReferenceLookups, RouteProps, SubmissionResult } from "./types.js";
 import {
   ContributeHome,
   ContributeMode,
@@ -21,6 +21,7 @@ import {
   ProviderDashboard,
   ProviderRateSubmission,
   ProviderBookingDetail,
+  StaffSignIn,
 } from "./views.js";
 
 function buildLookups(reference: ReferenceExport | null): ReferenceLookups {
@@ -60,6 +61,7 @@ export default function App() {
   const [contributorName, setContributorName] = useState("");
   const [moderatorToken, setModeratorToken] = useState("");
   const [providerToken, setProviderToken] = useState("");
+  const [submissionResult, setSubmissionResult] = useState<SubmissionResult | null>(null);
 
   useEffect(() => {
     const onPopState = () => setPath(window.location.pathname);
@@ -74,7 +76,7 @@ export default function App() {
         const data = await getReferenceExport();
         if (!cancelled) setReference(data);
       } catch (error) {
-        if (!cancelled) setReferenceError(error instanceof Error ? error.message : "Failed to load reference export");
+        if (!cancelled) setReferenceError(error instanceof Error ? error.message : "Failed to load delivery data");
       }
     })();
     return () => {
@@ -90,20 +92,24 @@ export default function App() {
       contributorName,
       moderatorToken,
       providerToken,
+      submissionResult,
       setContributorName,
       setModeratorToken,
       setProviderToken,
+      setSubmissionResult,
       navigate: (next: string) => {
         window.history.pushState({}, "", next);
         setPath(next);
+        window.scrollTo(0, 0);
       },
     }),
-    [contributorName, lookups, moderatorToken, providerToken, reference],
+    [contributorName, lookups, moderatorToken, providerToken, reference, submissionResult],
   );
 
   const match = useMemo(() => matchRoute(path), [path]);
-
   const routeProps: RouteProps = { context, params: match.params };
+  const staff = isStaffRoute(match.name);
+
   const content = (() => {
     switch (match.name) {
       case "contribute-home":
@@ -118,6 +124,8 @@ export default function App() {
         return <ContributeMode {...routeProps} />;
       case "contribute-success":
         return <ContributionSuccess {...routeProps} />;
+      case "staff-signin":
+        return <StaffSignIn {...routeProps} />;
       case "moderate-queue":
         return <ModerateQueue {...routeProps} />;
       case "moderate-submission":
@@ -137,72 +145,57 @@ export default function App() {
     }
   })();
 
-  const freshness = coerceReferenceRows<ReferenceLookupFreshness>(reference?.tables.freshness);
-
   return (
     <div className="app-shell">
       <aside className="sidebar">
         <div className="brand">
           <div className="brand-lockup">
             <strong>Itafika</strong>
-            <span>Portal</span>
+            <span>{staff ? "Staff" : "Delivery data"}</span>
           </div>
         </div>
 
-        <nav className="nav-stack">
-          <NavButton active={path.startsWith("/contribute")} icon={<PackagePlus size={16} />} label="Contribute" onClick={() => context.navigate("/contribute")} />
-          <NavButton active={path.startsWith("/moderate")} icon={<ShieldCheck size={16} />} label="Moderate" onClick={() => context.navigate("/moderate")} />
-          <NavButton active={path.startsWith("/provider")} icon={<Truck size={16} />} label="Provider" onClick={() => context.navigate("/provider")} />
-        </nav>
-
-        <div className="sidebar-summary">
-          <div>
-            <span className="metric-label">Reference export</span>
-            <strong>{reference ? `v${reference.export_version}` : "Loading"}</strong>
-          </div>
-          <div className="mini-grid">
-            <span>Zones</span>
-            <strong>{reference?.tables.zones.length ?? 0}</strong>
-            <span>Providers</span>
-            <strong>{reference?.tables.providers.length ?? 0}</strong>
-            <span>Modes</span>
-            <strong>{reference?.tables.modes.length ?? 0}</strong>
-          </div>
-        </div>
+        {staff ? (
+          <nav className="nav-stack">
+            <NavButton active={path.startsWith("/staff/moderate")} icon={<ShieldCheck size={16} />} label="Review queue" onClick={() => context.navigate("/staff/moderate")} />
+            <NavButton active={path.startsWith("/staff/moderate/change-log")} icon={<History size={16} />} label="Change history" onClick={() => context.navigate("/staff/moderate/change-log")} />
+            <NavButton active={path.startsWith("/staff/provider")} icon={<Truck size={16} />} label="Provider" onClick={() => context.navigate("/staff/provider")} />
+          </nav>
+        ) : (
+          <nav className="nav-stack">
+            <NavButton active={path === "/contribute" || path === "/"} icon={<ClipboardList size={16} />} label="Home" onClick={() => context.navigate("/contribute")} />
+            <NavButton active={path.startsWith("/contribute/rate")} icon={<PackagePlus size={16} />} label="Add a price" onClick={() => context.navigate("/contribute/rate")} />
+          </nav>
+        )}
 
         <div className="sidebar-footer">
           {referenceError ? <div className="banner banner-danger">{referenceError}</div> : null}
-          <div className="freshness-list">
-            {freshness.slice(0, 5).map((entry) => (
-              <div key={entry.town} className="freshness-item">
-                <span>{entry.town}</span>
-                <strong>{entry.last_updated}</strong>
-              </div>
-            ))}
-          </div>
+          {staff ? (
+            <button className="link-text" type="button" onClick={() => context.navigate("/contribute")}>
+              <ArrowLeft size={14} /> Back to public site
+            </button>
+          ) : (
+            <button className="link-text staff-link" type="button" onClick={() => context.navigate("/staff")}>
+              Staff sign-in
+            </button>
+          )}
         </div>
       </aside>
 
       <main className="workspace">
         <header className="topbar">
           <div>
-            <div className="topbar-kicker">Same-origin portal</div>
-            <h1>{match.name.replace(/-/g, " ")}</h1>
+            <div className="topbar-kicker">{staff ? "Staff tools" : "Community contributions"}</div>
+            <h1>{routeTitle(match.name)}</h1>
           </div>
-          <div className="topbar-meta">
-            <div>
-              <span className="metric-label">Contributor</span>
-              <strong>{contributorName || "Not set"}</strong>
+          {!staff ? (
+            <div className="topbar-meta">
+              <div>
+                <span className="metric-label">You are</span>
+                <strong>{contributorName || "a guest"}</strong>
+              </div>
             </div>
-            <div>
-              <span className="metric-label">Moderator</span>
-              <strong>{moderatorToken ? "Set" : "Unset"}</strong>
-            </div>
-            <div>
-              <span className="metric-label">Provider</span>
-              <strong>{providerToken ? "Set" : "Unset"}</strong>
-            </div>
-          </div>
+          ) : null}
         </header>
 
         <div className="workspace-body">{content}</div>

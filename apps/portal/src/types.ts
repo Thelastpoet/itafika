@@ -68,6 +68,19 @@ export interface ReferenceLookups {
   modes: ReferenceLookupMode[];
 }
 
+export interface SubmittedItem {
+  kind: "provider" | "place" | "rate" | "mode";
+  label: string;
+  status: "ok" | "error";
+  submissionId?: string;
+  error?: string;
+}
+
+export interface SubmissionResult {
+  contributorName: string;
+  items: SubmittedItem[];
+}
+
 export function coerceReferenceRows<T>(rows: readonly unknown[] | undefined): T[] {
   return (rows ?? []) as unknown as T[];
 }
@@ -78,9 +91,11 @@ export interface PortalContext {
   contributorName: string;
   moderatorToken: string;
   providerToken: string;
+  submissionResult: SubmissionResult | null;
   setContributorName: (name: string) => void;
   setModeratorToken: (token: string) => void;
   setProviderToken: (token: string) => void;
+  setSubmissionResult: (result: SubmissionResult | null) => void;
   navigate: (path: string) => void;
 }
 
